@@ -41,14 +41,26 @@ Foundation phase is implemented and tested at the unit level. A release ZIP was 
 - Installer failure counters are in memory (reset on restart); acceptable for install-only use, documented as a limitation.
 - Pagination lists have no sorting (UI-03).
 
+## IPPanel Edge contracts (read from official docs, 2026-10-09; no code written yet)
+
+Source: https://ippanelcom.github.io/Edge-Document/docs/ (overview), `/auth`, `/send`, `/send/pattern`, `/send/webservice`, `/report`.
+
+- Base URL: `https://edge.ippanel.com/v1`
+- Auth: every endpoint needs an `Authorization` header with the raw token or API key (no `Bearer` prefix per the docs' header tables). Tokens expire after 10 hours; API keys do not expire but some sensitive endpoints accept tokens only. API keys are created in the user panel (Developers → Access Keys).
+  - Discrepancy to confirm with IPPanel before live use: the curl examples show `Authorization: API TOKEN`, while the header tables show `YOUR_TOKEN_HERE`.
+- Pattern send: `POST {base}/api/send`, JSON body `{ sending_type: "pattern", from_number (E.164), code (pattern code), recipients: [one E.164 number], params: { <placeholder>: value }, phonebook?: {...} }`. Response `data.message_outbox_ids[]`, `meta.status`, `meta.message_code` ("200-1" success; "400-1" bad token; "400-2" validation error).
+- Webservice (plain text) send: `POST {base}/api/send`, body `{ sending_type: "webservice", from_number, message, params: { recipients: [E.164...] }, send_time? }`; `send_time` is `YYYY-MM-DD HH:MM:SS` in UTC.
+- Delivery status: the reports section lists "Outbox Report", "Outbox Report By ID", "Bulk Stats", and "Bulk Recipients". **Their exact paths and fields were not read yet**; read them before implementing delivery tracking.
+- Live verification is not possible from this sandbox: `edge.ippanel.com` is not on the allowlist, and no credentials are present. Tests must use a dry-run provider. A real send requires explicit user configuration and approval.
+
 ## Blocked items
 
-- **IPPanel Edge SMS (§13):** the spec requires implementation strictly from `https://ippanelcom.github.io/Edge-Document/docs/`. The sandbox cannot reach `edge.ippanel.com` and the docs were **not yet fetched**, so no SMS code has been written. Next: fetch the docs (via the allowed web tools), record the auth/send/pattern/status contracts here, and implement an adapter with a dry-run provider for tests. Live verification needs IPPanel credentials and explicit user approval before any real send.
+- **IPPanel live verification:** blocked by sandbox network allowlist and missing credentials (see above).
 - **cPanel/Passenger:** no host available; install steps are untested on a real host.
 
 ## Next steps (in order)
 
-1. Read the IPPanel Edge docs and record the contracts in this file (no guessing).
+1. Read the IPPanel report endpoints (outbox by ID, bulk recipients) and then implement the SMS adapter with a dry-run provider and the variable-mapping layer.
 2. Attempt the DB integration test again only if a MySQL/MariaDB server becomes reachable; otherwise keep it `IMPLEMENTED_UNVERIFIED`.
 3. Implement remaining domain modules in the spec's order: teachers, classes and sessions (with conflict detection), pre-registration and enrolment, students and CSV import, attendance, finance (exact integer rials, instalments, card-to-card review with no double approval), certificates with public QR verification, file storage with authorised serving, SMS adapter with masked key and dry-run tests, Chart.js dashboard charts, backup UI.
 4. Add the test suites the spec requires for finance, certificates, SMS mapping, and object-level access control.

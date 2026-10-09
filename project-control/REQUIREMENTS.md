@@ -112,7 +112,7 @@ Evidence keys: `unit:<file>` = test file in `src/tests/unit` (38 tests, all pass
 
 | ID | Requirement | Acceptance criterion | Status | Evidence / notes |
 |---|---|---|---|---|
-| SMS-01 | Implement strictly per official IPPanel Edge API docs (auth, send, pattern send, status) | Requests follow the documented contract | BLOCKED | Sandbox cannot reach `edge.ippanel.com` (not in allowlist); docs not yet fetched/validated. No code written |
+| SMS-01 | Implement strictly per official IPPanel Edge API docs (auth, send, pattern send, status) | Requests follow the documented contract | IN_PROGRESS | Docs read for auth, webservice, pattern send (see STATE “IPPanel Edge contracts”). Delivery-status endpoint paths not read yet. Live verification BLOCKED (no network allowlist, no credentials). No code written |
 | SMS-02 | Independent adapter with defined interface | `SmsProvider` interface + IPPanel adapter | NOT_STARTED | — |
 | SMS-03 | API key stored server-side only, masked | Sensitive setting masked | NOT_STARTED | Masking helper `maskSecret` exists (`unit:settings-config`) |
 | SMS-04 | Patterns, variable mapping layer, required-variable validation before send | Mapping tests | NOT_STARTED | — |
@@ -304,7 +304,7 @@ Evidence keys: `unit:<file>` = test file in `src/tests/unit` (38 tests, all pass
 | 15 | Balance updated after approved payment | NOT_STARTED | — |
 | 16 | Certificate issued and shown to student | NOT_STARTED | — |
 | 17 | Certificate verified via public code page | NOT_STARTED | — |
-| 18 | Configure IPPanel and a pattern | BLOCKED (SMS API access/docs fetch) | Not started |
+| 18 | Configure IPPanel and a pattern | BLOCKED (live access); docs read | Contracts recorded in STATE; no code |
 | 19 | Pattern variables extracted and mapped | NOT_STARTED | — |
 | 20 | Real SMS send with tracked result | BLOCKED | Needs IPPanel access and approval to send |
 | 21 | Dashboard from real DB | IMPLEMENTED_UNVERIFIED | 6 KPIs from SQL; `I` (dashboard subtest) not executed |
