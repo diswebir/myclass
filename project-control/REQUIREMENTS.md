@@ -40,7 +40,7 @@
 | REQ-P1-11 | Policy Layer مرکزی (مجوز + مالکیت/عضویت) | تست‌های IDOR برای منابع | VERIFIED |
 | REQ-P1-12 | audit log + middleware + صفحه مشاهده | تست: رویدادها ثبت شوند، بدون secret | VERIFIED |
 | REQ-P1-13 | ماژول settings: کلید تایپ‌شده + Zod + پیش‌فرض + ماسک + audit | تست‌های integration | VERIFIED |
-| REQ-P1-14 | نصب‌کننده وب: compat check → migrate → admin → قفل نصب (فایل خارج public + پرچم DB) | تست سناریوی نصب کامل | IMPLEMENTED_UNVERIFIED |
+| REQ-P1-14 | نصب‌کننده وب: compat check → migrate → admin → قفل نصب (فایل خارج public + پرچم DB) — با انتخاب درایور mysql/sqlite | تست سناریوی نصب کامل (sqlite e2e + check graceful mysql) | VERIFIED |
 | REQ-P1-15 | صفحه سلامت (فقط مدیر): DB، نسخه Node، وضعیت migration، دیسک، خطاها | تست دسترسی مدیر/غیرمدیر | VERIFIED |
 | REQ-P1-16 | Design System RTL + قالب پایه Nunjucks + فونت self-host + htmx/alpine | تست رندر صفحات + بررسی استقرار | VERIFIED |
 | REQ-P1-17 | خطاهای فارسی، بدون افشای جزئیات سرور | تست صفحه خطا | VERIFIED |

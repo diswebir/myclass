@@ -4,6 +4,7 @@ import type { Config } from '../../core/config/env';
 import { InstallerService } from './installer.service';
 import { isInstalledSync } from '../../core/http/middleware/installGate';
 import { wantsHtml, type AppContext } from '../../core/http/context';
+import { AppError } from '../../core/errors/AppError';
 
 export function installerRoutes(ctx: AppContext): Router {
   const router = Router();
@@ -64,23 +65,31 @@ export function installerRoutes(ctx: AppContext): Router {
 }
 
 function normalizeInput(body: Record<string, unknown>): {
+  dbDriver: 'mysql' | 'sqlite';
   dbHost: string;
   dbPort: number;
   dbName: string;
   dbUser: string;
   dbPassword: string;
+  sqlitePath: string;
   appBaseUrl: string;
   adminUsername: string;
   adminPassword: string;
   adminFullName: string;
 } {
   const get = (k: string) => String(body?.[k] ?? '').trim();
+  const dbDriver = get('dbDriver') || 'mysql';
+  if (dbDriver !== 'mysql' && dbDriver !== 'sqlite') {
+    throw AppError.badRequest('درایور پایگاه داده نامعتبر است. گزینه‌ها: mysql یا sqlite.');
+  }
   return {
+    dbDriver,
     dbHost: get('dbHost') || 'localhost',
     dbPort: Number(get('dbPort')) || 3306,
     dbName: get('dbName'),
     dbUser: get('dbUser'),
     dbPassword: String(body?.dbPassword ?? ''),
+    sqlitePath: get('sqlitePath'),
     appBaseUrl: get('appBaseUrl') || 'http://localhost:3000',
     adminUsername: get('adminUsername'),
     adminPassword: String(body?.adminPassword ?? ''),
@@ -88,12 +97,14 @@ function normalizeInput(body: Record<string, unknown>): {
   };
 }
 
-function publicValues(input: { dbHost: string; dbPort: number; dbName: string; dbUser: string; appBaseUrl: string; adminUsername: string; adminFullName: string }) {
+function publicValues(input: { dbDriver: string; dbHost: string; dbPort: number; dbName: string; dbUser: string; sqlitePath: string; appBaseUrl: string; adminUsername: string; adminFullName: string }) {
   return {
+    dbDriver: input.dbDriver,
     dbHost: input.dbHost,
     dbPort: input.dbPort,
     dbName: input.dbName,
     dbUser: input.dbUser,
+    sqlitePath: input.sqlitePath,
     appBaseUrl: input.appBaseUrl,
     adminUsername: input.adminUsername,
     adminFullName: input.adminFullName,

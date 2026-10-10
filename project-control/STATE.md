@@ -1,7 +1,7 @@
 # STATE.md — کنترل وضعیت پروژه
 
 > این فایل در پایان هر نشست کاری به‌روز می‌شود.
-> آخرین به‌روزرسانی: 2026-10-10 — پایان فاز ۳ (attendance + پنل‌ها) — ۱۷۰ تست سبز
+> آخرین به‌روزرسانی: 2026-10-10 — Session 5: installer با انتخاب درایور mysql/sqlite — ۱۷۵ تست سبز
 
 ## تاریخچه نشست‌ها
 
@@ -52,19 +52,31 @@
 - Smoke test واقعی: حالت نصب (virgin DB): /install 200، /healthz 200، POST /install/run با MySQL down → 500 graceful (بدون crash). حالت کامل (sqlite): migrate-cli (۶ مایگریشن)، seed، login/logout، dashboard، /classes، /attendance/warnings، پنل‌ها — همه سبز. redirectهای /login رفع شد.
 - REQ-P3-01..04 → VERIFIED؛ REQ-P1-11 (Policy/IDOR) → VERIFIED. REQ-P1-14 (installer MySQL flow) هنوز IMPLEMENTED_UNVERIFIED (MySQL واقعی در sandbox نیست) — ولی باگ pool که آن را «ناممکن» کرده بود رفع شد.
 
+
+### 2026-10-10 — Session 5 (درخواست کاربر: انتخاب درایور mysql/sqlite در installer)
+
+- installer حالا از انتخاب بین **MariaDB/MySQL** و **SQLite** پشتیبانی می‌کند (`dbDriver` در فرم نصب، check و run).
+  - sqlite: مسیر فایل (پیش‌فرض `<STORAGE_DIR>/myclass.sqlite`) → `DB_DRIVER=sqlite` + `DB_SQLITE_PATH` در `.env`
+  - mysql: همان flow قبلی + `DB_DRIVER=mysql` + host/port/name/user/pass
+- `runChecks` و `writeEnvAndLock` driver-aware شدند؛ view فرم نصب select درایور + فیلدهای شرطی (Alpine).
+- `.env.example` و `docs/decisions/installer.md` به‌روز شدند.
+- تست‌های جدید در `install.test.ts`: درایور نامعتبر → 400؛ check با sqlite (ok) و mysql down (fail بدون crash)؛ **نصب کامل e2e با sqlite** (migrate → seed → admin → قفل → `.env` → لاگین واقعی روی DB نصب‌شده)؛ پس از نصب /install بسته می‌شود.
+- REQ-P1-14 → VERIFIED (مسیر sqlite کاملاً تست شد؛ مسیر mysql روی سرور واقعی هنوز اجرا‌نشده — sandbox MySQL ندارد).
+- تست‌ها: **۱۷۵ موفق** — typecheck + build سبز.
+
 ## وضعیت فعلی
 
-- فاز: **۳ — حضور و غیاب + پنل استاد + پنل فراگیر — کامل شد ✅ (۱۷۰ تست) → شروع فاز ۴ (مالی)**
-- آخرین نیازمندی VERIFIED: REQ-P3-04 (و REQ-P1-11)
+- فاز: **۳ — کامل شد ✅ (۱۷۵ تست پس از Session 5) → شروع فاز ۴ (مالی)**
+- آخرین نیازمندی VERIFIED: REQ-P1-14 (installer با انتخاب درایور — مسیر sqlite e2e)
 - در حال انجام: فاز ۴ — REQ-P4-01.. (پرداخت‌ها، اقساط، دفتر کل، بررسی رسید، گزارش‌های مالی، PaymentGateway interface)
-- تست‌ها: ۱۷۰ موفق / ۰ ناموفق — `npm test` + `npm run typecheck` + `npm run build` سبز؛ boot smoke (install + full mode) سبز.
+- تست‌ها: ۱۷۵ موفق / ۰ ناموفق — `npm test` + `npm run typecheck` + `npm run build` سبز؛ boot smoke (install + full mode) سبز.
 
 ## نتایج تست
 
 | suite | نتیجه |
 |---|---|
 | unit | ۷۸ موفق |
-| integration | ۹۲ موفق (install, auth, rbac, settings, migration, security, audit, phase2, phase3) |
+| integration | ۹۷ موفق (install incl. sqlite e2e, auth, rbac, settings, migration, security, audit, phase2, phase3) |
 | typecheck / build | سبز |
 | boot smoke (install mode, virgin DB) | سبز — /install 200، /healthz 200، installer failure graceful |
 | boot smoke (full mode, sqlite) | سبز — migrate-cli + login/logout + dashboard + panels + attendance |

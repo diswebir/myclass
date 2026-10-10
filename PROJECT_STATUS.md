@@ -18,11 +18,11 @@
 | اسکلت پروژه (package.json, tsconfig, .env.example) | ✅ VERIFIED |
 | docs/ (architecture, ERD, assumptions, decisions) | ✅ VERIFIED |
 | Spike PDF فارسی + `docs/decisions/pdf.md` | ✅ VERIFIED (۲۳/²³ تطابق با HarfBuzz + PDF نمونه) |
-| نصب‌کننده (installer + gate + compat check) | ✅ IMPLEMENTED_UNVERIFIED (flow کامل MySQL روی هاست) |
+| نصب‌کننده (installer + gate + compat check + انتخاب درایور mysql/sqlite) | ✅ VERIFIED (نصب کامل e2e با sqlite + check graceful با mysql؛ مسیر MySQL روی هاست «اجرا‌نشده») |
 | فاز ۱ — زیرساخت (config, db, migrations, auth, sessions, CSRF, helmet, rate-limit, RBAC, policy, audit, settings, users, health, UI) | ✅ VERIFIED (۱۲۷ تست) |
 | فاز ۲ — اساتید، فراگیران، کلاس‌ها، جلسات، پیش‌ثبت‌نام، ثبت‌نام | ✅ VERIFIED (۱۲ تست)
 | فاز ۳ — attendance + پنل استاد + پنل فراگیر + IDOR | ✅ VERIFIED (۳۱ تست) |
-| تست کل | ✅ ۱۷۰ موفق / ۰ ناموفق — typecheck + build + boot smoke سبز |
+| تست کل | ✅ ۱۷۵ موفق / ۰ ناموفق — typecheck + build + boot smoke سبز |
 
 ## محیط sandbox
 

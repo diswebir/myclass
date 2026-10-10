@@ -11,6 +11,15 @@ POST /install/run      → migration → seed (roles/permissions) → admin → 
 GET  /install/status   → وضعیت نصب
 ```
 
+## انتخاب درایور پایگاه داده (mysql یا sqlite)
+
+- فرم نصب انتخیاب بین **MariaDB/MySQL** (پیشنهاد برای cPanel/هاستینگ اشتراکی) و **SQLite** (قابل حمل و ساده — بدون سرور DB، مناسب برای تست/توسعه).
+- `POST /install/check` و `POST /install/run` هر دو بر اساس `dbDriver` کار می‌کنند:
+  - `mysql` → اتصال واقعی با ping (host/port/name/user/pass) + `DB_DRIVER=mysql` در `.env`
+  - `sqlite` → مسیر فایل (پیش‌فرض `<STORAGE_DIR>/myclass.sqlite`) + `DB_DRIVER=sqlite` + `DB_SQLITE_PATH` در `.env`
+- نکته: installer با `mysql2` (callback pool) — `mysql2/promise` با Kysely ناسازگار است (getConnection با callback را ignore می‌کند → hang/crash).
+- تست: نصب کامل با sqlite (migrate → seed → admin → قفل → `.env` → لاگین واقعی) در `install.test.ts` پاس شد.
+
 ## بررسی سازگاری (compat check)
 
 - نسخه Node (>= 18)
@@ -39,7 +48,7 @@ GET  /install/status   → وضعیت نصب
 - همه خطاها فارسی، کاربرپسند، بدون مسیر فایل/نام هاست/versione DB.
 - خطاهای داخلی در `audit_log`/`error log` با جزئیات (سمت سرور) ثبت می‌شوند.
 
-## decisões de design
+## تصمیم‌های طراحی
 
-- installer módulos de código: `src/modules/installer/` (routes, service, checks, views).
-- تست: `tests/integration/install.test.ts` — سناریوی نصب کامل با supertest.
+- ماژول installer: `src/modules/installer/` (routes, service, views).
+- تست: `tests/integration/install.test.ts` — سناریوی نصب کامل با supertest (sqlite) + check graceful برای mysql.
