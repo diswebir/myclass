@@ -86,7 +86,7 @@
 - SmsProvider interface + FakeSmsProvider (outbox داخل حافظه، failNext برای تست backoff) + IPanelSmsProvider adapter (wire format «تأییدنشده» — blocker B2 — ippanel.com خارج از allowlist — در یک فایل ایزوله، per spec §3).
 - Gate REQ-P6-05: مگر SMS_LIVE_TESTS=1، provider همیشه Fake است (هیچ تماس شبکه‌ای در تست/کران).
 - کلید API: تنظیمات sms.ip_panel_api_key (isSecret — رمزنگاری‌شده با ENCRYPTION_KEY، ماسک در UI) + fallback به env؛ هرگز در لاگ.
-- صف DB: enqueue با dedupe (event+entity+recipient)، delay_minutes، شرط (gte/lte/eq)، نگاشت متغیر + پیش‌فرض + الزامی، rate limit (پیش‌فرض ۳۰/دقیقه)، backoff wasserfall (base*2^n سقف ۶۰ دقیقه)، retry_max → failed.
+- صف DB: enqueue با dedupe (event+entity+recipient)، delay_minutes، شرط (gte/lte/eq)، نگاشت متغیر + پیش‌فرض + الزامی، rate limit (پیش‌فرض ۳۰/دقیقه)، backoff exponential (base*2^n، سقف ۶۰ دقیقه)، retry_max → failed.
 - پردازش: cron dist/jobs/run.js (smoke تست شد) + endpoint داخلی POST /internal/jobs/run با Bearer SMS_CRON_TOKEN (CSRF-exempt).
 - پترن/رویداد: CRUD + seedDefaults (۴ پترن + ۴ رویداد) — installer و test helper هر دو seed می‌کنند.
 - هوک‌های دامنه (best-effort): enrollment_created، payment_approved (create+approve)، certificate_issued.

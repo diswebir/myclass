@@ -24,7 +24,8 @@
 | فاز ۳ — attendance + پنل استاد + پنل فراگیر + IDOR | ✅ VERIFIED (۳۱ تست) |
 | فاز ۴ — پرداخت‌ها، اقساط، رسید کارت‌به‌کارت، گزارش‌های مالی، PaymentGateway | ✅ VERIFIED (۱۶ تست) |
 | فاز ۵ — قالب‌ها، صدور مدرک PDF (Vazirmatn+QR)، verify عمومی، لغو+audit، دسته‌ای | ✅ VERIFIED (۱۰ تست) |
-| تست کل | ✅ ۲۰۱ موفق / ۰ ناموفق — typecheck + build + boot smoke سبز |
+| فاز ۶ — SmsProvider+Fake+IPPanel adapter (B2: wire تأییدنشده)، صف DB dedupe/rate/backoff، cron+endpoint داخلی، هوک‌ها | ✅ VERIFIED (۱۹ تست) |
+| تست کل | ✅ ۲۲۰ موفق / ۰ ناموفق — typecheck + build + cron smoke سبز |
 
 ## محیط sandbox
 
@@ -44,5 +45,4 @@
 
 ## گام بعدی
 
-1. فاز ۶ (پیامک): SmsProvider + Fake + IPPanel adapter، پترن/رویداد، صف DB + cron + تست‌ارسال
-2. فاز ۷: داشبورد KPI + Chart.js، backup/restore، ماژول‌ها، مستندات فارسی، سناریوی پذیرش §۸، ZIP نهایی
+1. فاز ۷: داشبورد KPI + ۷ نمودار Chart.js، backup/restore (بدون mysqldump)، UI ماژول‌ها، ۹ راهنمای فارسی + dev guide، سناریوی پذیرش §۸ (۲۳ گام)، ZIP نهایی cPanel
