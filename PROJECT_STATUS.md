@@ -23,7 +23,8 @@
 | فاز ۲ — اساتید، فراگیران، کلاس‌ها، جلسات، پیش‌سبت‌نام، سبت‌نام | ✅ VERIFIED (۱۲ تست)
 | فاز ۳ — attendance + پنل استاد + پنل فراگیر + IDOR | ✅ VERIFIED (۳۱ تست) |
 | فاز ۴ — پرداخت‌ها، اقساط، رسید کارت‌به‌کارت، گزارش‌های مالی، PaymentGateway | ✅ VERIFIED (۱۶ تست) |
-| تست کل | ✅ ۱۹۱ موفق / ۰ ناموفق — typecheck + build + boot smoke سبز |
+| فاز ۵ — قالب‌ها، صدور مدرک PDF (Vazirmatn+QR)، verify عمومی، لغو+audit، دسته‌ای | ✅ VERIFIED (۱۰ تست) |
+| تست کل | ✅ ۲۰۱ موفق / ۰ ناموفق — typecheck + build + boot smoke سبز |
 
 ## محیط sandbox
 
@@ -43,6 +44,5 @@
 
 ## گام بعدی
 
-1. فاز ۵ (مدارک): قالب‌ها، صدور مدرک PDF (pipeline spike) + QR، صفحه عمومی اعتبارسنجی، لغو + audit
-2. فاز ۶ (پیامک): SmsProvider + Fake + IPPanel adapter، پترن/رویداد، صف DB + cron
-3. فاز ۷: داشبورد KPI + Chart.js، backup/restore، ماژول‌ها، مستندات فارسی، سناریوی پذیرش §۸، ZIP نهایی
+1. فاز ۶ (پیامک): SmsProvider + Fake + IPPanel adapter، پترن/رویداد، صف DB + cron + تست‌ارسال
+2. فاز ۷: داشبورد KPI + Chart.js، backup/restore، ماژول‌ها، مستندات فارسی، سناریوی پذیرش §۸، ZIP نهایی

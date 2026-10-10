@@ -1,7 +1,7 @@
 # STATE.md — کنترل وضعیت پروژه
 
 > این فایل در پایان هر نشست کاری به‌روز می‌شود.
-> آخرین به‌روزرسانی: 2026-10-10 — پایان فاز ۴ (مالی) — ۱۹۱ تست سبز
+> آخرین به‌روزرسانی: 2026-10-10 — پایان فاز ۵ (مدارک/PDF/QR) — ۲۰۱ تست سبز
 
 ## تاریخچه نشست‌ها
 
@@ -73,19 +73,26 @@
 - **رفع خطای سیستماتیک نویسه‌ای «ثبت» (ث→س) در ۴۱ فایل / ۱۹۷ رخداد** — علت: pipeline تایپ. ابزار `fa_check.py` (واژه‌سنج فارسی مبتنی بر corpus) ساخته شد
 - REQ-P4-01..06 → VERIFIED. تست‌ها: **۱۹۱ موفق**. typecheck + build سبز.
 
+
+### 2026-10-10 — Session 7 (فاز ۵ — مدارک)
+
+- ماژول certificates: قالب‌ها (CRUD + design/conditions JSON)، صدور مدرک با شرط حضور/تسویه مالی (طبق تنظیمات یا قالب)، کد یکتا MC-<سال جلالی>-<۵رقم>، PDF با pdf-lib + Vazirmatn + QR (pipeline spike) + ذخیره در files، صدور دسته‌ای (dryRun + واقعی)، لغو با دلیل + audit + بازتولید PDF با واترمارک (کد ثابت)، صفحه عمومی /verify/:token (حداقل اطلاعات + نمایش لغو).
+- ۱۰ تست جدید (phase5.test.ts): صدور+PDF+فونت+QR، verify عمومی/نامعتبر، حضور ناکافی، تسویه‌نشده→پرداخت→صدور، تکراری ۴۰۹، لغو+دوباره ۴۰۹، دسته‌ای+dryRun، پنل فراگیر، CRUD قالب+شرط ۱۰۰٪، RBAC ۴۰۳.
+- REQ-P5-01..04 → VERIFIED. تست‌ها: **۲۰۱ موفق**. typecheck + build سبز.
+
 ## وضعیت فعلی
 
-- فاز: **۴ — مالی — کامل شد ✅ (۱۹۱ تست) → شروع فاز ۵ (مدارک/PDF/QR)**
-- آخرین نیازمندی VERIFIED: REQ-P4-06
-- در حال انجام: فاز ۵ — REQ-P5-01..04 (قالب‌ها، صدور مدرک PDF+QR، صفحه عمومی اعتبارسنجی، لغو)
-- تست‌ها: ۱۹۱ موفق / ۰ ناموفق — `npm test` + `npm run typecheck` + `npm run build` سبز؛ boot smoke (install + full mode) سبز.
+- فاز: **۵ — مدارک/PDF/QR — کامل شد ✅ (۲۰۱ تست) → شروع فاز ۶ (پیامک/IPPanel)**
+- آخرین نیازمندی VERIFIED: REQ-P5-04
+- در حال انجام: فاز ۶ — REQ-P6-01.. (SmsProvider + IPPanel adapter، پترن/رویداد، صف DB + cron، تست‌ارسال)
+- تست‌ها: ۲۰۱ موفق / ۰ ناموفق — `npm test` + `npm run typecheck` + `npm run build` سبز؛ boot smoke (install + full mode) سبز.
 
 ## نتایج تست
 
 | suite | نتیجه |
 |---|---|
 | unit | ۷۸ موفق |
-| integration | ۱۱۳ موفق (install incl. sqlite e2e, auth, rbac, settings, migration, security, audit, phase2, phase3, phase4) |
+| integration | ۱۲۳ موفق (install incl. sqlite e2e, auth, rbac, settings, migration, security, audit, phase2, phase3, phase4, phase5) |
 | typecheck / build | سبز |
 | boot smoke (install mode, virgin DB) | سبز — /install 200، /healthz 200، installer failure graceful |
 | boot smoke (full mode, sqlite) | سبز — migrate-cli + login/logout + dashboard + panels + attendance |

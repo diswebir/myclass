@@ -1,0 +1,35 @@
+{% extends "layout.njk" %}
+{% block title %}نتیجه صدور دسته‌ای — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>نتیجه صدور دسته‌ای</h1>
+  <div><a href="/certificates?classId={{ classId }}" class="btn btn-ghost">بازگشت به مدارک</a></div>
+</div>
+{% if dryRun %}<div class="card"><p>اجرای آزمایشی — هیچ مدرکی صادر نشده است.</p></div>{% endif %}
+<div class="card">
+  <h2>صادر شده ({{ result.issued.length }})</h2>
+  <table class="table">
+    <thead><tr><th>شناسه فراگیر</th><th>کد مدرک</th></tr></thead>
+    <tbody>
+      {% for it in result.issued %}
+      <tr><td>{{ it.studentId | faNum }}</td><td><code>{{ it.code }}</code></td></tr>
+      {% else %}
+      <tr><td colspan="2" class="empty">موردی صادر نشد.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="card">
+  <h2>رد شده ({{ result.skipped.length }})</h2>
+  <table class="table">
+    <thead><tr><th>فراگیر</th><th>علت</th></tr></thead>
+    <tbody>
+      {% for it in result.skipped %}
+      <tr><td>{{ it.studentName }}</td><td>{{ it.reasons | join(' — ') }}</td></tr>
+      {% else %}
+      <tr><td colspan="2" class="empty">موردی رد نشد.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

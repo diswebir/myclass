@@ -1,0 +1,29 @@
+{% extends "layout.njk" %}
+{% block title %}راستی‌آزمایی مدرک — myclass{% endblock %}
+{% block content %}
+<div class="card" style="max-width:36rem;margin:2rem auto">
+  <h1>راستی‌آزمایی مدرک</h1>
+  {% if found %}
+    {% if result.status == 'active' %}
+    <p><span class="badge ok">معتبر — فعال</span></p>
+    {% else %}
+    <p><span class="badge fail">لغو شده</span></p>
+    {% endif %}
+    <table class="table">
+      <tbody>
+        <tr><th>شماره مدرک</th><td><code>{{ result.code }}</code></td></tr>
+        <tr><th>نام فراگیر</th><td>{{ result.studentName }}</td></tr>
+        <tr><th>دوره</th><td>{{ result.classTitle or '—' }}</td></tr>
+        <tr><th>تاریخ صدور</th><td>{{ result.issuedAtJalaali | faNum }}</td></tr>
+        {% if result.status == 'revoked' %}
+        <tr><th>تاریخ لغو</th><td>{{ result.revokedAt | faDateTime }}</td></tr>
+        {% if result.revokeReason %}<tr><th>علت لغو</th><td>{{ result.revokeReason }}</td></tr>{% endif %}
+        {% endif %}
+      </tbody>
+    </table>
+  {% else %}
+    <p><span class="badge fail">یافت نشد</span></p>
+    <p class="muted">مدرکی با این کد/توکن در سیستم ثبت نشده است.</p>
+  {% endif %}
+</div>
+{% endblock %}
