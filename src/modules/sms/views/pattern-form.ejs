@@ -1,0 +1,70 @@
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('settings-2') %><%= def.label %></h1><p class="page-sub">رویداد: <span class="ltr d-inline mono"><%= def.key %></span> · گیرنده: <%= def.recipient || 'کاربر' %></p></div>
+  <div class="page-actions"><a class="btn btn-ghost" href="<%= url('/panel/sms/patterns') %>"><%- icon('arrow-right', 'icon-sm') %>همه پترن‌ها</a></div>
+</div>
+<form method="post" action="<%= url('/panel/sms/patterns/' + def.key) %>" id="pattern-form">
+  <%- include('partials/csrf') %>
+  <div class="grid grid-side">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('hash') %>کد پترن</h2></div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="field col-8"><label class="label">کد پترن در IPPanel</label>
+              <div class="flex gap-2"><input class="input ltr mono" id="pattern-code" name="pattern_code" value="<%= pattern.pattern_code || '' %>" placeholder="مثلاً abc123xyz">
+              <button class="btn btn-soft" type="button" data-fetch-pattern="<%= url('/panel/sms/api/patterns') %>" data-code-input="#pattern-code"><%- icon('download', 'icon-sm') %>دریافت متغیرها</button></div>
+              <span class="help">با «دریافت متغیرها»، متن و نام متغیرهای پترن از IPPanel خوانده می‌شود.</span>
+            </div>
+            <div class="field col-4" style="justify-content:flex-end"><label class="switch"><input type="checkbox" name="is_active" value="1"<%= pattern.is_active ? ' checked' : '' %>><span class="track"></span>ارسال این پیامک فعال باشد</label></div>
+          </div>
+          <div id="pattern-message" class="alert alert-info mt-3 mb-0 hidden"><%- icon('message-square') %><div><b>متن پترن (<span data-status></span>):</b><div data-msg style="white-space:pre-line" class="mt-1"></div></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h2 class="card-title"><%- icon('variable') %>متغیرهای ارسالی</h2><p class="card-sub">نام متغیر باید دقیقاً مطابق پترن IPPanel باشد. در مقدار می‌توانید متن ثابت و توکن‌ها را ترکیب کنید.</p></div></div>
+        <div class="card-body">
+          <div id="vars" data-repeater="vars" data-template="tpl-var" data-max="20">
+            <div data-repeater-list class="stack" style="gap:8px">
+              <% vars.forEach(function (x) { %>
+              <div class="flex gap-2 items-center" data-repeater-item>
+                <span class="chip" data-index></span>
+                <input class="input ltr mono" data-name="vars[__i__][name]" value="<%= x.name %>" placeholder="نام متغیر" style="max-width:180px">
+                <input class="input" data-name="vars[__i__][value]" value="<%= x.value %>" placeholder="مقدار، مثلاً {name}" data-token-target>
+                <button class="btn btn-ghost btn-icon btn-sm text-danger" type="button" data-repeater-remove><%- icon('x', 'icon-sm') %></button>
+              </div>
+              <% }) %>
+            </div>
+            <button class="btn btn-soft btn-sm mt-3" type="button" data-repeater-add="vars"><%- icon('plus', 'icon-sm') %>افزودن متغیر</button>
+          </div>
+          <template id="tpl-var"><div class="flex gap-2 items-center" data-repeater-item><span class="chip" data-index></span><input class="input ltr mono" data-name="vars[__i__][name]" placeholder="نام متغیر" style="max-width:180px"><input class="input" data-name="vars[__i__][value]" placeholder="مقدار، مثلاً {name}" data-token-target><button class="btn btn-ghost btn-icon btn-sm text-danger" type="button" data-repeater-remove>×</button></div></template>
+          <div class="divider"></div>
+          <div class="label mb-2">توکن‌های قابل استفاده (روی فیلد مقدار کلیک کرده و سپس توکن را انتخاب کنید):</div>
+          <div class="chips"><% tokens.forEach(function (t) { %><button class="chip" type="button" data-insert-token="<%= t %>" title="نمونه: <%= sample[t] || '' %>"><%= labels[t] || t %> <span class="ltr text-muted mono">{<%= t %>}</span></button><% }) %></div>
+        </div>
+      </div>
+      <% if (Object.keys(preview).length) { %>
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('eye') %>نمونه مقادیر ارسالی (با داده آزمایشی)</h2></div>
+        <div class="card-body"><dl class="kv"><% Object.keys(preview).forEach(function (k) { %><dt class="ltr mono"><%= k %></dt><dd><%= preview[k] %></dd><% }) %></dl></div>
+      </div>
+      <% } %>
+    </div>
+    <div class="stack">
+      <div class="card">
+        <div class="card-body">
+          <%- include('partials/field', { name: 'note', label: 'یادداشت', value: pattern.note, placeholder: 'مثلاً متن پترن تأیید شده' }) %>
+        </div>
+        <div class="card-foot"><button class="btn btn-primary btn-block" type="submit"><%- icon('save', 'icon-sm') %>ذخیره پترن</button></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('send') %>ارسال آزمایشی</h2></div>
+        <div class="card-body">
+          <div class="field"><label class="label">شماره موبایل</label><input class="input ltr" name="mobile" value="<%= s('sms.test_mobile', '') %>" placeholder="09121234567" data-en-digits form="pattern-form"></div>
+          <p class="help mt-2">پترن با مقادیر فعلی فرم و داده نمونه ارسال می‌شود (حتی اگر غیرفعال باشد).</p>
+        </div>
+        <div class="card-foot"><button class="btn btn-soft btn-block" type="submit" formaction="<%= url('/panel/sms/patterns/' + def.key + '/test') %>"><%- icon('send', 'icon-sm') %>ارسال آزمایشی</button></div>
+      </div>
+      <% if (def.help) { %><div class="alert alert-info"><%- icon('info') %><div><%= def.help %></div></div><% } %>
+    </div>
+  </div>
+</form>

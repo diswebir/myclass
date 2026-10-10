@@ -1,0 +1,34 @@
+<!doctype html>
+<% const _inst = s('general.institute_name', 'آموزشگاه'); const _logo = s('general.logo'); %>
+<html lang="fa" dir="rtl" data-theme="<%= s('appearance.default_theme', 'light') === 'dark' ? 'dark' : 'light' %>" data-radius="<%= s('appearance.radius', 'md') %>">
+<head>
+<%- include('../partials/head') %>
+</head>
+<body>
+<div class="auth">
+  <div class="auth-main">
+    <div class="auth-box">
+      <%- body %>
+      <p class="text-center text-xs text-muted mt-4"><%= s('appearance.footer_text') || ('© ' + _inst) %></p>
+    </div>
+  </div>
+  <div class="auth-side">
+    <div class="auth-logo">
+      <span class="brand-logo"><% if (_logo) { %><img src="<%= media(_logo) %>" alt=""><% } else { %><%= initials(_inst) %><% } %></span>
+      <div><b class="text-lg"><%= _inst %></b><div class="text-sm" style="opacity:.8"><%= s('general.slogan', 'سامانه مدیریت آموزش') %></div></div>
+    </div>
+    <div style="position:relative;z-index:1">
+      <h1><%= s('appearance.login_title') || 'به سامانه آموزشی خوش آمدید' %></h1>
+      <p><%= s('appearance.login_subtitle') || 'مدیریت کلاس‌ها، حضور و غیاب، شهریه و مدارک، همه در یک پنل یکپارچه.' %></p>
+    </div>
+    <div class="auth-features">
+      <div><span class="fi"><%- icon('calendar') %></span><span>برنامه کلاس‌ها و جلسات با تقویم شمسی</span></div>
+      <div><span class="fi"><%- icon('clipboard-check') %></span><span>حضور و غیاب و گزارش لحظه‌ای</span></div>
+      <div><span class="fi"><%- icon('wallet') %></span><span>پرداخت شهریه، اقساط و ارسال رسید</span></div>
+      <div><span class="fi"><%- icon('award') %></span><span>صدور و استعلام آنلاین مدارک</span></div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/scripts') %>
+</body>
+</html>

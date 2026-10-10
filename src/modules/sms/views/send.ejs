@@ -1,0 +1,72 @@
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('send') %>ارسال پیامک گروهی</h1><p class="page-sub">ارسال با پترن (پیشنهادی، بدون محدودیت مخابراتی) یا متن آزاد</p></div>
+  <div class="page-actions"><a class="btn btn-ghost" href="<%= url('/panel/sms') %>"><%- icon('arrow-right', 'icon-sm') %>پنل پیامک</a></div>
+</div>
+<% if (!enabled) { %><div class="alert alert-warning"><%- icon('alert-triangle') %><div>ارسال پیامک در تنظیمات غیرفعال است.</div></div><% } %>
+<form method="post" action="<%= url('/panel/sms/send') %>" id="sms-send-form" data-confirm="پیامک برای گیرندگان انتخاب‌شده ارسال شود؟" data-confirm-danger="false" data-confirm-ok="ارسال">
+  <%- include('partials/csrf') %>
+  <div class="grid grid-side">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('users') %>گیرندگان</h2></div>
+        <div class="card-body"><div class="form-grid">
+          <div class="field col-12"><div class="options-grid">
+            <label class="check-card"><input type="radio" name="target" value="class"<%= query.numbers ? '' : ' checked' %>><span><b>دانشجویان کلاس</b><small>یک یا چند کلاس</small></span></label>
+            <% if (!scoped) { %>
+            <label class="check-card"><input type="radio" name="target" value="role"><span><b>بر اساس نقش</b><small>مثلاً همه اساتید</small></span></label>
+            <% if (moduleOn('finance')) { %><label class="check-card"><input type="radio" name="target" value="debtors"><span><b>بدهکاران</b><small>دارای قسط معوق</small></span></label><% } %>
+            <% } %>
+            <label class="check-card"><input type="radio" name="target" value="custom"<%= query.numbers ? ' checked' : '' %>><span><b>شماره‌های دلخواه</b><small>وارد کردن دستی</small></span></label>
+          </div></div>
+          <div class="col-12" data-show-when="target=class">
+            <input class="input mb-2" placeholder="جستجوی کلاس..." data-filter-list="#cls-list .check-card">
+            <div class="options-grid" id="cls-list"><% classes.forEach(function (c) { %><label class="check-card"><input type="checkbox" name="class_ids" value="<%= c.id %>"<%= preClass === c.id ? ' checked' : '' %>><span><b><%= c.title %></b><small><%= statusLabel('class', c.status) %></small></span></label><% }) %></div>
+            <div class="flex gap-3 mt-3 text-sm"><span class="text-muted">وضعیت ثبت‌نام:</span><label class="check"><input type="checkbox" name="enroll_status" value="active" checked> فعال</label><label class="check"><input type="checkbox" name="enroll_status" value="completed"> فارغ‌التحصیل</label><label class="check"><input type="checkbox" name="enroll_status" value="suspended"> تعلیق</label></div>
+          </div>
+          <% if (!scoped) { %><div class="col-12" data-show-when="target=role"><div class="options-grid"><% roles.forEach(function (r) { %><label class="check-card"><input type="checkbox" name="role_ids" value="<%= r.id %>"><span><b><%= r.name %></b></span></label><% }) %></div></div><% } %>
+          <div class="field col-12" data-show-when="target=custom"><label class="label">شماره‌ها</label><textarea class="input ltr" name="numbers" rows="4" placeholder="09121234567&#10;09351234567" data-en-digits><%= query.numbers || '' %></textarea><span class="help">هر شماره در یک خط یا با کاما جدا شود.</span></div>
+          <div class="col-12 flex gap-2 items-center">
+            <button class="btn btn-ghost btn-sm" type="button" data-preview-recipients="<%= url('/panel/sms/send/preview') %>"><%- icon('eye', 'icon-sm') %>پیش‌نمایش گیرندگان</button>
+          </div>
+          <div class="col-12 hidden alert alert-info mb-0" id="recipients-preview"></div>
+        </div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('message-square') %>محتوای پیامک</h2></div>
+        <div class="card-body"><div class="form-grid">
+          <div class="field col-12"><div class="options-grid">
+            <label class="check-card"><input type="radio" name="mode" value="pattern" checked><span><b>ارسال با پترن</b><small>تحویل سریع و مطمئن، حتی به شماره‌های بلاک‌شده تبلیغاتی</small></span></label>
+            <label class="check-card"><input type="radio" name="mode" value="text"><span><b>متن آزاد</b><small>ارسال از خط خدماتی/تبلیغاتی</small></span></label>
+          </div></div>
+          <div class="col-12" data-show-when="mode=pattern">
+            <div class="field mb-3"><label class="label">کد پترن</label>
+              <div class="flex gap-2"><input class="input ltr mono" id="pattern-code" name="pattern_code" list="pattern-codes" placeholder="کد پترن IPPanel"><button class="btn btn-soft" type="button" data-fetch-pattern="<%= url('/panel/sms/api/patterns') %>" data-code-input="#pattern-code"><%- icon('download', 'icon-sm') %>دریافت متغیرها</button></div>
+              <datalist id="pattern-codes"><% patterns.forEach(function (p) { %><option value="<%= p.code %>"><%= p.event %></option><% }) %></datalist>
+            </div>
+            <div id="pattern-message" class="alert alert-info hidden"><%- icon('message-square') %><div><b>متن پترن (<span data-status></span>):</b><div data-msg style="white-space:pre-line" class="mt-1"></div></div></div>
+            <div id="vars" data-repeater="vars" data-template="tpl-var" data-max="20">
+              <div data-repeater-list class="stack" style="gap:8px"></div>
+              <button class="btn btn-soft btn-sm mt-3" type="button" data-repeater-add="vars"><%- icon('plus', 'icon-sm') %>افزودن متغیر</button>
+            </div>
+            <template id="tpl-var"><div class="flex gap-2 items-center" data-repeater-item><span class="chip" data-index></span><input class="input ltr mono" data-name="vars[__i__][name]" placeholder="نام متغیر" style="max-width:170px"><input class="input" data-name="vars[__i__][value]" placeholder="مقدار، مثلاً {name}" data-token-target><button class="btn btn-ghost btn-icon btn-sm text-danger" type="button" data-repeater-remove>×</button></div></template>
+          </div>
+          <div class="field col-12" data-show-when="mode=text"><label class="label">متن پیامک</label><textarea class="input" id="sms-message" name="message" rows="5" data-token-target placeholder="سلام {name}، ..."></textarea><span class="help" id="sms-counter"></span></div>
+          <div class="col-12">
+            <div class="label mb-2">توکن‌های شخصی‌سازی:</div>
+            <div class="chips"><% ['name', 'first_name', 'last_name', 'mobile', 'class_title', 'class_code', 'institute_name', 'login_url', 'today'].forEach(function (t) { %><button class="chip" type="button" data-insert-token="<%= t %>"><%= labels[t] || t %></button><% }) %></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card" style="position:sticky;top:80px">
+        <div class="card-head"><h2 class="card-title"><%- icon('send') %>ارسال</h2></div>
+        <div class="card-body text-sm text-2">
+          <p>ارسال در پس‌زمینه انجام می‌شود و نتیجه هر پیامک در «گزارش ارسال» ثبت می‌گردد.</p>
+          <p class="mb-0">اعتبار پنل: <b data-sms-credit="<%= url('/panel/sms/api/credit') %>" data-unit="ریال">…</b></p>
+        </div>
+        <div class="card-foot"><button class="btn btn-primary btn-block" type="submit"<%= enabled ? '' : ' disabled' %>><%- icon('send', 'icon-sm') %>ارسال پیامک</button></div>
+      </div>
+    </div>
+  </div>
+</form>

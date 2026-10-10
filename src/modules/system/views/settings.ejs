@@ -1,0 +1,47 @@
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('settings') %>تنظیمات</h1><p class="page-sub">پیکربندی کامل سامانه؛ تنظیمات هر ماژول در زبانه مخصوص آن قرار دارد.</p></div>
+</div>
+<div class="grid" style="grid-template-columns:240px minmax(0,1fr);align-items:start" id="settings-grid">
+  <nav class="card" style="padding:8px;position:sticky;top:80px">
+    <% tabs.forEach(function (t) { if (t.key === 'modules' && !(locals.user.isSuper || can('system.manage'))) return; %>
+      <a class="nav-link<%= t.key === tab.key ? ' active' : '' %>" href="<%= url('/panel/settings/' + t.key) %>" style="color:var(--text-2)"><%- icon(t.icon || 'settings') %><span><%= t.label %></span></a>
+    <% }) %>
+  </nav>
+  <div>
+  <% if (tab.key === 'modules') { %>
+    <form method="post" action="<%= url('/panel/settings/modules') %>">
+      <%- include('partials/csrf') %>
+      <div class="alert alert-info"><%- icon('puzzle') %><div>با غیرفعال کردن هر ماژول، منو، مسیرها، زمان‌بندی‌ها و پیامک‌های آن از سامانه حذف می‌شود (داده‌ها حفظ می‌شوند). ماژول‌های هسته قابل غیرفعال‌سازی نیستند.</div></div>
+      <div class="grid grid-2">
+        <% modules.forEach(function (m) { const on = disabled.indexOf(m.key) === -1; %>
+        <label class="card" style="cursor:<%= m.core ? 'default' : 'pointer' %>">
+          <div class="card-body flex gap-3 items-center">
+            <span class="stat-icon<%= on ? '' : '' %>" style="<%= on ? '' : 'filter:grayscale(1);opacity:.6' %>"><%- icon(m.icon || 'puzzle') %></span>
+            <span class="grow"><b class="d-block"><%= m.name %> <% if (m.core) { %><span class="badge badge-gray no-dot">هسته</span><% } %></b><span class="text-sm text-muted"><%= m.description || '' %></span><% if (m.requires && m.requires.length) { %><span class="text-xs text-muted d-block mt-2">نیازمند: <%= m.requires.join('، ') %></span><% } %></span>
+            <span class="switch"><input type="checkbox" name="enabled" value="<%= m.key %>"<%= on ? ' checked' : '' %><%= m.core ? ' checked disabled' : '' %>><span class="track"></span></span>
+          </div>
+        </label>
+        <% }) %>
+      </div>
+      <div class="form-actions mt-4"><button class="btn btn-primary" type="submit"><%- icon('save', 'icon-sm') %>ذخیره وضعیت ماژول‌ها</button></div>
+    </form>
+  <% } else { %>
+    <form method="post" action="<%= hasImage ? mpAction('/panel/settings/' + tab.key) : url('/panel/settings/' + tab.key) %>"<%- hasImage ? ' enctype="multipart/form-data"' : '' %>>
+      <%- include('partials/csrf') %>
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon(tab.icon || 'settings') %><%= tab.label %></h2></div>
+        <div class="card-body">
+          <% if (!fields.length) { %><p class="text-muted">تنظیمی برای این بخش تعریف نشده است.</p><% } %>
+          <div class="form-grid">
+            <% fields.forEach(function (fl) { %><%- include('_setting-field', { field: fl, values: values }) %><% }) %>
+          </div>
+        </div>
+        <div class="card-foot flex justify-between items-center">
+          <span class="text-muted text-sm">تغییرات بلافاصله پس از ذخیره اعمال می‌شوند.</span>
+          <button class="btn btn-primary" type="submit"><%- icon('save', 'icon-sm') %>ذخیره تنظیمات</button>
+        </div>
+      </div>
+    </form>
+  <% } %>
+  </div>
+</div>

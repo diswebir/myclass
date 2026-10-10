@@ -1,0 +1,60 @@
+<% const it = item || {}; const isEdit = !!(item && item.id); const perms = new Set(rolePerms || []); %>
+<div class="page-head">
+  <div><h1 class="page-title"><%= title %></h1><p class="page-sub">نوع کاربر، محدوده دسترسی به داده‌ها و مجوزهای این نقش را مشخص کنید.</p></div>
+  <div class="page-actions"><a class="btn btn-ghost" href="<%= url('/panel/roles') %>"><%- icon('arrow-right', 'icon-sm') %>بازگشت</a></div>
+</div>
+<form method="post" action="<%= url(isEdit ? '/panel/roles/' + it.id : '/panel/roles') %>">
+  <%- include('partials/csrf') %>
+  <div class="grid grid-side">
+    <div class="card">
+      <div class="card-head">
+        <div><h2 class="card-title"><%- icon('key-round') %>مجوزها</h2><p class="card-sub">مجوزهای هر ماژول را انتخاب کنید. ماژول‌های غیرفعال کم‌رنگ نمایش داده می‌شوند.</p></div>
+        <% if (!it.is_super) { %><label class="check"><input type="checkbox" data-checkall=".perm-cb"> انتخاب همه</label><% } %>
+      </div>
+      <div class="card-body">
+        <% if (it.is_super) { %>
+          <div class="alert alert-warning mb-0"><%- icon('shield-check') %><div>این نقش «مدیر کل» است و به صورت خودکار به همه بخش‌ها دسترسی کامل دارد.</div></div>
+        <% } else { %>
+        <div class="grid grid-2">
+          <% groups.forEach(function (g) { %>
+          <div class="check-card" style="flex-direction:column;cursor:default;<%= g.enabled ? '' : 'opacity:.55' %>">
+            <div class="flex items-center justify-between" style="width:100%">
+              <b class="flex items-center gap-2"><%- icon(g.icon || 'puzzle', 'icon-sm') %><%= g.name %></b>
+              <label class="check text-xs text-muted"><input type="checkbox" data-checkall=".pg-<%= g.key %>"> همه</label>
+            </div>
+            <div class="flex wrap gap-2 mt-2" style="flex-direction:column;width:100%">
+              <% g.permissions.forEach(function (p) { const dis = !user.isSuper && !user.perms.has(p.key); %>
+                <label class="check text-sm"><input class="perm-cb pg-<%= g.key %>" type="checkbox" name="perms" value="<%= p.key %>"<%= perms.has(p.key) ? ' checked' : '' %><%= dis ? ' disabled' : '' %>><span><%= p.label %> <span class="text-xs text-muted ltr">(<%= p.key %>)</span></span></label>
+              <% }) %>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+        <% } %>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('shield-check') %>مشخصات نقش</h2></div>
+        <div class="card-body"><div class="form-grid">
+          <%- include('partials/field', { name: 'name', label: 'نام نقش', value: it.name, required: true }) %>
+          <%- include('partials/field', { name: 'slug', label: 'شناسه انگلیسی', value: it.slug, ltr: true, attrs: it.is_system ? 'readonly' : '', help: 'اختیاری؛ به صورت خودکار ساخته می‌شود.' }) %>
+          <%- include('partials/field', { name: 'description', label: 'توضیحات', type: 'textarea', value: it.description, rows: 2 }) %>
+          <%- include('partials/field', { name: 'kind', label: 'نوع کاربر', type: 'select', value: it.kind || 'staff', options: KINDS, attrs: it.is_system ? 'disabled' : '', help: 'نوع کاربر تعیین می‌کند کاربر در کدام لیست (دانشجویان/اساتید/کارکنان) نمایش داده شود.' }) %>
+          <% if (it.is_system) { %><input type="hidden" name="kind" value="<%= it.kind %>"><% } %>
+          <%- include('partials/field', { name: 'data_scope', label: 'محدوده دسترسی به داده‌ها', type: 'select', value: it.data_scope || 'assigned', options: { all: 'همه کلاس‌ها و کاربران', assigned: 'فقط کلاس‌های تخصیص‌یافته (مانند استاد)', own: 'فقط اطلاعات شخصی (مانند دانشجو)' }, attrs: it.is_super ? 'disabled' : '' }) %>
+          <div class="field"><label class="label">رنگ</label><div class="flex gap-2"><input class="input input-color" type="color" value="<%= it.color || '#4f46e5' %>" data-sync="role-color"><input class="input ltr" id="role-color" name="color" value="<%= it.color || '#4f46e5' %>"></div></div>
+        </div></div>
+        <div class="card-foot"><button class="btn btn-primary btn-block" type="submit"><%- icon('save', 'icon-sm') %><%= isEdit ? 'ذخیره تغییرات' : 'ایجاد نقش' %></button></div>
+      </div>
+      <% if (isEdit && typeof users !== 'undefined' && users.length) { %>
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('users') %>کاربران این نقش (<%= fa(usersCount) %>)</h2></div>
+        <ul class="list">
+          <% users.forEach(function (u) { %><li><a class="list-item" href="<%= url('/panel/users/' + u.id) %>"><span class="avatar avatar-sm"><%= initials(u.first_name + ' ' + u.last_name) %></span><span class="list-title"><%= u.first_name %> <%= u.last_name %></span></a></li><% }) %>
+        </ul>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</form>

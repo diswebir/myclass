@@ -1,0 +1,80 @@
+<% const it = item || {}; const isEdit = !!item; const days = String(old('week_days', it.week_days || '')).split(','); const tsel = classTeachers.map(String); const canTeachers = user.isSuper || user.data_scope === 'all'; %>
+<div class="page-head">
+  <div><h1 class="page-title"><%= title %></h1><p class="page-sub">اطلاعات، برنامه زمانی و اساتید کلاس را وارد کنید.</p></div>
+  <div class="page-actions"><a class="btn btn-ghost" href="<%= url(isEdit ? '/panel/classes/' + it.id : '/panel/classes') %>"><%- icon('arrow-right', 'icon-sm') %>بازگشت</a></div>
+</div>
+<form method="post" action="<%= url(isEdit ? '/panel/classes/' + it.id : '/panel/classes') %>">
+  <%- include('partials/csrf') %>
+  <div class="grid grid-side">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('book-open') %>اطلاعات کلاس</h2></div>
+        <div class="card-body"><div class="form-grid">
+          <%- include('partials/field', { name: 'title', label: 'عنوان کلاس', value: it.title, col: 8, required: true, placeholder: 'مثلاً: آموزش جامع پایتون - مقدماتی' }) %>
+          <%- include('partials/field', { name: 'code', label: 'کد کلاس', value: it.code, col: 4, ltr: true, placeholder: typeof suggestedCode !== 'undefined' ? suggestedCode : '', help: isEdit ? '' : 'خالی = تولید خودکار' }) %>
+          <%- include('partials/field', { name: 'category_id', label: 'دسته‌بندی', type: 'select', value: it.category_id, col: 4, empty: 'بدون دسته', options: categories.map(function (c) { return { value: c.id, label: c.name }; }) }) %>
+          <%- include('partials/field', { name: 'level', label: 'سطح', value: it.level, col: 4, placeholder: 'مقدماتی / پیشرفته', attrs: 'list="levels"' }) %>
+          <datalist id="levels"><option value="مقدماتی"><option value="متوسط"><option value="پیشرفته"><option value="تخصصی"></datalist>
+          <%- include('partials/field', { name: 'total_hours', label: 'مدت دوره (ساعت)', value: it.total_hours, col: 4, ltr: true, attrs: 'inputmode="numeric" data-en-digits' }) %>
+          <%- include('partials/field', { name: 'description', label: 'توضیحات و سرفصل‌ها', type: 'textarea', value: it.description, col: 12, rows: 5, help: 'در صفحه عمومی ثبت‌نام نمایش داده می‌شود.' }) %>
+        </div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div><h2 class="card-title"><%- icon('calendar-clock') %>برنامه زمانی</h2><p class="card-sub">با تعیین بازه تاریخ، روزهای هفته و ساعت، جلسات کلاس به صورت خودکار ساخته می‌شوند.</p></div></div>
+        <div class="card-body"><div class="form-grid">
+          <%- include('partials/field', { name: 'start_date', label: 'تاریخ شروع', type: 'date', value: jinput(it.start_date), col: 3 }) %>
+          <%- include('partials/field', { name: 'end_date', label: 'تاریخ پایان', type: 'date', value: jinput(it.end_date), col: 3 }) %>
+          <%- include('partials/field', { name: 'start_time', label: 'ساعت شروع', type: 'time', value: it.start_time, col: 3, ltr: true }) %>
+          <%- include('partials/field', { name: 'end_time', label: 'ساعت پایان', type: 'time', value: it.end_time, col: 3, ltr: true }) %>
+          <div class="field col-12">
+            <label class="label">روزهای برگزاری</label>
+            <div class="weekdays">
+              <% jalali.WEEK_ORDER.forEach(function (d) { %><label><input type="checkbox" name="week_days" value="<%= d %>"<%= days.includes(String(d)) ? ' checked' : '' %>><span><%= weekday(d) %></span></label><% }) %>
+            </div>
+          </div>
+          <%- include('partials/field', { name: 'location', label: 'محل برگزاری', value: it.location, col: 6, placeholder: 'مثلاً: ساختمان مرکزی، کلاس ۳' }) %>
+          <%- include('partials/field', { name: 'online_link', label: 'لینک کلاس آنلاین', value: it.online_link, col: 6, ltr: true, placeholder: 'https://' }) %>
+          <div class="col-12">
+          <% if (isEdit) { %>
+            <label class="switch"><input type="checkbox" name="regenerate_sessions" value="1"><span class="track"></span>بازسازی جلسات آینده بر اساس برنامه جدید <span class="text-xs text-muted">(جلسات دارای حضور و غیاب حفظ می‌شوند)</span></label>
+          <% } else { %>
+            <label class="switch"><input type="checkbox" name="generate_sessions" value="1" checked><span class="track"></span>ساخت خودکار جلسات کلاس</label>
+          <% } %>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div><h2 class="card-title"><%- icon('presentation') %>اساتید کلاس</h2><p class="card-sub">استاد فقط به کلاس‌هایی که در اینجا به او تخصیص داده شود و دانشجویان آن‌ها دسترسی دارد.</p></div></div>
+        <div class="card-body">
+          <% if (!canTeachers) { %><div class="alert alert-info mb-3"><%- icon('info') %><div>تغییر اساتید فقط توسط مدیر امکان‌پذیر است.</div></div><% } %>
+          <% if (!teachers.length) { %><p class="text-muted">هنوز استادی ثبت نشده است. <a href="<%= url('/panel/teachers/new') %>">افزودن استاد</a></p><% } %>
+          <input type="text" class="input mb-3" placeholder="جستجوی استاد..." data-filter-list="#teacher-list .check-card">
+          <div class="options-grid" id="teacher-list">
+            <% teachers.forEach(function (t) { %>
+            <label class="check-card"><input type="checkbox" name="teachers" value="<%= t.id %>"<%= tsel.includes(String(t.id)) ? ' checked' : '' %><%= canTeachers ? '' : ' disabled' %>><span><b><%= t.first_name %> <%= t.last_name %></b><small><%= t.role_name %></small></span></label>
+            <% }) %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('settings') %>وضعیت و ثبت‌نام</h2></div>
+        <div class="card-body"><div class="form-grid">
+          <%- include('partials/field', { name: 'status', label: 'وضعیت کلاس', type: 'select', value: it.status || 'open', options: Object.keys(STATUS.class).map(function (k) { return { value: k, label: STATUS.class[k][0] }; }) }) %>
+          <%- include('partials/field', { name: 'capacity', label: 'ظرفیت', value: it.capacity, ltr: true, attrs: 'inputmode="numeric" data-en-digits', help: '۰ = نامحدود' }) %>
+          <%- include('partials/field', { name: 'price', label: 'شهریه', type: 'money', value: it.price, help: '۰ = رایگان' }) %>
+          <%- include('partials/field', { name: 'min_attendance', label: 'حداقل درصد حضور برای مدرک', value: it.min_attendance, ltr: true, placeholder: s('certificates.min_attendance', 75), attrs: 'inputmode="numeric" data-en-digits', help: 'خالی = مقدار پیش‌فرض تنظیمات' }) %>
+          <label class="switch"><input type="checkbox" name="is_public" value="1"<%= (isEdit ? it.is_public : true) ? ' checked' : '' %>><span class="track"></span>نمایش در صفحه عمومی دوره‌ها</label>
+          <% if (moduleOn('preregistration')) { %><label class="switch"><input type="checkbox" name="prereg_enabled" value="1"<%= (isEdit ? it.prereg_enabled : true) ? ' checked' : '' %>><span class="track"></span>فعال بودن پیش‌ثبت‌نام آنلاین</label><% } %>
+          <div class="field"><label class="label">رنگ کلاس (تقویم و کارت‌ها)</label><div class="flex gap-2"><input class="input input-color" type="color" value="<%= it.color || '#4f46e5' %>" data-sync="class-color"><input class="input ltr" id="class-color" name="color" value="<%= it.color || '' %>" placeholder="#4f46e5"></div></div>
+          <%- include('partials/field', { name: 'notes', label: 'یادداشت داخلی', type: 'textarea', value: it.notes, rows: 3 }) %>
+        </div></div>
+        <div class="card-foot"><button class="btn btn-primary btn-block" type="submit"><%- icon('save', 'icon-sm') %><%= isEdit ? 'ذخیره تغییرات' : 'ایجاد کلاس' %></button></div>
+      </div>
+    </div>
+  </div>
+</form>

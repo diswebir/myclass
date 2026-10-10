@@ -1,0 +1,72 @@
+<%
+  const d = design; const P = d.primary_color || '#1e3a8a'; const A = d.accent_color || '#b45309';
+  const land = d.orientation !== 'portrait'; const W = land ? 297 : 210; const H = land ? 210 : 297;
+  const logo = s('general.logo'); const revoked = cert.status === 'revoked';
+%>
+<style>
+  .cert { --p: <%= P %>; --a: <%= A %>; width: <%= W %>mm; height: <%= H %>mm; position: relative; background: #fff; color: #1f2937; overflow: hidden; font-family: Vazirmatn, Tahoma, sans-serif; box-sizing: border-box; direction: rtl; }
+  .cert * { box-sizing: border-box; }
+  .cert-bg { position: absolute; inset: 0; background-size: cover; background-position: center; }
+  .cert-frame { position: absolute; inset: 9mm; }
+  .cert-frame.double { border: 1.6mm double var(--p); outline: .4mm solid var(--a); outline-offset: -4mm; }
+  .cert-frame.single { border: .8mm solid var(--p); }
+  .cert-frame.ornate { border: 1mm solid var(--p); box-shadow: inset 0 0 0 2.2mm #fff, inset 0 0 0 2.6mm var(--a); }
+  .cert-frame.ornate::before, .cert-frame.ornate::after { content: ''; position: absolute; width: 22mm; height: 22mm; border: 1.2mm solid var(--a); }
+  .cert-frame.ornate::before { top: -4mm; right: -4mm; border-left: 0; border-bottom: 0; }
+  .cert-frame.ornate::after { bottom: -4mm; left: -4mm; border-right: 0; border-top: 0; }
+  .cert-inner { position: absolute; inset: 16mm 20mm; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .cert-logo { height: 20mm; max-width: 50mm; object-fit: contain; margin-bottom: 3mm; }
+  .cert-inst { font-size: 13pt; font-weight: 700; color: var(--p); margin-bottom: 4mm; }
+  .cert-title { font-size: 30pt; font-weight: 900; color: var(--p); line-height: 1.3; margin: 0; }
+  .cert-sub { font-size: 11pt; color: var(--a); letter-spacing: .25em; text-transform: uppercase; font-weight: 600; margin-top: 1mm; direction: ltr; }
+  .cert-sep { width: 60mm; height: .7mm; background: linear-gradient(90deg, transparent, var(--a), transparent); margin: 6mm auto; }
+  .cert-body { font-size: 14pt; line-height: 2.1; max-width: <%= land ? 215 : 160 %>mm; flex: 1; display: flex; align-items: center; justify-content: center; }
+  .cert-foot { width: 100%; display: flex; align-items: flex-end; justify-content: space-between; gap: 8mm; margin-top: 4mm; }
+  .cert-signs { display: flex; gap: 14mm; flex: 1; justify-content: center; }
+  .cert-sign { text-align: center; min-width: 42mm; }
+  .cert-sign .line { border-top: .3mm solid #9ca3af; margin: 14mm auto 2mm; width: 42mm; }
+  .cert-sign b { display: block; font-size: 11pt; color: #111827; }
+  .cert-sign span { font-size: 9.5pt; color: #6b7280; }
+  .cert-qr { width: 24mm; text-align: center; font-size: 7pt; color: #6b7280; direction: ltr; }
+  .cert-qr svg { width: 22mm; height: 22mm; display: block; margin: 0 auto 1mm; }
+  .cert-meta { width: 30mm; font-size: 8.5pt; color: #4b5563; text-align: right; line-height: 1.9; }
+  .cert-note { position: absolute; bottom: 11mm; left: 0; right: 0; text-align: center; font-size: 7.5pt; color: #9ca3af; }
+  .cert-revoked { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+  .cert-revoked span { font-size: 48pt; font-weight: 900; color: rgba(220, 38, 38, .25); border: 2mm solid rgba(220, 38, 38, .25); padding: 4mm 14mm; transform: rotate(-18deg); border-radius: 6mm; }
+  /* تم‌ها */
+  .cert.t-modern .cert-frame { inset: 0; border: 0; outline: 0; box-shadow: none; }
+  .cert.t-modern::before { content: ''; position: absolute; top: 0; bottom: 0; right: 0; width: 16mm; background: linear-gradient(180deg, var(--p), var(--a)); }
+  .cert.t-modern .cert-inner { inset: 16mm 30mm 16mm 22mm; align-items: flex-start; text-align: right; }
+  .cert.t-modern .cert-sep { margin: 6mm 0; background: var(--a); width: 30mm; height: 1.2mm; }
+  .cert.t-modern .cert-body { justify-content: flex-start; text-align: justify; }
+  .cert.t-minimal .cert-title { font-weight: 300; font-size: 32pt; color: #111827; }
+  .cert.t-minimal .cert-sub { color: #9ca3af; }
+  .cert.t-minimal .cert-sep { background: #e5e7eb; height: .3mm; }
+  .cert.t-elegant { background: radial-gradient(circle at 0 0, color-mix(in srgb, var(--a) 18%, #fff) 0, transparent 35%), radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--p) 14%, #fff) 0, transparent 40%), #fffdf8; }
+  .cert.t-elegant .cert-title { font-style: italic; color: var(--a); }
+  .cert.t-elegant .cert-inst { color: var(--p); letter-spacing: .05em; }
+</style>
+<div class="cert t-<%= d.theme || 'classic' %>">
+  <% if (d.bg_image) { %><div class="cert-bg" style="background-image:url('<%= media(d.bg_image) %>')"></div><% } %>
+  <% if (d.border !== 'none') { %><div class="cert-frame <%= d.border || 'double' %>"></div><% } %>
+  <div class="cert-inner">
+    <% if (d.show_logo && logo) { %><img class="cert-logo" src="<%= media(logo) %>" alt=""><% } %>
+    <div class="cert-inst"><%= s('general.institute_name', '') %></div>
+    <h1 class="cert-title"><%= certTitle %></h1>
+    <% if (subtitle) { %><div class="cert-sub"><%= subtitle %></div><% } %>
+    <div class="cert-sep"></div>
+    <div class="cert-body"><div><%= body %></div></div>
+    <div class="cert-foot">
+      <div class="cert-meta">
+        <% if (d.show_serial) { %>شماره: <b style="direction:ltr;unicode-bidi:embed"><%= cert.serial %></b><br><% } %>
+        تاریخ: <b><%= vars.issued_date %></b>
+      </div>
+      <div class="cert-signs">
+        <% signers.forEach(function (sg) { %><div class="cert-sign"><div class="line"></div><b><%= sg.name || '\u00a0' %></b><span><%= sg.title %></span></div><% }) %>
+      </div>
+      <div class="cert-qr"><% if (qr) { %><%- qr %>کد: <%= cert.verify_code %><% } %></div>
+    </div>
+  </div>
+  <% if (footer) { %><div class="cert-note"><%= footer %></div><% } %>
+  <% if (revoked) { %><div class="cert-revoked"><span>ابطال شده</span></div><% } %>
+</div>

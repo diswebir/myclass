@@ -1,0 +1,29 @@
+<% const MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند']; const today = jalali.today(); %>
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('calendar-days') %>تقویم جلسات</h1><p class="page-sub">نمای ماهانه همه جلسات کلاس‌ها</p></div>
+  <div class="page-actions">
+    <form method="get" class="flex gap-2"><input type="hidden" name="y" value="<%= jy %>"><input type="hidden" name="m" value="<%= jm %>">
+      <select class="input" name="class" data-autosubmit><option value="">همه کلاس‌ها</option><% classes.forEach(function (c) { %><option value="<%= c.id %>"<%= String(query.class) === String(c.id) ? ' selected' : '' %>><%= c.title %></option><% }) %></select>
+    </form>
+  </div>
+</div>
+<div class="card">
+  <div class="card-head">
+    <a class="btn btn-ghost btn-icon" href="<%= qs({ y: prev.y, m: prev.m }) %>" aria-label="ماه قبل"><%- icon('chevron-right') %></a>
+    <h2 class="card-title" style="margin:0 auto"><%= MONTHS[jm - 1] %> <%= fa(jy) %></h2>
+    <a class="btn btn-ghost btn-sm" href="<%= qs({ y: '', m: '' }) || '?' %>">امروز</a>
+    <a class="btn btn-ghost btn-icon" href="<%= qs({ y: next.y, m: next.m }) %>" aria-label="ماه بعد"><%- icon('chevron-left') %></a>
+  </div>
+  <div class="calendar">
+    <% jalali.WEEK_ORDER.forEach(function (d) { %><div class="dow"><%= weekday(d) %></div><% }) %>
+    <% for (let i = 0; i < firstWeekday; i++) { %><div class="day out"></div><% } %>
+    <% for (let d = 1; d <= len; d++) { const g = jalali.addDays(start, d - 1); const evs = byDate[g] || []; %>
+      <div class="day<%= g === today ? ' today' : '' %>">
+        <div class="n"><%= fa(d) %></div>
+        <% evs.slice(0, 4).forEach(function (s) { %><a class="ev<%= s.status === 'canceled' ? ' canceled' : '' %>" style="--c:<%= s.color || '#4f46e5' %>" href="<%= url(moduleOn('attendance') ? '/panel/attendance/session/' + s.id : '/panel/classes/' + s.class_id + '?tab=sessions') %>" title="<%= s.class_title %> — <%= s.start_time || '' %>"><%= fa((s.start_time || '').slice(0, 5)) %> <%= s.class_title %></a><% }) %>
+        <% if (evs.length > 4) { %><span class="text-xs text-muted">+<%= fa(evs.length - 4) %> جلسه دیگر</span><% } %>
+      </div>
+    <% } %>
+    <% const tail = (7 - ((firstWeekday + len) % 7)) % 7; for (let i = 0; i < tail; i++) { %><div class="day out"></div><% } %>
+  </div>
+</div>

@@ -1,0 +1,46 @@
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('file-text') %>فاکتورها</h1><p class="page-sub">شهریه‌ها و صورتحساب‌های صادر شده</p></div>
+  <div class="page-actions">
+    <% if (can('finance.reports')) { %><a class="btn" href="<%= url('/panel/invoices/export') %><%= qs({ page: '' }) %>" data-no-loading><%- icon('download', 'icon-sm') %>خروجی اکسل</a><% } %>
+    <% if (can('finance.invoices')) { %><a class="btn btn-primary" href="<%= url('/panel/invoices/new') %>"><%- icon('plus', 'icon-sm') %>فاکتور جدید</a><% } %>
+  </div>
+</div>
+<div class="grid grid-3 mb-4">
+  <div class="card stat"><div class="stat-icon"><%- icon('file-text') %></div><div><div class="stat-label">مجموع فاکتورهای این فیلتر</div><div class="stat-value"><%= money(sums.total) %></div><div class="stat-foot"><%= fa(data.total) %> فاکتور</div></div></div>
+  <div class="card stat"><div class="stat-icon success"><%- icon('check-circle-2') %></div><div><div class="stat-label">پرداخت شده</div><div class="stat-value"><%= money(sums.paid) %></div></div></div>
+  <div class="card stat"><div class="stat-icon warning"><%- icon('hourglass') %></div><div><div class="stat-label">مانده</div><div class="stat-value"><%= money(sums.total - sums.paid) %></div></div></div>
+</div>
+<div class="card">
+  <form class="filters" method="get">
+    <div class="field grow"><label class="label">جستجو</label><div class="input-icon"><%- icon('search', 'icon-sm') %><input class="input" name="q" value="<%= query.q || '' %>" placeholder="شماره فاکتور، نام یا موبایل"></div></div>
+    <div class="field"><label class="label">وضعیت</label><select class="input" name="status" data-autosubmit><option value="">همه</option><% Object.keys(STATUS.invoice).forEach(function (k) { %><option value="<%= k %>"<%= query.status === k ? ' selected' : '' %>><%= STATUS.invoice[k][0] %></option><% }) %></select></div>
+    <div class="field"><label class="label">نوع</label><select class="input" name="type" data-autosubmit><option value="">همه</option><option value="cash"<%= query.type === 'cash' ? ' selected' : '' %>>نقدی</option><option value="installment"<%= query.type === 'installment' ? ' selected' : '' %>>اقساطی</option></select></div>
+    <div class="field"><label class="label">کلاس</label><select class="input" name="class" data-autosubmit><option value="">همه</option><% classes.forEach(function (c) { %><option value="<%= c.id %>"<%= String(query.class) === String(c.id) ? ' selected' : '' %>><%= c.title %></option><% }) %></select></div>
+    <div class="field"><label class="label">از تاریخ</label><input class="input ltr text-center" name="from" value="<%= query.from || '' %>" data-jdp style="width:120px"></div>
+    <div class="field"><label class="label">تا تاریخ</label><input class="input ltr text-center" name="to" value="<%= query.to || '' %>" data-jdp style="width:120px"></div>
+    <button class="btn btn-primary" type="submit"><%- icon('filter', 'icon-sm') %></button>
+  </form>
+  <% if (!data.rows.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'file-text', emptyTitle: 'فاکتوری یافت نشد' }) %>
+  <% } else { %>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>شماره</th><th>دانشجو</th><th>کلاس / عنوان</th><th>مبلغ قابل پرداخت</th><th>پرداخت شده</th><th>پیشرفت</th><th>نوع</th><th>وضعیت</th><th>تاریخ</th></tr></thead>
+    <tbody>
+    <% data.rows.forEach(function (i) { const p = pct(Number(i.paid), Number(i.total)); %>
+      <tr>
+        <td><a class="fw-6 ltr d-inline" href="<%= url('/panel/invoices/' + i.id) %>"><%= i.invoice_no %></a></td>
+        <td><a href="<%= url('/panel/users/' + i.user_id) %>"><%= i.first_name %> <%= i.last_name %></a><div class="text-xs text-muted ltr text-right"><%= fa(i.mobile || '') %></div></td>
+        <td class="text-sm"><%= i.class_title || i.title %></td>
+        <td class="fw-6"><%= money(i.total) %><% if (Number(i.discount)) { %><div class="text-xs text-muted">تخفیف: <%= num(i.discount) %></div><% } %></td>
+        <td class="text-success"><%= money(i.paid) %></td>
+        <td style="min-width:90px"><div class="progress progress-sm <%= p >= 100 ? 'success' : p > 0 ? 'warning' : 'danger' %>"><span style="width:<%= p %>%"></span></div><span class="text-xs text-muted"><%= fa(p) %>٪</span></td>
+        <td class="text-sm"><%= i.payment_type === 'installment' ? 'اقساطی' : 'نقدی' %></td>
+        <td><%- badge('invoice', i.status) %></td>
+        <td class="text-sm text-muted"><%= jdate(i.issue_date) %></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+  <%- include('partials/pagination', { data }) %>
+  <% } %>
+</div>

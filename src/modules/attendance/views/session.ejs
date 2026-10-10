@@ -1,0 +1,63 @@
+<% const ed = editable.ok; const def = s('attendance.default_status', 'present'); const thr = Number(s('attendance.warning_threshold', 3)); %>
+<div class="page-head">
+  <div>
+    <h1 class="page-title"><%- icon('clipboard-check') %><%= cls.title %></h1>
+    <p class="page-sub">جلسه <%= fa(session.session_no || '') %> · <%= weekday(jalali.weekday(session.date)) %> <%= jdate(session.date) %> · ساعت <%= fa((session.start_time || '') + ' تا ' + (session.end_time || '')) %> <%- badge('session', session.status) %></p>
+  </div>
+  <div class="page-actions">
+    <% if (prevSession) { %><a class="btn btn-ghost" href="<%= url('/panel/attendance/session/' + prevSession.id) %>"><%- icon('chevron-right', 'icon-sm') %>جلسه قبل</a><% } %>
+    <% if (nextSession) { %><a class="btn btn-ghost" href="<%= url('/panel/attendance/session/' + nextSession.id) %>">جلسه بعد<%- icon('chevron-left', 'icon-sm') %></a><% } %>
+    <a class="btn" href="<%= url('/panel/classes/' + cls.id + '?tab=attendance') %>"><%- icon('table', 'icon-sm') %>جدول کلی</a>
+  </div>
+</div>
+<% if (!ed) { %><div class="alert alert-warning"><%- icon('lock') %><div><%= editable.reason %></div></div><% } %>
+<% if (session.status === 'canceled') { %><div class="alert alert-danger"><%- icon('alert-triangle') %><div>این جلسه لغو شده است.</div></div><% } %>
+
+<form method="post" action="<%= url('/panel/attendance/session/' + session.id) %>" class="card">
+  <%- include('partials/csrf') %>
+  <div class="card-head" style="flex-wrap:wrap;gap:10px">
+    <div class="flex gap-2 wrap items-center" data-att-counts>
+      <span class="badge badge-success">حاضر: <b data-c="present">۰</b></span>
+      <span class="badge badge-danger">غایب: <b data-c="absent">۰</b></span>
+      <span class="badge badge-warning">تأخیر: <b data-c="late">۰</b></span>
+      <span class="badge badge-info">موجه: <b data-c="excused">۰</b></span>
+      <span class="text-xs text-muted">از <%= fa(students.length) %> دانشجو</span>
+    </div>
+    <% if (ed && students.length) { %><div class="flex gap-1">
+      <span class="text-xs text-muted" style="align-self:center">علامت‌گذاری همه:</span>
+      <button type="button" class="btn btn-sm btn-soft" data-mark-all="present">همه حاضر</button>
+      <button type="button" class="btn btn-sm btn-ghost" data-mark-all="absent">همه غایب</button>
+    </div><% } %>
+  </div>
+  <% if (!students.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'users', emptyTitle: 'دانشجوی فعالی در این کلاس وجود ندارد' }) %>
+  <% } else { %>
+  <div>
+    <% students.forEach(function (st, i) { const rec = records[st.id]; const cur = rec ? rec.status : (hasRecords ? '' : def); const n = st.first_name + ' ' + st.last_name; const ab = absences[st.id] || 0; %>
+    <div class="att-row">
+      <span class="text-muted text-sm" style="width:22px"><%= fa(i + 1) %></span>
+      <a class="person" href="<%= url('/panel/users/' + st.user_id) %>" target="_blank"><span class="avatar avatar-sm"><% if (st.avatar) { %><img src="<%= media(st.avatar) %>" alt=""><% } else { %><%= initials(n) %><% } %></span><span><span class="person-name"><%= n %><% if (st.enroll_status === 'suspended') { %> <span class="badge badge-warning no-dot">تعلیق</span><% } %></span><span class="person-sub">غیبت‌های کل: <b class="<%= thr && ab >= thr ? 'text-danger' : '' %>"><%= fa(ab) %></b><%= rec && rec.recorded_at ? ' · ثبت: ' + rel(rec.recorded_at) : '' %></span></span></a>
+      <div class="att-options" role="radiogroup" aria-label="وضعیت <%= n %>">
+        <% [['present', 'حاضر', 'check'], ['absent', 'غایب', 'x'], ['late', 'تأخیر', 'clock'], ['excused', 'موجه', 'file-text']].forEach(function (o) { %>
+          <label><input type="radio" name="status[<%= st.id %>]" value="<%= o[0] %>"<%= cur === o[0] ? ' checked' : '' %><%= ed ? '' : ' disabled' %>><span class="<%= o[0] %>"><%- icon(o[2], 'icon-sm') %><%= o[1] %></span></label>
+        <% }) %>
+      </div>
+      <input class="input input-sm att-note" name="note[<%= st.id %>]" value="<%= rec && rec.note ? rec.note : '' %>" placeholder="توضیح (اختیاری)"<%= ed ? '' : ' disabled' %>>
+    </div>
+    <% }) %>
+  </div>
+  <% if (ed) { %>
+  <div class="card-foot flex gap-3 wrap items-center">
+    <input class="input" name="topic" value="<%= session.topic || '' %>" placeholder="موضوع تدریس‌شده در این جلسه" style="max-width:320px">
+    <% if (moduleOn('sms')) { %>
+      <label class="switch"><input type="checkbox" name="notify_absent" value="1"<%= s('attendance.notify_absent', true) ? ' checked' : '' %>><span class="track"></span>پیامک به غایبین</label>
+      <label class="switch"><input type="checkbox" name="notify_late" value="1"<%= s('attendance.notify_late', false) ? ' checked' : '' %>><span class="track"></span>پیامک تأخیر</label>
+    <% } %>
+    <div class="flex gap-2" style="margin-right:auto">
+      <% if (nextSession) { %><button class="btn btn-ghost" type="submit" name="next_session" value="<%= nextSession.id %>">ذخیره و جلسه بعد</button><% } %>
+      <button class="btn btn-primary" type="submit"><%- icon('save', 'icon-sm') %>ذخیره حضور و غیاب</button>
+    </div>
+  </div>
+  <% } %>
+  <% } %>
+</form>

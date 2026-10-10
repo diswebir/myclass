@@ -1,0 +1,20 @@
+<div class="page-head"><div><h1 class="page-title"><%- icon('award') %>مدارک من</h1><p class="page-sub">گواهی‌های پایان دوره صادرشده برای شما</p></div></div>
+<% if (!list.length) { %><div class="card"><%- include('partials/empty', { emptyIcon: 'award', emptyTitle: 'هنوز مدرکی برای شما صادر نشده است', emptyText: 'پس از اتمام دوره و احراز شرایط، گواهی شما در این بخش نمایش داده می‌شود.' }) %></div><% } else { %>
+<div class="grid grid-3">
+  <% list.forEach(function (c) { const ok = c.status === 'valid'; %>
+  <div class="card">
+    <div class="card-body text-center" style="padding:28px 20px">
+      <div class="verify-icon" style="<%= ok ? '' : 'background:var(--danger-bg);color:var(--danger-fg)' %>"><%- icon(ok ? 'award' : 'ban', 'icon-xl') %></div>
+      <h3 class="fw-7" style="font-size:15px"><%= c.class_title || 'گواهی' %></h3>
+      <div class="text-sm text-muted">شماره: <span class="mono ltr d-inline"><%= c.serial %></span></div>
+      <div class="text-sm text-muted mt-2">تاریخ صدور: <%= jdate(c.issued_date) %><%= c.grade ? ' · نمره: ' + fa(c.grade) : '' %></div>
+      <div class="mt-3"><%- badge('certificate', c.status) %></div>
+    </div>
+    <div class="card-foot flex gap-2" style="justify-content:center">
+      <% if (ok && canDownload) { %><a class="btn btn-primary btn-sm" href="<%= url('/panel/my/certificates/' + c.id + '/print') %>" target="_blank"><%- icon('printer', 'icon-sm') %>مشاهده و چاپ</a><% } %>
+      <% if (ok) { %><button class="btn btn-ghost btn-sm" type="button" data-copy="<%= s('general.site_url', '') ? s('general.site_url').replace(/\/$/, '') : '' %><%= url('/verify/' + c.verify_code) %>"><%- icon('link', 'icon-sm') %>کپی لینک استعلام</button><% } %>
+    </div>
+  </div>
+  <% }) %>
+</div>
+<% } %>

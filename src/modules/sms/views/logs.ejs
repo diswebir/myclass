@@ -1,0 +1,36 @@
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('list') %>گزارش ارسال پیامک</h1><p class="page-sub">وضعیت تمام پیامک‌های ارسالی سامانه</p></div>
+  <div class="page-actions"><a class="btn btn-ghost" href="<%= url('/panel/sms') %>"><%- icon('arrow-right', 'icon-sm') %>پنل پیامک</a></div>
+</div>
+<div class="card">
+  <form class="filters" method="get">
+    <div class="field"><label class="label">موبایل</label><input class="input ltr" name="mobile" value="<%= query.mobile || '' %>" data-en-digits style="width:150px"></div>
+    <div class="field"><label class="label">رویداد</label><select class="input" name="event" data-autosubmit><option value="">همه</option><% eventKeys.filter(Boolean).forEach(function (k) { %><option value="<%= k %>"<%= query.event === k ? ' selected' : '' %>><%= labels[k] || k %></option><% }) %></select></div>
+    <div class="field"><label class="label">وضعیت</label><select class="input" name="status" data-autosubmit><option value="">همه</option><% Object.keys(STATUS.sms).forEach(function (k) { %><option value="<%= k %>"<%= query.status === k ? ' selected' : '' %>><%= STATUS.sms[k][0] %></option><% }) %></select></div>
+    <div class="field"><label class="label">از</label><input class="input ltr text-center" name="from" value="<%= query.from || '' %>" data-jdp style="width:120px"></div>
+    <div class="field"><label class="label">تا</label><input class="input ltr text-center" name="to" value="<%= query.to || '' %>" data-jdp style="width:120px"></div>
+    <button class="btn btn-primary" type="submit"><%- icon('filter', 'icon-sm') %></button>
+  </form>
+  <% if (!data.rows.length) { %><%- include('partials/empty', { emptyIcon: 'message-square', emptyTitle: 'پیامکی یافت نشد' }) %><% } else { %>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>گیرنده</th><th>رویداد</th><th>محتوا</th><th>زمان</th><th>وضعیت</th><th></th></tr></thead>
+    <tbody>
+    <% data.rows.forEach(function (l) { let params = {}; try { params = JSON.parse(l.params || '{}'); } catch (e) {} %>
+      <tr>
+        <td><% if (l.user_id) { %><a href="<%= url('/panel/users/' + l.user_id) %>"><%= l.first_name %> <%= l.last_name %></a><% } %><div class="ltr text-right text-sm text-muted"><%= fa(l.mobile || '') %></div></td>
+        <td class="text-sm"><%= labels[l.event_key] || l.event_key || '—' %></td>
+        <td class="text-xs" style="max-width:340px">
+          <% if (l.type === 'pattern') { %><span class="text-muted">پترن</span> <span class="mono ltr d-inline"><%= l.pattern_code %></span><div class="chips mt-1"><% Object.keys(params).slice(0, 6).forEach(function (k) { %><span class="chip"><span class="mono"><%= k %></span>: <%= truncate(params[k], 30) %></span><% }) %></div>
+          <% } else { %><%= truncate(l.message, 120) %><% } %>
+          <% if (l.error) { %><div class="text-danger mt-1"><%= truncate(l.error, 160) %></div><% } %>
+        </td>
+        <td class="text-sm text-muted" title="<%= jdt(l.created_at) %>"><%= rel(l.created_at) %></td>
+        <td><%- badge('sms', l.status) %></td>
+        <td class="actions"><% if (l.status === 'failed' && can('sms.send')) { %><form method="post" action="<%= url('/panel/sms/logs/' + l.id + '/resend') %>"><%- include('partials/csrf') %><button class="btn btn-ghost btn-sm" type="submit"><%- icon('rotate-ccw', 'icon-sm') %>ارسال مجدد</button></form><% } %></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+  <%- include('partials/pagination', { data }) %>
+  <% } %>
+</div>

@@ -1,0 +1,7 @@
+<% if (!list.length) { %><%- include('partials/empty', { emptyIcon: 'message-square', emptyTitle: 'پیامکی برای این کاربر ارسال نشده است' }) %><% } else { %>
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>رویداد</th><th>نوع</th><th>زمان</th><th>وضعیت</th></tr></thead>
+  <tbody>
+  <% list.forEach(function (l) { %><tr><td class="text-sm"><%= l.event_label || l.event_key || '—' %></td><td class="text-sm"><%= l.type === 'pattern' ? 'پترن' : 'متنی' %></td><td class="text-sm text-muted" title="<%= jdt(l.created_at) %>"><%= rel(l.created_at) %></td><td><%- badge('sms', l.status) %><% if (l.error) { %><div class="text-xs text-danger"><%= truncate(l.error, 80) %></div><% } %></td></tr><% }) %>
+  </tbody>
+</table></div><% } %>

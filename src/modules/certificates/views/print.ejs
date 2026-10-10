@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="fa" dir="rtl" data-theme="light">
+<head><%- include('partials/head') %>
+<style>
+  @page { size: A4 <%= design.orientation === 'portrait' ? 'portrait' : 'landscape' %>; margin: 0; }
+  body.cert-page { background: #e5e7eb; margin: 0; padding: 24px 0; }
+  .cert-wrap { width: max-content; margin: 0 auto; box-shadow: 0 20px 50px rgba(0,0,0,.18); }
+  .cert-toolbar { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
+  @media screen and (max-width: 1180px) { .cert-wrap { zoom: .7; } }
+  @media screen and (max-width: 800px) { .cert-wrap { zoom: .42; } }
+  @media print { body.cert-page { background: #fff; padding: 0; } .cert-wrap { box-shadow: none; zoom: 1 !important; } .cert-toolbar { display: none; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body class="cert-page"<%= query.autoprint ? ' data-autoprint' : '' %>>
+  <div class="cert-toolbar"><button class="btn btn-primary" type="button" data-print><%- icon('printer', 'icon-sm') %>چاپ / ذخیره PDF</button><button class="btn" type="button" data-copy="<%= verifyUrl %>"><%- icon('link', 'icon-sm') %>کپی لینک استعلام</button></div>
+  <div class="cert-wrap"><%- include('_cert') %></div>
+  <%- include('partials/scripts') %>
+</body>
+</html>

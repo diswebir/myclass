@@ -1,0 +1,30 @@
+<%
+  /* فیلد عمومی فرم: name, label, type, value, col, required, help, placeholder, options, attrs, ltr, money, jdp */
+  const _t = typeof type !== 'undefined' ? type : 'text';
+  const _v = old(name, typeof value !== 'undefined' ? value : '');
+  const _e = err(name);
+  const _id = 'f_' + name.replace(/[^\w]/g, '_');
+  const _req = typeof required !== 'undefined' && required;
+  const _attrs = typeof attrs !== 'undefined' ? attrs : '';
+  const _cls = 'input' + (typeof ltr !== 'undefined' && ltr ? ' ltr' : '');
+%>
+<div class="field <%= typeof col !== 'undefined' ? 'col-' + col : '' %><%= _e ? ' has-error' : '' %>">
+  <% if (typeof label !== 'undefined' && label) { %><label class="label" for="<%= _id %>"><%= label %><% if (_req) { %><span class="req">*</span><% } %></label><% } %>
+  <% if (_t === 'textarea') { %>
+    <textarea class="<%= _cls %>" id="<%= _id %>" name="<%= name %>" rows="<%= typeof rows !== 'undefined' ? rows : 3 %>" placeholder="<%= typeof placeholder !== 'undefined' ? placeholder : '' %>"<%= _req ? ' required' : '' %> <%- _attrs %>><%= _v %></textarea>
+  <% } else if (_t === 'select') { %>
+    <select class="<%= _cls %>" id="<%= _id %>" name="<%= name %>"<%= _req ? ' required' : '' %> <%- _attrs %>>
+      <% if (typeof empty !== 'undefined' && empty !== false) { %><option value=""><%= empty %></option><% } %>
+      <% (Array.isArray(options) ? options : Object.entries(options).map(([k, l]) => ({ value: k, label: l }))).forEach(function (o) { %>
+        <option value="<%= o.value %>"<%= String(_v) === String(o.value) ? ' selected' : '' %>><%= o.label %></option>
+      <% }) %>
+    </select>
+  <% } else if (_t === 'date') { %>
+    <div class="input-icon"><%- icon('calendar', 'icon-sm') %><input class="input ltr text-center" type="text" id="<%= _id %>" name="<%= name %>" value="<%= _v %>" data-jdp autocomplete="off" placeholder="۱۴۰۳/۰۱/۰۱"<%= _req ? ' required' : '' %> <%- _attrs %>></div>
+  <% } else if (_t === 'money') { %>
+    <div class="input-group"><input class="input ltr" type="text" inputmode="numeric" id="<%= _id %>" name="<%= name %>" value="<%= _v %>" data-money autocomplete="off"<%= _req ? ' required' : '' %> <%- _attrs %>><span class="addon"><%= s('finance.currency', 'تومان') %></span></div>
+  <% } else { %>
+    <input class="<%= _cls %>" type="<%= _t %>" id="<%= _id %>" name="<%= name %>" value="<%= _v %>" placeholder="<%= typeof placeholder !== 'undefined' ? placeholder : '' %>"<%= _req ? ' required' : '' %> <%- _attrs %>>
+  <% } %>
+  <% if (_e) { %><span class="error-text"><%= _e %></span><% } else if (typeof help !== 'undefined' && help) { %><span class="help"><%= help %></span><% } %>
+</div>

@@ -1,0 +1,65 @@
+<% const fmtSize = function (b) { return b > 1048576 ? fa((b / 1048576).toFixed(1)) + ' مگابایت' : fa(Math.round(b / 1024)) + ' کیلوبایت'; };
+   const tableLabels = { users: 'کاربران', classes: 'کلاس‌ها', enrollments: 'ثبت‌نام‌ها', class_sessions: 'جلسات', attendances: 'حضور و غیاب', invoices: 'فاکتورها', payments: 'پرداخت‌ها', certificates: 'مدارک', sms_logs: 'پیامک‌ها', audit_logs: 'گزارش فعالیت' }; %>
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('server') %>ابزارهای سیستم</h1><p class="page-sub">وضعیت سرور، پایگاه داده، زمان‌بند، پشتیبان‌گیری و نگهداری</p></div>
+  <div class="page-actions">
+    <a class="btn btn-primary" href="<%= url('/panel/system/backup') %>"><%- icon('download', 'icon-sm') %>دریافت پشتیبان کامل</a>
+  </div>
+</div>
+<div class="grid grid-4 mb-4">
+  <div class="card stat"><div class="stat-icon"><%- icon('cpu') %></div><div><div class="stat-label">Node.js</div><div class="stat-value ltr" style="font-size:18px"><%= info.node %></div><div class="stat-foot"><%= info.passenger ? 'Phusion Passenger (cPanel)' : 'مستقل' %></div></div></div>
+  <div class="card stat"><div class="stat-icon info"><%- icon('database') %></div><div><div class="stat-label">پایگاه داده</div><div class="stat-value ltr" style="font-size:16px"><%= String(dbVersion).slice(0, 24) %></div><div class="stat-foot"><%= cfg.db.client === 'sqlite' ? 'فایل محلی' : (cfg.db.database || '') %></div></div></div>
+  <div class="card stat"><div class="stat-icon success"><%- icon('activity') %></div><div><div class="stat-label">مصرف حافظه</div><div class="stat-value"><%= fa(info.memory) %><small>MB</small></div><div class="stat-foot">زمان اجرا: <%= fa(info.uptime) %> دقیقه</div></div></div>
+  <div class="card stat"><div class="stat-icon purple"><%- icon('hard-drive') %></div><div><div class="stat-label">فایل‌های آپلودی</div><div class="stat-value" style="font-size:18px"><%= fmtSize(uploadsSize) %></div><div class="stat-foot">نسخه برنامه <%= fa(locals.appVersion || '') %></div></div></div>
+</div>
+<div class="grid grid-2">
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%- icon('database') %>به‌روزرسانی پایگاه داده</h2>
+      <form method="post" action="<%= url('/panel/system/migrate') %>"><%- include('partials/csrf') %><button class="btn btn-sm <%= status.pending.length ? 'btn-primary' : 'btn-soft' %>" type="submit"><%- icon('refresh-cw', 'icon-sm') %>اجرای به‌روزرسانی</button></form></div>
+    <div class="card-body">
+      <% if (status.pending.length) { %><div class="alert alert-warning"><%- icon('alert-triangle') %><div><b><%= fa(status.pending.length) %> به‌روزرسانی در انتظار اجرا:</b><div class="chips mt-2"><% status.pending.forEach(function (p) { %><span class="chip mono"><%= p %></span><% }) %></div></div></div>
+      <% } else { %><div class="alert alert-success mb-3"><%- icon('check-circle-2') %><div>ساختار پایگاه داده به‌روز است (<%= fa(status.completed.length) %> مرحله اعمال شده).</div></div><% } %>
+      <div class="kv-grid"><% Object.keys(counts).forEach(function (t) { %><div class="kv-item"><span><%= tableLabels[t] || t %></span><b><%= typeof counts[t] === 'number' ? fa(counts[t].toLocaleString('en-US')) : counts[t] %></b></div><% }) %></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%- icon('clock') %>زمان‌بند خودکار</h2>
+      <form method="post" action="<%= url('/panel/system/scheduler') %>" class="flex gap-2"><%- include('partials/csrf') %><label class="check text-sm"><input type="checkbox" name="force" value="1"> اجرای اجباری همه</label><button class="btn btn-soft btn-sm" type="submit"><%- icon('play', 'icon-sm') %>اجرا</button></form></div>
+    <div class="card-body">
+      <p class="text-sm text-muted">آخرین اجرا: <b class="text-2"><%= scheduler.last ? jdt(scheduler.last.at) + ' (' + ({ internal: 'داخلی', cron: 'Cron سی‌پنل', manual: 'دستی' }[scheduler.last.trigger] || scheduler.last.trigger) + ')' : 'هرگز' %></b> · <a href="<%= url('/panel/settings/system') %>">تنظیم Cron</a></p>
+      <div class="table-wrap"><table class="table table-sm">
+        <thead><tr><th>وظیفه</th><th>تناوب</th><th>آخرین اجرا</th><th>نتیجه</th></tr></thead>
+        <tbody><% tasks.forEach(function (t) { const st = scheduler.state[t.key]; %><tr>
+          <td class="text-sm"><%= t.label %></td>
+          <td class="text-sm text-muted"><%= t.every >= 1440 ? fa(t.every / 1440) + ' روز' : t.every >= 60 ? fa(t.every / 60) + ' ساعت' : fa(t.every) + ' دقیقه' %></td>
+          <td class="text-sm text-muted"><%= st && st.ranAt ? rel(st.ranAt) : '—' %></td>
+          <td><% if (!st) { %><span class="badge badge-gray">اجرا نشده</span><% } else if (st.ok) { %><span class="badge badge-success" title="<%= st.result ? JSON.stringify(st.result) : '' %>">موفق</span><% } else { %><span class="badge badge-danger" title="<%= st.error %>">خطا</span><% } %></td>
+        </tr><% }) %></tbody>
+      </table></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%- icon('wrench') %>نگهداری</h2></div>
+    <ul class="list">
+      <li><div class="list-item"><span class="list-icon"><%- icon('download', 'icon-sm') %></span><span class="grow"><span class="list-title">پشتیبان کامل (JSON)</span><span class="list-sub">خروجی همه جداول؛ فایل‌های آپلودی را جداگانه از File Manager دریافت کنید.</span></span><a class="btn btn-soft btn-sm" href="<%= url('/panel/system/backup') %>">دریافت</a></div></li>
+      <li><div class="list-item"><span class="list-icon"><%- icon('rotate-ccw', 'icon-sm') %></span><span class="grow"><span class="list-title">راه‌اندازی مجدد برنامه</span><span class="list-sub">ساخت فایل tmp/restart.txt برای Passenger (معادل Restart در cPanel)</span></span><form method="post" action="<%= url('/panel/system/restart') %>" data-confirm="برنامه مجدداً راه‌اندازی شود؟" data-confirm-danger="false"><%- include('partials/csrf') %><button class="btn btn-soft btn-sm" type="submit">راه‌اندازی</button></form></div></li>
+      <li><div class="list-item"><span class="list-icon"><%- icon('log-out', 'icon-sm') %></span><span class="grow"><span class="list-title">پایان همه نشست‌ها</span><span class="list-sub">خروج اجباری همه کاربران به جز شما</span></span><form method="post" action="<%= url('/panel/system/sessions/clear') %>" data-confirm="همه کاربران از سامانه خارج شوند؟"><%- include('partials/csrf') %><button class="btn btn-soft-danger btn-sm" type="submit">اجرا</button></form></div></li>
+      <li><a class="list-item" href="<%= url('/panel/settings/modules') %>"><span class="list-icon"><%- icon('puzzle', 'icon-sm') %></span><span class="grow"><span class="list-title">مدیریت ماژول‌ها</span><span class="list-sub">فعال/غیرفعال‌سازی امکانات سامانه</span></span><%- icon('chevron-left', 'icon-sm') %></a></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%- icon('info') %>اطلاعات سرور</h2></div>
+    <div class="card-body"><dl class="kv">
+      <dt>سیستم‌عامل</dt><dd class="ltr text-right"><%= info.platform %></dd>
+      <dt>شناسه فرایند</dt><dd class="ltr text-right"><%= info.pid %></dd>
+      <dt>منطقه زمانی</dt><dd class="ltr text-right"><%= jalali.getTimezone() %></dd>
+      <dt>زمان سرور</dt><dd><%= jdt(jalali.now()) %></dd>
+      <dt>نوع پایگاه داده</dt><dd><%= cfg.db.client === 'sqlite' ? 'SQLite' : 'MySQL / MariaDB' %></dd>
+      <% if (cfg.db.client !== 'sqlite') { %><dt>میزبان</dt><dd class="ltr text-right"><%= cfg.db.host %>:<%= cfg.db.port %></dd><% } %>
+    </dl></div>
+  </div>
+</div>
+<div class="card mt-4">
+  <div class="card-head"><h2 class="card-title"><%- icon('alert-triangle') %>گزارش خطاها</h2><% if (errorLog) { %><form method="post" action="<%= url('/panel/system/clear-log') %>" data-confirm="گزارش خطاها پاک شود؟"><%- include('partials/csrf') %><button class="btn btn-ghost btn-sm" type="submit"><%- icon('trash-2', 'icon-sm') %>پاک کردن</button></form><% } %></div>
+  <div class="card-body"><% if (!errorLog) { %><p class="text-muted text-center mb-0">خطایی ثبت نشده است 🎉</p><% } else { %><pre class="ltr mono" style="max-height:340px;overflow:auto;background:var(--surface-2);padding:12px;border-radius:8px;font-size:12px;white-space:pre-wrap;margin:0"><%= errorLog %></pre><% } %></div>
+</div>

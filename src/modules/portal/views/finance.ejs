@@ -1,0 +1,102 @@
+<% const cur = s('finance.currency', 'تومان');
+   const totals = invoices.reduce(function (a, i) { a.t += Number(i.total); a.p += Number(i.paid); return a; }, { t: 0, p: 0 });
+   const openInvoices = invoices.filter(function (i) { return Number(i.total) > Number(i.paid); });
+   const today = jalali.today(); %>
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('wallet') %>امور مالی من</h1><p class="page-sub">فاکتورها، اقساط و پرداخت‌های شما</p></div>
+  <% if (cardEnabled && openInvoices.length) { %><div class="page-actions"><button class="btn btn-primary" type="button" data-modal-open="#receipt-modal"><%- icon('upload', 'icon-sm') %>ثبت رسید کارت به کارت</button></div><% } %>
+</div>
+<div class="grid grid-3 mb-4">
+  <div class="card stat"><div class="stat-icon"><%- icon('receipt') %></div><div><div class="stat-label">مجموع شهریه</div><div class="stat-value"><%= money(totals.t) %><small><%= cur %></small></div></div></div>
+  <div class="card stat"><div class="stat-icon success"><%- icon('check-circle-2') %></div><div><div class="stat-label">پرداخت‌شده</div><div class="stat-value"><%= money(totals.p) %><small><%= cur %></small></div><div class="progress progress-sm success mt-2" style="width:120px"><span style="width:<%= pct(totals.p, totals.t) %>%"></span></div></div></div>
+  <div class="card stat"><div class="stat-icon <%= totals.t - totals.p > 0 ? 'warning' : 'success' %>"><%- icon('hourglass') %></div><div><div class="stat-label">مانده بدهی</div><div class="stat-value"><%= money(totals.t - totals.p) %><small><%= cur %></small></div></div></div>
+</div>
+
+<% if (!invoices.length) { %><div class="card"><%- include('partials/empty', { emptyIcon: 'receipt', emptyTitle: 'فاکتوری برای شما صادر نشده است' }) %></div><% } %>
+<div class="stack">
+<% invoices.forEach(function (inv) { const its = installments.filter(function (it) { return it.invoice_id === inv.id; }); const rem = Number(inv.total) - Number(inv.paid); %>
+  <div class="card">
+    <div class="card-head">
+      <div><h2 class="card-title"><%- icon('file-text') %><%= inv.title || inv.class_title || 'فاکتور' %> <%- badge('invoice', inv.status) %></h2><p class="card-sub">شماره <%= inv.invoice_no %> · صدور <%= jdate(inv.issue_date || String(inv.created_at).slice(0, 10)) %> · <%= inv.payment_type === 'installment' ? 'اقساطی' : 'نقدی' %></p></div>
+      <div class="card-actions"><a class="btn btn-ghost btn-sm" href="<%= url('/panel/my/invoices/' + inv.id + '/print') %>" target="_blank"><%- icon('printer', 'icon-sm') %>چاپ</a></div>
+    </div>
+    <div class="card-body">
+      <div class="kv-grid mb-3">
+        <div class="kv-item"><span>مبلغ کل</span><b><%= money(inv.total, true) %></b></div>
+        <% if (Number(inv.discount)) { %><div class="kv-item"><span>تخفیف</span><b class="text-success"><%= money(inv.discount, true) %></b></div><% } %>
+        <div class="kv-item"><span>پرداخت‌شده</span><b><%= money(inv.paid, true) %></b></div>
+        <div class="kv-item"><span>مانده</span><b class="<%= rem > 0 ? 'text-danger' : 'text-success' %>"><%= money(rem, true) %></b></div>
+      </div>
+      <div class="table-wrap"><table class="table table-sm">
+        <thead><tr><th>قسط</th><th>سررسید</th><th>مبلغ</th><th>پرداخت‌شده</th><th>وضعیت</th><th></th></tr></thead>
+        <tbody><% its.forEach(function (it) { const late = it.status !== 'paid' && it.due_date < today; %>
+          <tr<%= preInstallment === it.id ? ' style="background:var(--primary-bg)"' : '' %>>
+            <td><%= its.length === 1 ? 'کامل' : fa(it.seq) %></td>
+            <td><%= jdate(it.due_date) %><% if (late) { %> <span class="text-danger text-xs">(<%= fa(jalali.diffDays(it.due_date, today)) %> روز تأخیر)</span><% } %></td>
+            <td><%= money(it.amount) %></td><td><%= money(it.paid_amount) %></td>
+            <td><%- badge('installment', late && it.status !== 'paid' ? 'overdue' : it.status) %></td>
+            <td class="actions"><% if (it.status !== 'paid' && cardEnabled) { %><button class="btn btn-soft btn-sm" type="button" data-modal-open="#receipt-modal" data-fill='<%- JSON.stringify({ invoice_id: inv.id, installment_id: it.id, amount: money(it.amount - it.paid_amount) }) %>'>پرداخت</button><% } %></td>
+          </tr>
+        <% }) %></tbody>
+      </table></div>
+    </div>
+  </div>
+<% }) %>
+
+<% if (payments.length) { %>
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%- icon('history') %>سوابق پرداخت</h2></div>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>تاریخ</th><th>مبلغ</th><th>روش</th><th>پیگیری</th><th>وضعیت</th><th></th></tr></thead>
+      <tbody><% payments.forEach(function (py) { %><tr>
+        <td><%= jdate(py.paid_date) %></td><td class="fw-6"><%= money(py.amount, true) %></td><td class="text-sm"><%= PAYMENT_METHODS[py.method] || py.method %></td>
+        <td class="mono ltr text-right text-sm"><%= py.tracking_code ? fa(py.tracking_code) : '—' %></td>
+        <td><%- badge('payment', py.status) %><% if (py.status === 'rejected' && py.reject_reason) { %><div class="text-xs text-danger"><%= py.reject_reason %></div><% } %></td>
+        <td class="actions"><% if (py.receipt_path) { %><a class="btn btn-ghost btn-icon btn-sm" href="<%= url('/panel/payments/' + py.id + '/receipt') %>" target="_blank" title="رسید"><%- icon('image', 'icon-sm') %></a><% } %></td>
+      </tr><% }) %></tbody>
+    </table></div>
+  </div>
+<% } %>
+</div>
+
+<% if (cardEnabled && openInvoices.length) { %>
+<div class="modal-backdrop<%= Object.keys(formErrors).length ? '' : ' hidden' %>" id="receipt-modal" data-page-modal>
+  <form class="modal modal-lg" method="post" action="<%= mpAction('/panel/my/finance/receipt') %>" enctype="multipart/form-data">
+    <div class="modal-head"><span class="m-icon"><%- icon('credit-card') %></span><div><h3>ثبت رسید کارت به کارت</h3><p class="text-muted text-sm">پس از واریز، مشخصات تراکنش را وارد کنید.</p></div><button class="btn btn-ghost btn-icon btn-sm" type="button" data-modal-close>×</button></div>
+    <div class="modal-body">
+      <% if (cards.length) { %>
+      <div class="grid grid-2 mb-3">
+        <% cards.forEach(function (c) { %>
+        <div class="card" style="background:linear-gradient(135deg,var(--primary),#7c3aed);color:#fff;border:0">
+          <div class="card-body">
+            <div class="flex justify-between items-center"><b><%= c.bank || 'بانک' %></b><%- icon('credit-card') %></div>
+            <div class="ltr mono mt-3" style="font-size:18px;letter-spacing:2px;text-align:center"><%= fa(String(c.card_number).replace(/(\d{4})(?=\d)/g, '$1 ')) %></div>
+            <div class="flex justify-between items-center mt-3 text-sm"><span><%= c.holder || '' %></span><button class="btn btn-sm" type="button" style="background:rgba(255,255,255,.2);color:#fff;border:0" data-copy="<%= c.card_number %>"><%- icon('copy', 'icon-sm') %>کپی</button></div>
+            <% if (c.sheba) { %><div class="ltr text-xs mt-2" style="opacity:.85"><%= c.sheba %></div><% } %>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+      <% } %>
+      <% if (s('finance.card_instructions')) { %><div class="alert alert-info"><%- icon('info') %><div><%= s('finance.card_instructions') %></div></div><% } %>
+      <div class="form-grid">
+        <div class="field col-6"><label class="label">فاکتور<span class="req">*</span></label>
+          <select class="input" name="invoice_id" required><% openInvoices.forEach(function (i) { %><option value="<%= i.id %>"<%= preInvoice === i.id ? ' selected' : '' %>><%= i.title || i.class_title || i.invoice_no %> (مانده <%= money(i.total - i.paid, true) %>)</option><% }) %></select>
+        </div>
+        <div class="field col-6"><label class="label">قسط</label>
+          <select class="input" name="installment_id"><option value="">به ترتیب سررسید</option><% open.forEach(function (it) { %><option value="<%= it.id %>"<%= preInstallment === it.id ? ' selected' : '' %>>قسط <%= fa(it.seq) %> - <%= jdate(it.due_date) %> (<%= money(it.amount - it.paid_amount, true) %>)</option><% }) %></select>
+        </div>
+        <%- include('partials/field', { name: 'amount', label: 'مبلغ واریزی', type: 'money', col: 6, required: true }) %>
+        <%- include('partials/field', { name: 'paid_date', label: 'تاریخ واریز', type: 'date', col: 6, required: true, value: jalali.toJalali(today) }) %>
+        <%- include('partials/field', { name: 'tracking_code', label: 'شماره پیگیری / مرجع', col: 6, required: true, ltr: true, attrs: 'data-en-digits' }) %>
+        <%- include('partials/field', { name: 'payer_card', label: '۴ رقم آخر کارت واریزکننده', col: 6, ltr: true, attrs: 'data-en-digits maxlength="19" inputmode="numeric"' }) %>
+        <% if (cards.length > 1) { %><%- include('partials/field', { name: 'dest_account', label: 'واریز به', col: 6, type: 'select', empty: false, options: cards.map(function (c) { return { value: (c.bank || '') + ' ' + c.card_number, label: (c.bank || '') + ' - ' + c.card_number.slice(-4) }; }) }) %><% } %>
+        <%- include('partials/field', { name: 'payer_name', label: 'نام واریزکننده', col: 6 }) %>
+        <div class="field col-12"><label class="label">تصویر رسید<% if (receiptRequired) { %><span class="req">*</span><% } %></label><input class="input input-file" type="file" name="receipt" accept="image/*,application/pdf"<%= receiptRequired ? ' required' : '' %> data-preview="#receipt-preview"><img id="receipt-preview" class="hidden mt-2" style="max-height:160px;border-radius:8px" alt=""><span class="help">JPG، PNG، WEBP یا PDF حداکثر ۵ مگابایت</span></div>
+        <%- include('partials/field', { name: 'note', label: 'توضیحات', type: 'textarea', col: 12, rows: 2 }) %>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" type="button" data-modal-close>انصراف</button><button class="btn btn-primary" type="submit"><%- icon('send', 'icon-sm') %>ثبت رسید</button></div>
+  </form>
+</div>
+<% } %>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fa" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>نصب با موفقیت انجام شد</title>
+<link rel="stylesheet" href="<%= asset('css/app.css') %>">
+<script type="application/json" id="app-config"><%- json({ icons: url('/public/img/icons.svg'), faDigits: true }) %></script>
+</head>
+<body>
+<div class="container container-sm" style="padding-top:48px">
+  <div class="card verify-card">
+    <div class="verify-icon ok"><%- icon('check-circle-2') %></div>
+    <h1 style="font-size:24px">نصب با موفقیت انجام شد!</h1>
+    <p class="text-muted">سامانه آماده استفاده است. با نام کاربری <b class="ltr"><%= username %></b> وارد شوید.</p>
+    <ul class="list text-right mb-4" style="border:1px solid var(--border);border-radius:var(--radius-sm)">
+      <% steps.forEach(function (s) { %><li class="list-item"><span class="text-success"><%- icon('check', 'icon-sm') %></span><span><%= s %></span></li><% }) %>
+    </ul>
+    <div class="alert alert-info text-right"><%- icon('clock') %><div>
+      <b>تنظیم زمان‌بند (اختیاری اما پیشنهادی):</b> برای ارسال خودکار یادآوری اقساط و جلسات، در cPanel بخش «Cron Jobs» یک کار با فاصله هر ۱۵ دقیقه و دستور زیر بسازید:
+      <div class="mono mt-2" style="background:var(--surface);padding:8px 10px;border-radius:8px;word-break:break-all">wget -q -O /dev/null "<%= cronUrl %>"</div>
+      <button class="btn btn-sm mt-2" type="button" data-copy='wget -q -O /dev/null "<%= cronUrl %>"'><%- icon('copy', 'icon-sm') %>کپی دستور</button>
+    </div></div>
+    <a class="btn btn-primary btn-lg" href="<%= loginUrl %>"><%- icon('log-out', 'icon-sm') %>ورود به پنل مدیریت</a>
+  </div>
+</div>
+<script src="<%= asset('js/app.js') %>" defer></script>
+</body>
+</html>

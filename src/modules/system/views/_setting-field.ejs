@@ -1,0 +1,74 @@
+<%
+  const f = field; const val = values[f.key] !== undefined ? values[f.key] : f.default;
+  const id = 'set_' + String(f.key || '').replace(/[^\w]/g, '_');
+  const colCls = 'col-' + (f.col || 12);
+%>
+<% if (f.type === 'heading') { %>
+  <div class="col-12 mt-3"><div class="form-section"><%- icon(f.icon || 'chevron-left', 'icon-sm') %><%= f.label %></div><% if (f.help) { %><p class="help mt-2"><%= f.help %></p><% } %></div>
+<% } else if (f.type === 'toggle') { %>
+  <div class="field <%= colCls %>" style="justify-content:center">
+    <label class="switch"><input type="checkbox" name="<%= f.key %>" value="1"<%= val ? ' checked' : '' %><%= f.readonly ? ' disabled' : '' %>><span class="track"></span><%= f.label %></label>
+    <% if (f.help) { %><span class="help"><%= f.help %></span><% } %>
+  </div>
+<% } else if (f.type === 'repeater') { const rows = Array.isArray(val) ? val : []; const rid = 'rep_' + id; %>
+  <div class="field col-12">
+    <label class="label"><%= f.label %></label>
+    <div id="<%= rid %>" data-repeater="<%= f.key %>" data-template="tpl_<%= rid %>" data-max="<%= f.max || 30 %>">
+      <div data-repeater-list class="stack" style="gap:8px">
+        <% rows.forEach(function (row) { %>
+        <div class="flex gap-2 items-center wrap" data-repeater-item style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px">
+          <span class="chip" data-index></span>
+          <% f.fields.forEach(function (sf) { %><% if (sf.type === 'toggle') { %><label class="check"><input type="checkbox" data-name="<%= f.key %>[__i__][<%= sf.key %>]" value="1"<%= row[sf.key] ? ' checked' : '' %>> <%= sf.label %></label><% } else { %><input class="input<%= sf.ltr ? ' ltr' : '' %> grow" style="min-width:120px;flex-basis:120px" data-name="<%= f.key %>[__i__][<%= sf.key %>]" value="<%= row[sf.key] || '' %>" placeholder="<%= sf.label %>"><% } %><% }) %>
+          <button class="btn btn-ghost btn-icon btn-sm text-danger" type="button" data-repeater-remove title="حذف"><%- icon('x', 'icon-sm') %></button>
+        </div>
+        <% }) %>
+      </div>
+      <button class="btn btn-soft btn-sm mt-3" type="button" data-repeater-add="<%= rid %>"><%- icon('plus', 'icon-sm') %>افزودن ردیف</button>
+    </div>
+    <template id="tpl_<%= rid %>"><div class="flex gap-2 items-center wrap" data-repeater-item style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px"><span class="chip" data-index></span><% f.fields.forEach(function (sf) { %><% if (sf.type === 'toggle') { %><label class="check"><input type="checkbox" data-name="<%= f.key %>[__i__][<%= sf.key %>]" value="1" checked> <%= sf.label %></label><% } else { %><input class="input<%= sf.ltr ? ' ltr' : '' %> grow" style="min-width:120px;flex-basis:120px" data-name="<%= f.key %>[__i__][<%= sf.key %>]" placeholder="<%= sf.label %>"><% } %><% }) %><button class="btn btn-ghost btn-icon btn-sm text-danger" type="button" data-repeater-remove title="حذف">×</button></div></template>
+    <% if (f.help) { %><span class="help"><%= f.help %></span><% } %>
+  </div>
+<% } else if (f.type === 'cron') { const base = (values['system.base_url'] || '').replace(/\/$/, '') || '[آدرس سامانه]'; const cronUrl = base + url('/cron/' + (val || '')); %>
+  <div class="field col-12">
+    <label class="label"><%= f.label %></label>
+    <div class="input-group"><input class="input ltr mono" readonly value="<%= val %>"><button class="btn btn-soft" type="submit" formaction="<%= url('/panel/settings/system/cron-key') %>" formnovalidate data-confirm="کلید جدید ساخته شود؟ دستور Cron قبلی از کار می‌افتد." data-confirm-danger="false"><%- icon('refresh-cw', 'icon-sm') %>کلید جدید</button></div>
+    <div class="alert alert-info mt-3 mb-0"><%- icon('info') %><div>
+      <b>راهنمای Cron Job در سی‌پنل:</b> در cPanel بخش <b>Cron Jobs</b> یک وظیفه با فاصله «هر ۵ دقیقه» (<span class="mono ltr d-inline">*/5 * * * *</span>) و دستور زیر بسازید:
+      <div class="flex gap-2 items-center mt-2"><code class="ltr d-block grow mono" style="background:var(--surface);padding:8px 10px;border-radius:6px;overflow:auto;white-space:nowrap">wget -q -O /dev/null "<%= cronUrl %>"</code><button class="btn btn-ghost btn-icon btn-sm" type="button" data-copy='wget -q -O /dev/null "<%= cronUrl %>"' title="کپی"><%- icon('copy', 'icon-sm') %></button></div>
+    </div></div>
+  </div>
+<% } else if (f.type === 'image') { %>
+  <div class="field <%= colCls %>">
+    <label class="label"><%= f.label %></label>
+    <div class="flex gap-3 items-center">
+      <div style="width:64px;height:64px;border-radius:12px;border:1px dashed var(--border);display:grid;place-items:center;overflow:hidden;background:var(--surface-2);flex-shrink:0"><img id="prev_<%= id %>"<%- val ? ' src="' + esc(media(val)) + '"' : '' %> alt="" class="<%= val ? '' : 'hidden' %>" style="max-width:100%;max-height:100%"><% if (!val) { %><%- icon('image', 'text-muted') %><% } %></div>
+      <div class="grow"><input class="input input-file" type="file" name="<%= f.key %>" accept="image/*" data-preview="prev_<%= id %>"><% if (val) { %><label class="check mt-2 text-sm"><input type="checkbox" name="<%= f.key %>__remove" value="1"> حذف تصویر فعلی</label><% } %></div>
+    </div>
+    <% if (f.help) { %><span class="help"><%= f.help %></span><% } %>
+  </div>
+<% } else { %>
+  <div class="field <%= colCls %>">
+    <label class="label" for="<%= id %>"><%= f.label %><% if (f.required) { %><span class="req">*</span><% } %></label>
+    <% if (f.type === 'textarea') { %>
+      <textarea class="input<%= f.ltr ? ' ltr' : '' %>" id="<%= id %>" name="<%= f.key %>" rows="<%= f.rows || 3 %>"<%= f.readonly ? ' readonly' : '' %><%= f.tokens ? ' data-token-target' : '' %>><%= val || '' %></textarea>
+    <% } else if (f.type === 'select') { %>
+      <select class="input" id="<%= id %>" name="<%= f.key %>"><% Object.keys(f.options || {}).forEach(function (k) { %><option value="<%= k %>"<%= String(val) === String(k) ? ' selected' : '' %>><%= f.options[k] %></option><% }) %></select>
+    <% } else if (f.type === 'multiselect') { const arr = [].concat(val || []).map(String); %>
+      <div class="options-grid"><% Object.keys(f.options || {}).forEach(function (k) { %><label class="check-card"><input type="checkbox" name="<%= f.key %>" value="<%= k %>"<%= arr.indexOf(String(k)) !== -1 ? ' checked' : '' %>><span><b><%= f.options[k] %></b></span></label><% }) %></div>
+    <% } else if (f.type === 'tags') { %>
+      <input class="input" id="<%= id %>" name="<%= f.key %>" value="<%= [].concat(val || []).join('، ') %>" placeholder="مقادیر را با کاما جدا کنید">
+    <% } else if (f.type === 'color') { %>
+      <div class="flex gap-2"><input class="input input-color" type="color" value="<%= val || '#4f46e5' %>" data-sync="<%= id %>"><input class="input ltr mono" id="<%= id %>" name="<%= f.key %>" value="<%= val || '' %>" maxlength="7"></div>
+    <% } else if (f.type === 'password') { %>
+      <input class="input ltr" type="password" id="<%= id %>" name="<%= f.key %>" autocomplete="new-password" placeholder="<%= val ? '•••••••• (برای تغییر، مقدار جدید وارد کنید)' : '' %>">
+    <% } else if (f.type === 'number') { %>
+      <input class="input ltr" type="number" id="<%= id %>" name="<%= f.key %>" value="<%= val %>"<%= f.min !== undefined ? ' min="' + f.min + '"' : '' %><%= f.max !== undefined ? ' max="' + f.max + '"' : '' %><%= f.readonly ? ' readonly' : '' %>>
+    <% } else if (f.type === 'time') { %>
+      <input class="input ltr text-center" type="time" id="<%= id %>" name="<%= f.key %>" value="<%= val || '' %>">
+    <% } else { %>
+      <input class="input<%= f.ltr || ['email', 'url'].includes(f.type) ? ' ltr' : '' %>" type="<%= ['email', 'url'].includes(f.type) ? f.type : 'text' %>" id="<%= id %>" name="<%= f.key %>" value="<%= val === null || val === undefined ? '' : val %>"<%= f.required ? ' required' : '' %><%= f.readonly ? ' readonly' : '' %><%= f.placeholder ? ' placeholder="' + f.placeholder + '"' : '' %>>
+    <% } %>
+    <% if (f.help) { %><span class="help"><%= f.help %></span><% } %>
+    <% if (f.tokens) { %><div class="chips mt-2"><% f.tokens.forEach(function (t) { %><button class="chip" type="button" data-insert-token="<%= t %>">{<%= t %>}</button><% }) %></div><% } %>
+  </div>
+<% } %>

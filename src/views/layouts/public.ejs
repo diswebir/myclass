@@ -1,0 +1,32 @@
+<!doctype html>
+<% const _inst = s('general.institute_name', 'آموزشگاه'); const _logo = s('general.logo'); %>
+<html lang="fa" dir="rtl" data-theme="<%= s('appearance.default_theme', 'light') === 'dark' ? 'dark' : 'light' %>" data-radius="<%= s('appearance.radius', 'md') %>">
+<head>
+<% var robots = 'index, follow'; %>
+<%- include('../partials/head', { robots }) %>
+</head>
+<body>
+<header class="public-top">
+  <div class="wrap">
+    <a class="flex items-center gap-2" href="<%= url('/') %>">
+      <span class="brand-logo"><% if (_logo) { %><img src="<%= media(_logo) %>" alt=""><% } else { %><%= initials(_inst) %><% } %></span>
+      <span><span class="brand-name d-block"><%= _inst %></span><span class="brand-sub"><%= s('general.slogan', '') %></span></span>
+    </a>
+    <nav>
+      <% if (s('appearance.home_enabled', true)) { %><a href="<%= url('/') %>" class="<%= path === '/' ? 'active' : '' %>">دوره‌ها</a><% } %>
+      <% if (moduleOn('preregistration') && s('prereg.enabled', true)) { %><a href="<%= url('/register') %>" class="<%= path.startsWith('/register') ? 'active' : '' %>">پیش‌ثبت‌نام</a><a href="<%= url('/track') %>" class="<%= path === '/track' ? 'active' : '' %>">پیگیری</a><% } %>
+      <% if (moduleOn('certificates') && s('certificates.verify_enabled', true)) { %><a href="<%= url('/verify') %>" class="<%= path.startsWith('/verify') ? 'active' : '' %>">استعلام مدرک</a><% } %>
+      <% if (locals.user) { %><a class="btn btn-primary btn-sm" href="<%= url('/panel') %>"><%- icon('layout-dashboard', 'icon-sm') %>ورود به پنل</a><% } else { %><a class="btn btn-primary btn-sm" href="<%= url('/login') %>"><%- icon('user', 'icon-sm') %>ورود</a><% } %>
+      <button class="btn btn-ghost btn-icon btn-sm" type="button" data-theme-toggle aria-label="حالت تیره"><%- icon('moon', 'icon-sm') %></button>
+    </nav>
+  </div>
+</header>
+<%- body %>
+<footer class="public-footer">
+  <div><b><%= _inst %></b><% if (s('general.phone')) { %> · تلفن: <span class="ltr"><%= fa(s('general.phone')) %></span><% } %></div>
+  <% if (s('general.address')) { %><div class="mt-2"><%= s('general.address') %></div><% } %>
+  <div class="mt-2"><%= s('appearance.footer_text') || ('© ' + fa(jalali.toJalaliParts(jalali.today()).jy) + ' - همه حقوق محفوظ است.') %></div>
+</footer>
+<%- include('../partials/scripts') %>
+</body>
+</html>

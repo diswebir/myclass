@@ -1,0 +1,36 @@
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('tags') %>دسته‌بندی کلاس‌ها</h1><p class="page-sub">گروه‌بندی کلاس‌ها برای فیلتر و نمایش در صفحه عمومی</p></div>
+  <div class="page-actions"><a class="btn btn-ghost" href="<%= url('/panel/classes') %>"><%- icon('arrow-right', 'icon-sm') %>کلاس‌ها</a></div>
+</div>
+<div class="grid grid-side">
+  <div class="card">
+    <% if (!categories.length) { %><%- include('partials/empty', { emptyIcon: 'tags', emptyTitle: 'دسته‌بندی‌ای تعریف نشده است' }) %><% } else { %>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>نام</th><th>رنگ</th><th>ترتیب</th><th>کلاس‌ها</th><th></th></tr></thead>
+      <tbody>
+      <% categories.forEach(function (c) { %>
+        <tr>
+          <td><form method="post" action="<%= url('/panel/categories/' + c.id) %>" id="cat-<%= c.id %>"><%- include('partials/csrf') %></form><input class="input input-sm" name="name" value="<%= c.name %>" form="cat-<%= c.id %>"></td>
+          <td><input class="input input-color" type="color" name="color" value="<%= c.color || '#6366f1' %>" form="cat-<%= c.id %>"></td>
+          <td><input class="input input-sm ltr" style="width:70px" name="sort" value="<%= c.sort || 0 %>" form="cat-<%= c.id %>"></td>
+          <td><a href="<%= url('/panel/classes?category=' + c.id) %>"><%= fa(counts[c.id] || 0) %> کلاس</a></td>
+          <td class="actions">
+            <button class="btn btn-soft btn-sm" type="submit" form="cat-<%= c.id %>"><%- icon('save', 'icon-sm') %></button>
+            <form method="post" action="<%= url('/panel/categories/' + c.id + '/delete') %>" class="d-inline" data-confirm="دسته‌بندی «<%= c.name %>» حذف شود؟ کلاس‌های آن بدون دسته می‌شوند."><%- include('partials/csrf') %><button class="btn btn-ghost btn-sm btn-icon text-danger" type="submit"><%- icon('trash-2', 'icon-sm') %></button></form>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table></div><% } %>
+  </div>
+  <form class="card" method="post" action="<%= url('/panel/categories') %>">
+    <%- include('partials/csrf') %>
+    <div class="card-head"><h2 class="card-title"><%- icon('plus') %>دسته‌بندی جدید</h2></div>
+    <div class="card-body"><div class="form-grid">
+      <div class="field"><label class="label">نام <span class="req">*</span></label><input class="input" name="name" required></div>
+      <div class="field"><label class="label">رنگ</label><input class="input input-color" type="color" name="color" value="#6366f1"></div>
+      <div class="field"><label class="label">ترتیب نمایش</label><input class="input ltr" name="sort" value="0"></div>
+    </div></div>
+    <div class="card-foot"><button class="btn btn-primary btn-block" type="submit">افزودن</button></div>
+  </form>
+</div>

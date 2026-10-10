@@ -1,0 +1,69 @@
+<% const d = design; const isEdit = !!item; const sigs = (d.signers || []).map(function (x) { return { title: x.title || '', name: x.name || '', source: x.use_teacher ? 'teacher' : x.use_manager ? 'manager' : 'custom' }; }); %>
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('palette') %><%= title %></h1><p class="page-sub">متن مدرک با متغیرها به صورت خودکار برای هر دانشجو تکمیل می‌شود.</p></div>
+  <div class="page-actions">
+    <% if (isEdit) { %><a class="btn" href="<%= url('/panel/certificate-templates/' + item.id + '/preview') %>" target="_blank"><%- icon('eye', 'icon-sm') %>پیش‌نمایش</a><% } %>
+    <a class="btn btn-ghost" href="<%= url('/panel/certificate-templates') %>"><%- icon('arrow-right', 'icon-sm') %>بازگشت</a>
+  </div>
+</div>
+<form method="post" action="<%= mpAction(isEdit ? '/panel/certificate-templates/' + item.id : '/panel/certificate-templates') %>" enctype="multipart/form-data">
+  <div class="grid grid-side">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('file-text') %>متن مدرک</h2></div>
+        <div class="card-body"><div class="form-grid">
+          <div class="field col-6"><label class="label">عنوان مدرک</label><input class="input" name="title" value="<%= d.title %>"></div>
+          <div class="field col-6"><label class="label">زیرعنوان</label><input class="input" name="subtitle" value="<%= d.subtitle %>"></div>
+          <div class="field col-12"><label class="label">متن اصلی</label><textarea class="input" name="body" id="cert-body" rows="5" data-token-target><%= d.body %></textarea>
+            <div class="chips mt-2"><% Object.keys(variables).forEach(function (k) { %><button class="chip" type="button" data-insert-token="<%= k %>" title="{<%= k %>}"><%= variables[k] %></button><% }) %></div>
+            <span class="help">برای درج متغیر روی آن کلیک کنید.</span>
+          </div>
+          <div class="field col-12"><label class="label">متن پاورقی</label><input class="input" name="footer" value="<%= d.footer %>"></div>
+        </div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h2 class="card-title"><%- icon('pen-tool') %>امضاکنندگان</h2><p class="card-sub">حداکثر ۳ امضا. نام استاد/مدیر می‌تواند به صورت خودکار درج شود.</p></div></div>
+        <div class="card-body">
+          <div id="signers" data-repeater="signers" data-template="tpl-signer" data-max="3">
+            <div data-repeater-list class="stack" style="gap:8px">
+              <% sigs.forEach(function (sg) { %>
+              <div class="flex gap-2 items-center wrap" data-repeater-item>
+                <input class="input" data-name="signers[__i__][title]" value="<%= sg.title %>" placeholder="سمت (مثلاً مدرس دوره)" style="flex:1;min-width:140px">
+                <select class="input" data-name="signers[__i__][source]" style="width:170px"><option value="custom"<%= sg.source === 'custom' ? ' selected' : '' %>>نام دلخواه</option><option value="teacher"<%= sg.source === 'teacher' ? ' selected' : '' %>>نام استاد کلاس</option><option value="manager"<%= sg.source === 'manager' ? ' selected' : '' %>>نام مدیر موسسه</option></select>
+                <input class="input" data-name="signers[__i__][name]" value="<%= sg.name %>" placeholder="نام (در صورت دلخواه)" style="flex:1;min-width:140px">
+                <button class="btn btn-ghost btn-icon btn-sm text-danger" type="button" data-repeater-remove><%- icon('x', 'icon-sm') %></button>
+              </div>
+              <% }) %>
+            </div>
+            <button class="btn btn-soft btn-sm mt-3" type="button" data-repeater-add="signers"><%- icon('plus', 'icon-sm') %>افزودن امضا</button>
+          </div>
+          <template id="tpl-signer"><div class="flex gap-2 items-center wrap" data-repeater-item><input class="input" data-name="signers[__i__][title]" placeholder="سمت" style="flex:1;min-width:140px"><select class="input" data-name="signers[__i__][source]" style="width:170px"><option value="custom">نام دلخواه</option><option value="teacher">نام استاد کلاس</option><option value="manager">نام مدیر موسسه</option></select><input class="input" data-name="signers[__i__][name]" placeholder="نام" style="flex:1;min-width:140px"><button class="btn btn-ghost btn-icon btn-sm text-danger" type="button" data-repeater-remove>×</button></div></template>
+        </div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('palette') %>طراحی</h2></div>
+        <div class="card-body"><div class="form-grid">
+          <div class="field"><label class="label">نام قالب</label><input class="input" name="name" value="<%= item ? item.name : '' %>" required></div>
+          <div class="field col-6"><label class="label">تم</label><select class="input" name="theme"><% [['classic', 'کلاسیک'], ['modern', 'مدرن'], ['minimal', 'مینیمال'], ['elegant', 'فاخر']].forEach(function (o) { %><option value="<%= o[0] %>"<%= d.theme === o[0] ? ' selected' : '' %>><%= o[1] %></option><% }) %></select></div>
+          <div class="field col-6"><label class="label">جهت</label><select class="input" name="orientation"><option value="landscape"<%= d.orientation !== 'portrait' ? ' selected' : '' %>>افقی</option><option value="portrait"<%= d.orientation === 'portrait' ? ' selected' : '' %>>عمودی</option></select></div>
+          <div class="field col-6"><label class="label">قاب</label><select class="input" name="border"><% [['double', 'دوخطی'], ['single', 'ساده'], ['ornate', 'تزئینی'], ['none', 'بدون قاب']].forEach(function (o) { %><option value="<%= o[0] %>"<%= d.border === o[0] ? ' selected' : '' %>><%= o[1] %></option><% }) %></select></div>
+          <div class="field col-6"></div>
+          <div class="field col-6"><label class="label">رنگ اصلی</label><div class="flex gap-2"><input class="input input-color" type="color" value="<%= d.primary_color %>" data-sync="c-primary"><input class="input ltr" id="c-primary" name="primary_color" value="<%= d.primary_color %>"></div></div>
+          <div class="field col-6"><label class="label">رنگ تأکید</label><div class="flex gap-2"><input class="input input-color" type="color" value="<%= d.accent_color %>" data-sync="c-accent"><input class="input ltr" id="c-accent" name="accent_color" value="<%= d.accent_color %>"></div></div>
+          <div class="field"><label class="label">تصویر پس‌زمینه (اختیاری)</label><input class="input input-file" type="file" name="bg_image" accept="image/png,image/jpeg,image/webp" data-preview="bg-prev">
+            <img id="bg-prev" class="<%= d.bg_image ? '' : 'hidden' %> mt-2" src="<%= d.bg_image ? media(d.bg_image) : '' %>" alt="" style="max-width:100%;border-radius:8px">
+            <% if (d.bg_image) { %><label class="check mt-2 text-sm"><input type="checkbox" name="bg_remove" value="1"> حذف تصویر فعلی</label><% } %>
+            <span class="help">ابعاد پیشنهادی A4 (۳۵۰۸×۲۴۸۰ پیکسل)، حداکثر ۴ مگابایت</span>
+          </div>
+          <label class="switch"><input type="checkbox" name="show_logo" value="1"<%= d.show_logo ? ' checked' : '' %>><span class="track"></span>نمایش لوگوی موسسه</label>
+          <label class="switch"><input type="checkbox" name="show_qr" value="1"<%= d.show_qr ? ' checked' : '' %>><span class="track"></span>کد QR استعلام</label>
+          <label class="switch"><input type="checkbox" name="show_serial" value="1"<%= d.show_serial ? ' checked' : '' %>><span class="track"></span>نمایش شماره سریال</label>
+          <label class="switch"><input type="checkbox" name="is_default" value="1"<%= item && item.is_default ? ' checked' : '' %>><span class="track"></span>قالب پیش‌فرض</label>
+        </div></div>
+        <div class="card-foot"><button class="btn btn-primary btn-block" type="submit"><%- icon('save', 'icon-sm') %>ذخیره قالب</button></div>
+      </div>
+    </div>
+  </div>
+</form>

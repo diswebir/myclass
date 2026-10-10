@@ -1,0 +1,183 @@
+<% const remain = Number(inv.total) - Number(inv.paid); const canceled = inv.status === 'canceled'; const p = pct(Number(inv.paid), Number(inv.total)); const today = jalali.today();
+   const nextInst = installments.find(function (x) { return x.status !== 'paid'; }); %>
+<div class="page-head">
+  <div>
+    <h1 class="page-title"><%- icon('file-text') %>فاکتور <span class="ltr d-inline"><%= inv.invoice_no %></span> <%- badge('invoice', inv.status) %></h1>
+    <p class="page-sub"><%= inv.title %> · صادر شده در <%= jdate(inv.issue_date) %></p>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="<%= url('/panel/invoices/' + inv.id + '/print') %>" target="_blank"><%- icon('printer', 'icon-sm') %>چاپ</a>
+    <% if (!canceled && can('finance.payments') && remain > 0) { %><button class="btn btn-primary" type="button" data-modal-open="#pay-modal" data-fill="<%= JSON.stringify({ amount: nextInst ? num(Number(nextInst.amount) - Number(nextInst.paid_amount)) : num(remain), installment_id: '' }) %>"><%- icon('plus', 'icon-sm') %>ثبت پرداخت</button><% } %>
+    <% if (!canceled && (can('finance.invoices') || can('finance.delete'))) { %>
+    <div class="dropdown">
+      <button class="btn btn-icon" type="button" data-dropdown><%- icon('more-vertical', 'icon-sm') %></button>
+      <div class="dropdown-menu">
+        <% if (can('finance.invoices')) { %>
+        <button class="dropdown-item" type="button" data-modal-open="#discount-modal"><%- icon('percent') %>اعمال تخفیف</button>
+        <button class="dropdown-item" type="button" data-modal-open="#schedule-modal"><%- icon('calendar-range') %>ویرایش جدول اقساط</button>
+        <% } %>
+        <% if (can('finance.delete')) { %>
+        <div class="dropdown-divider"></div>
+        <form method="post" action="<%= url('/panel/invoices/' + inv.id + '/cancel') %>" data-confirm="فاکتور باطل شود؟ مبالغ آن دیگر در مطالبات محاسبه نمی‌شود." data-confirm-input="دلیل ابطال" data-confirm-name="reason"><%- include('partials/csrf') %><button class="dropdown-item danger" type="submit"><%- icon('ban') %>ابطال فاکتور</button></form>
+        <% if (!payments.length) { %><form method="post" action="<%= url('/panel/invoices/' + inv.id + '/delete') %>" data-confirm="فاکتور برای همیشه حذف شود؟"><%- include('partials/csrf') %><button class="dropdown-item danger" type="submit"><%- icon('trash-2') %>حذف فاکتور</button></form><% } %>
+        <% } %>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="grid grid-side">
+  <div class="stack">
+    <div class="card">
+      <div class="card-body">
+        <div class="grid grid-4">
+          <div class="kv-item"><span>مبلغ کل</span><b><%= money(inv.amount) %></b></div>
+          <div class="kv-item"><span>تخفیف</span><b><%= money(inv.discount) %></b></div>
+          <div class="kv-item"><span>پرداخت شده</span><b class="text-success"><%= money(inv.paid) %></b></div>
+          <div class="kv-item"><span>مانده</span><b class="<%= remain > 0 ? 'text-danger' : 'text-success' %>"><%= remain > 0 ? money(remain) : 'تسویه شده' %></b></div>
+        </div>
+        <div class="flex justify-between text-xs text-muted mt-4 mb-1"><span>پیشرفت پرداخت</span><span><%= fa(p) %>٪</span></div>
+        <div class="progress <%= p >= 100 ? 'success' : 'warning' %>"><span style="width:<%= p %>%"></span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2 class="card-title"><%- icon('calendar-range') %><%= inv.payment_type === 'installment' ? 'جدول اقساط' : 'سررسید پرداخت' %></h2></div>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>#</th><th>سررسید</th><th>مبلغ</th><th>پرداخت شده</th><th>وضعیت</th><th></th></tr></thead>
+        <tbody>
+        <% installments.forEach(function (it) { const rem = Number(it.amount) - Number(it.paid_amount); const late = it.status !== 'paid' && String(it.due_date).slice(0, 10) < today; %>
+          <tr>
+            <td class="fw-6"><%= fa(it.seq) %></td>
+            <td class="text-sm"><%= jdate(it.due_date) %><div class="text-xs <%= late ? 'text-danger' : 'text-muted' %>"><%= it.status === 'paid' ? (it.paid_at ? 'پرداخت: ' + jdate(it.paid_at) : '') : rel(it.due_date) %></div></td>
+            <td><%= money(it.amount) %></td>
+            <td class="text-success"><%= num(it.paid_amount) %></td>
+            <td><%- badge('installment', late && it.status !== 'overdue' ? 'overdue' : it.status) %></td>
+            <td class="actions">
+              <% if (!canceled && rem > 0 && can('finance.payments')) { %><button class="btn btn-soft btn-sm" type="button" data-modal-open="#pay-modal" data-fill="<%= JSON.stringify({ amount: num(rem), installment_id: String(it.id) }) %>">پرداخت</button><% } %>
+              <% if (!canceled && rem > 0 && moduleOn('sms')) { %><form method="post" action="<%= url('/panel/installments/' + it.id + '/remind') %>" class="d-inline"><%- include('partials/csrf') %><button class="btn btn-ghost btn-icon btn-sm" type="submit" title="ارسال پیامک یادآوری"><%- icon('bell', 'icon-sm') %></button></form><% } %>
+            </td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2 class="card-title"><%- icon('receipt') %>پرداخت‌ها</h2></div>
+      <% if (!payments.length) { %><%- include('partials/empty', { emptyIcon: 'receipt', emptyTitle: 'پرداختی ثبت نشده است' }) %><% } else { %>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>تاریخ</th><th>مبلغ</th><th>روش</th><th>جزئیات</th><th>وضعیت</th><th></th></tr></thead>
+        <tbody>
+        <% payments.forEach(function (py) { %>
+          <tr>
+            <td class="text-sm"><%= jdate(py.paid_date) %></td>
+            <td class="fw-6"><%= money(py.amount) %></td>
+            <td class="text-sm"><%= PAYMENT_METHODS[py.method] || py.method %></td>
+            <td class="text-xs text-muted">
+              <% if (py.tracking_code) { %>پیگیری: <span class="ltr d-inline"><%= fa(py.tracking_code) %></span><br><% } %>
+              <% if (py.payer_card) { %>کارت: <span class="ltr d-inline"><%= fa(py.payer_card) %></span><br><% } %>
+              <% if (py.note) { %><%= py.note %><br><% } %>
+              <% if (py.reject_reason) { %><span class="text-danger">دلیل رد: <%= py.reject_reason %></span><br><% } %>
+              <% if (py.reviewer_first) { %>بررسی: <%= py.reviewer_first %> <%= py.reviewer_last %><% } %>
+            </td>
+            <td><%- badge('payment', py.status) %></td>
+            <td class="actions">
+              <% if (py.receipt_path) { %><a class="btn btn-ghost btn-icon btn-sm" href="<%= url('/panel/payments/' + py.id + '/receipt') %>" target="_blank" title="مشاهده رسید"><%- icon('image', 'icon-sm') %></a><% } %>
+              <% if (py.status === 'pending' && can('finance.review')) { %>
+                <form method="post" action="<%= url('/panel/payments/' + py.id + '/approve') %>" class="d-inline"><%- include('partials/csrf') %><button class="btn btn-soft btn-sm" type="submit"><%- icon('check', 'icon-sm') %>تأیید</button></form>
+                <form method="post" action="<%= url('/panel/payments/' + py.id + '/reject') %>" class="d-inline" data-confirm="این پرداخت رد شود؟" data-confirm-input="دلیل رد (برای دانشجو پیامک می‌شود)" data-confirm-name="reason"><%- include('partials/csrf') %><button class="btn btn-soft-danger btn-sm" type="submit">رد</button></form>
+              <% } %>
+              <% if (can('finance.delete')) { %><form method="post" action="<%= url('/panel/payments/' + py.id + '/delete') %>" class="d-inline" data-confirm="این پرداخت حذف شود؟ مانده فاکتور دوباره محاسبه می‌شود."><%- include('partials/csrf') %><button class="btn btn-ghost btn-icon btn-sm text-danger" type="submit" title="حذف"><%- icon('trash-2', 'icon-sm') %></button></form><% } %>
+            </td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table></div><% } %>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 class="card-title"><%- icon('user') %>پرداخت‌کننده</h2></div>
+      <div class="card-body">
+        <a class="person mb-3" href="<%= url('/panel/users/' + inv.user_id) %>"><span class="avatar"><%= initials(inv.first_name + ' ' + inv.last_name) %></span><span><span class="person-name"><%= inv.first_name %> <%= inv.last_name %></span><span class="person-sub ltr text-right"><%= fa(inv.mobile || '') %></span></span></a>
+        <dl class="kv">
+          <% if (inv.national_code) { %><dt>کد ملی</dt><dd><%= fa(inv.national_code) %></dd><% } %>
+          <% if (inv.class_title) { %><dt>کلاس</dt><dd><a href="<%= url('/panel/classes/' + inv.class_id) %>"><%= inv.class_title %></a></dd><% } %>
+          <dt>نوع پرداخت</dt><dd><%= inv.payment_type === 'installment' ? 'اقساطی (' + fa(installments.length) + ' قسط)' : 'نقدی' %></dd>
+          <% if (inv.due_date) { %><dt>سررسید نهایی</dt><dd><%= jdate(inv.due_date) %></dd><% } %>
+        </dl>
+        <% if (inv.notes) { %><div class="divider"></div><p class="text-sm text-2 mb-0" style="white-space:pre-line"><%= inv.notes %></p><% } %>
+      </div>
+    </div>
+    <% if (cards.length) { %>
+    <div class="card">
+      <div class="card-head"><h2 class="card-title"><%- icon('credit-card') %>حساب‌های واریز</h2></div>
+      <ul class="list">
+        <% cards.forEach(function (c) { %><li class="list-item"><span class="list-icon"><%- icon('credit-card', 'icon-sm') %></span><span class="grow"><span class="list-title ltr text-right"><%= fa(c.card_number) %></span><span class="list-sub"><%= c.bank %> · <%= c.holder %></span></span><button class="btn btn-ghost btn-icon btn-sm" type="button" data-copy="<%= c.card_number %>" title="کپی"><%- icon('copy', 'icon-sm') %></button></li><% }) %>
+      </ul>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<% if (!canceled && can('finance.payments')) { %>
+<div class="modal-backdrop hidden" id="pay-modal" data-page-modal>
+  <form class="modal modal-lg" method="post" action="<%= url('/panel/invoices/' + inv.id + '/payments') %>">
+    <%- include('partials/csrf') %>
+    <div class="modal-head"><div class="m-icon primary"><%- icon('banknote') %></div><h3>ثبت پرداخت</h3></div>
+    <div class="modal-body"><div class="form-grid">
+      <div class="field col-6"><label class="label">مبلغ <span class="req">*</span></label><div class="input-group"><input class="input ltr" name="amount" data-money required><span class="addon"><%= s('finance.currency', 'تومان') %></span></div></div>
+      <div class="field col-6"><label class="label">بابت</label><select class="input" name="installment_id"><option value="">تخصیص خودکار به اقساط (به ترتیب)</option><% installments.filter(function (x) { return x.status !== 'paid'; }).forEach(function (x) { %><option value="<%= x.id %>">قسط <%= fa(x.seq) %> — <%= jdate(x.due_date) %></option><% }) %></select></div>
+      <div class="field col-6"><label class="label">روش پرداخت</label><select class="input" name="method"><% Object.keys(PAYMENT_METHODS).forEach(function (k) { %><option value="<%= k %>"><%= PAYMENT_METHODS[k] %></option><% }) %></select></div>
+      <div class="field col-6"><label class="label">تاریخ پرداخت</label><input class="input ltr text-center" name="paid_date" data-jdp value="<%= jinput(today) %>"></div>
+      <div class="field col-6" data-show-when="method=card_to_card|pos|bank_transfer|online|cheque"><label class="label">کد پیگیری / شماره چک</label><input class="input ltr" name="tracking_code" data-en-digits></div>
+      <div class="field col-6" data-show-when="method=card_to_card"><label class="label">شماره کارت پرداخت‌کننده</label><input class="input ltr" name="payer_card" data-en-digits></div>
+      <% if (cards.length) { %><div class="field col-12" data-show-when="method=card_to_card|bank_transfer"><label class="label">واریز به حساب</label><select class="input" name="dest_account"><option value="">—</option><% cards.forEach(function (c) { %><option value="<%= c.bank %> - <%= c.card_number %>"><%= c.bank %> — <%= c.card_number %></option><% }) %></select></div><% } %>
+      <div class="field col-12"><label class="label">توضیحات</label><input class="input" name="note"></div>
+      <% if (moduleOn('sms')) { %><label class="switch col-12"><input type="checkbox" name="notify" value="1" checked><span class="track"></span>ارسال پیامک تأیید پرداخت</label><% } %>
+    </div></div>
+    <div class="modal-foot"><button class="btn btn-primary" type="submit">ثبت پرداخت</button><button class="btn btn-ghost" type="button" data-modal-close>انصراف</button></div>
+  </form>
+</div>
+<% } %>
+<% if (!canceled && can('finance.invoices')) { %>
+<div class="modal-backdrop hidden" id="discount-modal" data-page-modal>
+  <form class="modal" method="post" action="<%= url('/panel/invoices/' + inv.id + '/discount') %>">
+    <%- include('partials/csrf') %>
+    <div class="modal-head"><div class="m-icon primary"><%- icon('percent') %></div><h3>اعمال تخفیف</h3></div>
+    <div class="modal-body">
+      <p class="text-sm">مبلغ کل فاکتور: <b><%= money(inv.amount) %></b>. تخفیف از آخرین اقساط پرداخت‌نشده کسر می‌شود.</p>
+      <div class="field"><label class="label">مبلغ تخفیف (کل)</label><div class="input-group"><input class="input ltr" name="discount" data-money value="<%= inv.discount %>"><span class="addon"><%= s('finance.currency', 'تومان') %></span></div></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" type="submit">اعمال</button><button class="btn btn-ghost" type="button" data-modal-close>انصراف</button></div>
+  </form>
+</div>
+<div class="modal-backdrop hidden" id="schedule-modal" data-page-modal>
+  <form class="modal modal-lg" method="post" action="<%= url('/panel/invoices/' + inv.id + '/schedule') %>">
+    <%- include('partials/csrf') %>
+    <div class="modal-head"><div class="m-icon primary"><%- icon('calendar-range') %></div><h3>ویرایش جدول اقساط</h3></div>
+    <div class="modal-body">
+      <p class="text-sm">جمع اقساط باید برابر <b><%= money(inv.total) %></b> باشد. جمع فعلی: <b data-schedule-sum>—</b></p>
+      <div id="schedule" data-repeater="rows" data-template="tpl-inst" data-max="48">
+        <div data-repeater-list class="stack" style="gap:8px">
+          <% installments.forEach(function (it) { %>
+          <div class="flex gap-2 items-center" data-repeater-item>
+            <span class="chip" data-index></span>
+            <input type="hidden" data-name="rows[__i__][id]" value="<%= it.id %>">
+            <input class="input ltr" data-name="rows[__i__][amount]" data-money value="<%= it.amount %>" placeholder="مبلغ">
+            <input class="input ltr text-center" data-name="rows[__i__][due_date]" data-jdp value="<%= jinput(it.due_date) %>" style="max-width:140px">
+            <button class="btn btn-ghost btn-icon btn-sm text-danger" type="button" data-repeater-remove><%- icon('x', 'icon-sm') %></button>
+          </div>
+          <% }) %>
+        </div>
+        <button class="btn btn-soft btn-sm mt-3" type="button" data-repeater-add="schedule"><%- icon('plus', 'icon-sm') %>افزودن قسط</button>
+      </div>
+      <template id="tpl-inst"><div class="flex gap-2 items-center" data-repeater-item><span class="chip" data-index></span><input class="input ltr" data-name="rows[__i__][amount]" data-money placeholder="مبلغ"><input class="input ltr text-center" data-name="rows[__i__][due_date]" data-jdp style="max-width:140px"><button class="btn btn-ghost btn-icon btn-sm text-danger" type="button" data-repeater-remove>×</button></div></template>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" type="submit">ذخیره جدول اقساط</button><button class="btn btn-ghost" type="button" data-modal-close>انصراف</button></div>
+  </form>
+</div>
+<% } %>

@@ -1,0 +1,48 @@
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('receipt') %>پرداخت‌ها</h1><p class="page-sub">همه پرداخت‌های نقدی، کارت به کارت و اقساط</p></div>
+  <div class="page-actions"><% if (can('finance.reports')) { %><a class="btn" href="<%= url('/panel/payments/export') %><%= qs({ page: '' }) %>" data-no-loading><%- icon('download', 'icon-sm') %>خروجی اکسل</a><% } %></div>
+</div>
+<div class="tabs card mb-4" style="padding:0 12px">
+  <a class="tab<%= !query.status ? ' active' : '' %>" href="<%= qs({ status: '', page: '' }) || '?' %>">همه</a>
+  <a class="tab<%= query.status === 'pending' ? ' active' : '' %>" href="<%= qs({ status: 'pending', page: '' }) %>">در انتظار بررسی <% if (pendingCount) { %><span class="count" style="background:var(--warning-bg);color:var(--warning-fg)"><%= fa(pendingCount) %></span><% } %></a>
+  <a class="tab<%= query.status === 'approved' ? ' active' : '' %>" href="<%= qs({ status: 'approved', page: '' }) %>">تأیید شده</a>
+  <a class="tab<%= query.status === 'rejected' ? ' active' : '' %>" href="<%= qs({ status: 'rejected', page: '' }) %>">رد شده</a>
+</div>
+<div class="card">
+  <form class="filters" method="get">
+    <input type="hidden" name="status" value="<%= query.status || '' %>">
+    <div class="field grow"><label class="label">جستجو</label><div class="input-icon"><%- icon('search', 'icon-sm') %><input class="input" name="q" value="<%= query.q || '' %>" placeholder="نام، موبایل، شماره فاکتور یا کد پیگیری"></div></div>
+    <div class="field"><label class="label">روش</label><select class="input" name="method" data-autosubmit><option value="">همه</option><% METHODS.forEach(function (m) { %><option value="<%= m %>"<%= query.method === m ? ' selected' : '' %>><%= PAYMENT_METHODS[m] %></option><% }) %></select></div>
+    <div class="field"><label class="label">کلاس</label><select class="input" name="class" data-autosubmit><option value="">همه</option><% classes.forEach(function (c) { %><option value="<%= c.id %>"<%= String(query.class) === String(c.id) ? ' selected' : '' %>><%= c.title %></option><% }) %></select></div>
+    <div class="field"><label class="label">از</label><input class="input ltr text-center" name="from" value="<%= query.from || '' %>" data-jdp style="width:120px"></div>
+    <div class="field"><label class="label">تا</label><input class="input ltr text-center" name="to" value="<%= query.to || '' %>" data-jdp style="width:120px"></div>
+    <button class="btn btn-primary" type="submit"><%- icon('filter', 'icon-sm') %></button>
+  </form>
+  <div class="flex justify-between items-center" style="padding:10px 20px;background:var(--surface-2);border-bottom:1px solid var(--border)"><span class="text-sm text-muted"><%= fa(data.total) %> پرداخت</span><span class="text-sm">جمع تأیید شده: <b class="text-success"><%= money(sum) %></b></span></div>
+  <% if (!data.rows.length) { %><%- include('partials/empty', { emptyIcon: 'receipt', emptyTitle: 'پرداختی یافت نشد' }) %><% } else { %>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>پرداخت‌کننده</th><th>فاکتور</th><th>مبلغ</th><th>روش</th><th>تاریخ</th><th>پیگیری</th><th>وضعیت</th><th></th></tr></thead>
+    <tbody>
+    <% data.rows.forEach(function (p) { %>
+      <tr>
+        <td><a href="<%= url('/panel/users/' + p.user_id) %>"><%= p.first_name %> <%= p.last_name %></a><div class="text-xs text-muted"><%= p.class_title || '' %></div></td>
+        <td><a class="ltr d-inline" href="<%= url('/panel/invoices/' + p.invoice_id) %>"><%= p.invoice_no %></a></td>
+        <td class="fw-6"><%= money(p.amount) %></td>
+        <td class="text-sm"><%= PAYMENT_METHODS[p.method] || p.method %></td>
+        <td class="text-sm"><%= jdate(p.paid_date) %><div class="text-xs text-muted"><%= rel(p.created_at) %></div></td>
+        <td class="text-xs ltr text-right"><%= fa(p.tracking_code || '—') %><% if (p.payer_card) { %><div class="text-muted"><%= fa(p.payer_card) %></div><% } %></td>
+        <td><%- badge('payment', p.status) %></td>
+        <td class="actions">
+          <% if (p.receipt_path) { %><a class="btn btn-ghost btn-icon btn-sm" href="<%= url('/panel/payments/' + p.id + '/receipt') %>" target="_blank" title="رسید"><%- icon('image', 'icon-sm') %></a><% } %>
+          <% if (p.status === 'pending' && can('finance.review')) { %>
+            <form method="post" action="<%= url('/panel/payments/' + p.id + '/approve') %>" class="d-inline"><%- include('partials/csrf') %><button class="btn btn-soft btn-sm" type="submit"><%- icon('check', 'icon-sm') %>تأیید</button></form>
+            <form method="post" action="<%= url('/panel/payments/' + p.id + '/reject') %>" class="d-inline" data-confirm="این پرداخت رد شود؟" data-confirm-input="دلیل رد" data-confirm-name="reason"><%- include('partials/csrf') %><button class="btn btn-soft-danger btn-sm" type="submit">رد</button></form>
+          <% } %>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+  <%- include('partials/pagination', { data }) %>
+  <% } %>
+</div>

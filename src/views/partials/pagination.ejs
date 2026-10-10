@@ -1,0 +1,18 @@
+<% if (data && data.total > 0) {
+  const p = data.page, n = data.pages;
+  const pages = [];
+  for (let i = 1; i <= n; i++) { if (i === 1 || i === n || Math.abs(i - p) <= 2) pages.push(i); else if (pages[pages.length - 1] !== '…') pages.push('…'); }
+%>
+<div class="pagination">
+  <div class="info">نمایش <%= fa((p - 1) * data.perPage + 1) %> تا <%= fa(Math.min(p * data.perPage, data.total)) %> از <%= fa(data.total) %> مورد</div>
+  <% if (n > 1) { %>
+  <div class="pages">
+    <% if (p > 1) { %><a href="<%= qs({ page: p - 1 }) || '?' %>" aria-label="قبلی"><%- icon('chevron-right', 'icon-sm') %></a><% } %>
+    <% pages.forEach(function (i) { %>
+      <% if (i === '…') { %><span class="gap">…</span><% } else if (i === p) { %><span class="active"><%= fa(i) %></span><% } else { %><a href="<%= qs({ page: i }) %>"><%= fa(i) %></a><% } %>
+    <% }) %>
+    <% if (p < n) { %><a href="<%= qs({ page: p + 1 }) %>" aria-label="بعدی"><%- icon('chevron-left', 'icon-sm') %></a><% } %>
+  </div>
+  <% } %>
+</div>
+<% } %>

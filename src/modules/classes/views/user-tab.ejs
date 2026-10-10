@@ -1,0 +1,27 @@
+<% const rateOf = function (a) { a = a || {}; const t = (a.present || 0) + (a.absent || 0) + (a.late || 0) + (a.excused || 0); return t ? Math.round(((a.present || 0) + (a.late || 0) + (a.excused || 0)) / t * 100) : null; }; %>
+<% if (teaching.length) { %>
+  <h3 class="card-title" style="padding:16px 20px 0"><%- icon('presentation') %>کلاس‌های تدریس</h3>
+  <ul class="list">
+  <% teaching.forEach(function (c) { %>
+    <li><a class="list-item" href="<%= url('/panel/classes/' + c.id) %>"><span class="color-bar" style="--c:<%= c.color || '#4f46e5' %>;height:36px"></span><span class="grow"><span class="list-title"><%= c.title %></span><span class="list-sub ltr text-right"><%= c.code %></span></span><span class="list-end"><%- badge('class', c.status) %></span></a></li>
+  <% }) %>
+  </ul>
+<% } %>
+<% if (enrolled.length) { %>
+  <% if (teaching.length) { %><h3 class="card-title" style="padding:16px 20px 0"><%- icon('graduation-cap') %>کلاس‌های ثبت‌نامی</h3><% } %>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>کلاس</th><th>تاریخ ثبت‌نام</th><th>حضور</th><th>نمره</th><th>وضعیت</th></tr></thead>
+    <tbody>
+    <% enrolled.forEach(function (e) { const r = rateOf(att[e.id]); %>
+      <tr>
+        <td><a class="fw-6" href="<%= url('/panel/classes/' + e.class_id) %>"><%= e.title %></a><div class="text-xs text-muted"><%- badge('class', e.class_status, 'no-dot') %></div></td>
+        <td class="text-sm"><%= jdate(e.enrolled_at) %></td>
+        <td><%= r === null ? '—' : fa(r) + '٪' %></td>
+        <td><%= e.grade === null || e.grade === undefined ? '—' : fa(e.grade) %></td>
+        <td><%- badge('enrollment', e.status) %></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+<% } %>
+<% if (!teaching.length && !enrolled.length) { %><%- include('partials/empty', { emptyIcon: 'school', emptyTitle: 'کلاسی ثبت نشده است' }) %><% } %>

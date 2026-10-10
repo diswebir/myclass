@@ -1,0 +1,40 @@
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('award') %>مدارک و گواهینامه‌ها</h1><p class="page-sub"><%= fa(total) %> مدرک معتبر صادر شده · قابل استعلام با کد QR</p></div>
+  <div class="page-actions">
+    <% if (can('certificates.templates')) { %><a class="btn" href="<%= url('/panel/certificate-templates') %>"><%- icon('palette', 'icon-sm') %>قالب‌ها</a><% } %>
+    <% if (can('certificates.issue')) { %><a class="btn btn-primary" href="<%= url('/panel/certificates/issue') %>"><%- icon('award', 'icon-sm') %>صدور مدرک</a><% } %>
+  </div>
+</div>
+<div class="card">
+  <form class="filters" method="get">
+    <div class="field grow"><label class="label">جستجو</label><div class="input-icon"><%- icon('search', 'icon-sm') %><input class="input" name="q" value="<%= query.q || '' %>" placeholder="نام دانشجو، شماره سریال یا کد استعلام"></div></div>
+    <div class="field"><label class="label">کلاس</label><select class="input" name="class" data-autosubmit><option value="">همه</option><% classes.forEach(function (c) { %><option value="<%= c.id %>"<%= String(query.class) === String(c.id) ? ' selected' : '' %>><%= c.title %></option><% }) %></select></div>
+    <div class="field"><label class="label">وضعیت</label><select class="input" name="status" data-autosubmit><option value="">همه</option><option value="valid"<%= query.status === 'valid' ? ' selected' : '' %>>معتبر</option><option value="revoked"<%= query.status === 'revoked' ? ' selected' : '' %>>ابطال شده</option></select></div>
+    <button class="btn btn-primary" type="submit"><%- icon('filter', 'icon-sm') %></button>
+  </form>
+  <% if (!data.rows.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'award', emptyTitle: 'مدرکی یافت نشد', emptyText: 'برای صدور مدرک، کلاس را انتخاب و دانشجویان واجد شرایط را مشخص کنید.', emptyAction: can('certificates.issue') ? { href: '/panel/certificates/issue', label: 'صدور مدرک', icon: 'award' } : null }) %>
+  <% } else { %>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>دانشجو</th><th>کلاس</th><th>شماره سریال</th><th>کد استعلام</th><th>نمره</th><th>تاریخ صدور</th><th>وضعیت</th><th></th></tr></thead>
+    <tbody>
+    <% data.rows.forEach(function (c) { %>
+      <tr>
+        <td><a class="person" href="<%= url('/panel/users/' + c.user_id) %>"><span class="avatar avatar-sm"><%= initials(c.first_name + ' ' + c.last_name) %></span><span class="person-name"><%= c.first_name %> <%= c.last_name %></span></a></td>
+        <td class="text-sm"><%= c.class_title || '—' %></td>
+        <td><a class="ltr d-inline mono" href="<%= url('/panel/certificates/' + c.id) %>"><%= c.serial %></a></td>
+        <td class="mono text-sm ltr text-right"><%= c.verify_code %></td>
+        <td><%= c.grade ? fa(c.grade) : '—' %></td>
+        <td class="text-sm"><%= jdate(c.issued_date) %></td>
+        <td><%- badge('certificate', c.status) %></td>
+        <td class="actions">
+          <a class="btn btn-ghost btn-icon btn-sm" href="<%= url('/panel/certificates/' + c.id) %>" title="مشاهده"><%- icon('eye', 'icon-sm') %></a>
+          <a class="btn btn-ghost btn-icon btn-sm" href="<%= url('/panel/certificates/' + c.id + '/print') %>" target="_blank" title="چاپ"><%- icon('printer', 'icon-sm') %></a>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+  <%- include('partials/pagination', { data }) %>
+  <% } %>
+</div>

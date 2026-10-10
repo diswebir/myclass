@@ -1,0 +1,60 @@
+<% const it = item || {}; const isEdit = !!item; const action = isEdit ? '/panel/users/' + it.id : '/panel/users'; %>
+<div class="page-head">
+  <div><h1 class="page-title"><%= title %></h1><p class="page-sub"><%= isEdit ? 'ویرایش اطلاعات و سطح دسترسی کاربر' : 'ایجاد حساب کاربری جدید و تعیین نقش' %></p></div>
+  <div class="page-actions"><a class="btn btn-ghost" href="<%= url(isEdit ? '/panel/users/' + it.id : page.href) %>"><%- icon('arrow-right', 'icon-sm') %>بازگشت</a></div>
+</div>
+<form method="post" action="<%= url(action) %>" autocomplete="off">
+  <%- include('partials/csrf') %>
+  <input type="hidden" name="_page" value="<%= pageKey %>">
+  <div class="grid grid-side">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('user') %>اطلاعات هویتی</h2></div>
+        <div class="card-body"><div class="form-grid">
+          <%- include('partials/field', { name: 'first_name', label: 'نام', value: it.first_name, col: 4, required: true }) %>
+          <%- include('partials/field', { name: 'last_name', label: 'نام خانوادگی', value: it.last_name, col: 4, required: true }) %>
+          <%- include('partials/field', { name: 'father_name', label: 'نام پدر', value: it.father_name, col: 4 }) %>
+          <%- include('partials/field', { name: 'national_code', label: 'کد ملی', value: it.national_code, col: 4, ltr: true, attrs: 'data-en-digits inputmode="numeric" maxlength="10"' }) %>
+          <%- include('partials/field', { name: 'birth_date', label: 'تاریخ تولد', type: 'date', value: it.birth_date ? jinput(it.birth_date) : '', col: 4 }) %>
+          <%- include('partials/field', { name: 'gender', label: 'جنسیت', type: 'select', value: it.gender, col: 4, empty: 'انتخاب کنید', options: { male: 'مرد', female: 'زن' } }) %>
+          <%- include('partials/field', { name: 'education', label: 'تحصیلات', value: it.education, col: 6 }) %>
+          <%- include('partials/field', { name: 'job', label: 'شغل', value: it.job, col: 6 }) %>
+        </div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('phone') %>اطلاعات تماس</h2></div>
+        <div class="card-body"><div class="form-grid">
+          <%- include('partials/field', { name: 'mobile', label: 'موبایل', value: it.mobile, col: 4, ltr: true, placeholder: '09121234567', attrs: 'data-en-digits inputmode="tel"' }) %>
+          <%- include('partials/field', { name: 'phone', label: 'تلفن ثابت', value: it.phone, col: 4, ltr: true, attrs: 'data-en-digits' }) %>
+          <%- include('partials/field', { name: 'email', label: 'ایمیل', value: it.email, col: 4, ltr: true, type: 'email' }) %>
+          <%- include('partials/field', { name: 'postal_code', label: 'کد پستی', value: it.postal_code, col: 4, ltr: true, attrs: 'data-en-digits' }) %>
+          <%- include('partials/field', { name: 'address', label: 'نشانی', value: it.address, col: 8 }) %>
+          <%- include('partials/field', { name: 'notes', label: 'یادداشت مدیریتی', type: 'textarea', value: it.notes, col: 12, rows: 2, help: 'فقط برای کاربران پنل مدیریت قابل مشاهده است.' }) %>
+        </div></div>
+      </div>
+      <% if (!isEdit && classes.length && can('classes.students') && pageKey !== 'teachers') { %>
+      <div class="card">
+        <div class="card-head"><div><h2 class="card-title"><%- icon('book-open') %>ثبت‌نام در کلاس</h2><p class="card-sub">در صورت تمایل، کاربر را همزمان در یک یا چند کلاس ثبت‌نام کنید.</p></div></div>
+        <div class="card-body"><div class="options-grid">
+          <% classes.forEach(function (c) { %><label class="check-card"><input type="checkbox" name="enroll_classes" value="<%= c.id %>"><span><b><%= c.title %></b><small class="ltr"><%= c.code %></small></span></label><% }) %>
+        </div></div>
+      </div>
+      <% } %>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('shield-check') %>حساب و دسترسی</h2></div>
+        <div class="card-body"><div class="form-grid">
+          <%- include('partials/field', { name: 'role_id', label: 'نقش (سطح دسترسی)', type: 'select', value: it.role_id || (roles[0] && roles[0].id), required: true, options: roles.map(function (r) { return { value: r.id, label: r.name }; }) }) %>
+          <%- include('partials/field', { name: 'username', label: 'نام کاربری', value: it.username, ltr: true, help: 'در صورت خالی بودن، موبایل یا کد ملی به عنوان نام کاربری در نظر گرفته می‌شود.' }) %>
+          <%- include('partials/field', { name: 'password', label: isEdit ? 'رمز عبور جدید' : 'رمز عبور', type: 'password', ltr: true, attrs: 'autocomplete="new-password"', help: isEdit ? 'برای عدم تغییر خالی بگذارید.' : 'در صورت خالی بودن، رمز اولیه طبق تنظیمات امنیتی (کد ملی/موبایل) تعیین می‌شود.' }) %>
+          <label class="switch"><input type="checkbox" name="must_change_password" value="1"<%= old('must_change_password', it.must_change_password ? '1' : (isEdit ? '' : '1')) ? ' checked' : '' %>><span class="track"></span>الزام تغییر رمز در ورود بعدی</label>
+          <% if (!isEdit || it.id !== user.id) { %><label class="switch"><input type="checkbox" name="is_active" value="1"<%= (isEdit ? it.is_active : true) ? ' checked' : '' %>><span class="track"></span>حساب فعال باشد</label><% } %>
+          <% if (!isEdit && moduleOn('sms')) { %><label class="switch"><input type="checkbox" name="send_sms" value="1"><span class="track"></span>ارسال اطلاعات ورود با پیامک</label><% } %>
+        </div></div>
+        <div class="card-foot"><button class="btn btn-primary btn-block" type="submit"><%- icon('save', 'icon-sm') %><%= isEdit ? 'ذخیره تغییرات' : 'ایجاد کاربر' %></button></div>
+      </div>
+    </div>
+  </div>
+</form>

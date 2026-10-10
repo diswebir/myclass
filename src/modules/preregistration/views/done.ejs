@@ -1,0 +1,22 @@
+<div class="container container-sm">
+  <div class="steps"><div class="step done">تکمیل فرم</div><div class="step active">بررسی کارشناس</div><div class="step">ثبت‌نام قطعی</div></div>
+  <div class="card verify-card">
+    <div class="card-body text-center" style="padding:36px 28px">
+      <div class="verify-icon" style="background:var(--success-bg);color:var(--success-fg)"><%- icon('check-circle-2', 'icon-xl') %></div>
+      <h1 style="font-size:20px;font-weight:800">درخواست شما ثبت شد</h1>
+      <p class="text-2"><%= s('prereg.success_message', 'درخواست شما با موفقیت ثبت شد. کد رهگیری را برای پیگیری‌های بعدی نگه دارید.') %></p>
+      <div class="mt-4 mb-4"><div class="text-muted text-sm mb-2">کد رهگیری</div>
+        <div class="flex gap-2 items-center" style="justify-content:center"><b class="mono ltr" style="font-size:28px;letter-spacing:4px"><%= p.tracking_code %></b><button class="btn btn-ghost btn-icon btn-sm" type="button" data-copy="<%= p.tracking_code %>" title="کپی"><%- icon('copy', 'icon-sm') %></button></div>
+      </div>
+      <dl class="kv" style="text-align:right;max-width:360px;margin:0 auto">
+        <dt>نام</dt><dd><%= p.first_name %> <%= p.last_name %></dd>
+        <dt>دوره</dt><dd><%= p.class_title || 'پیش‌ثبت‌نام عمومی' %></dd>
+        <dt>تاریخ ثبت</dt><dd><%= jdt(p.created_at) %></dd>
+      </dl>
+    </div>
+    <div class="card-foot flex gap-2" style="justify-content:center">
+      <a class="btn" href="<%= url('/') %>"><%- icon('home', 'icon-sm') %>صفحه اصلی</a>
+      <button class="btn btn-soft" type="button" data-print><%- icon('printer', 'icon-sm') %>چاپ</button>
+    </div>
+  </div>
+</div>

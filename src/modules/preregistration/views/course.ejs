@@ -1,0 +1,45 @@
+<div class="container">
+  <div class="grid grid-main">
+    <div class="stack">
+      <div class="card" style="overflow:hidden">
+        <div style="height:8px;background:<%= cls.color || cls.category_color || 'var(--primary)' %>"></div>
+        <div class="card-body">
+          <div class="flex gap-2 mb-2"><% if (cls.category_name) { %><span class="badge badge-gray no-dot"><%= cls.category_name %></span><% } %><% if (cls.full) { %><span class="badge badge-danger">تکمیل ظرفیت</span><% } else if (cls.status === 'open') { %><span class="badge badge-success">در حال ثبت‌نام</span><% } else { %><span class="badge badge-info">در حال برگزاری</span><% } %></div>
+          <h1 style="font-size:24px;font-weight:800;margin-bottom:12px"><%= cls.title %></h1>
+          <% if (cls.description) { %><div class="text-2" style="white-space:pre-line;line-height:2"><%= cls.description %></div><% } %>
+        </div>
+      </div>
+      <% if (sessions.length) { %>
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('calendar-days') %>برنامه جلسات</h2><span class="text-muted text-sm"><%= fa(sessions.length) %> جلسه</span></div>
+        <div class="table-wrap"><table class="table table-sm">
+          <thead><tr><th>جلسه</th><th>تاریخ</th><th>روز</th><th>ساعت</th></tr></thead>
+          <tbody><% sessions.forEach(function (x) { %><tr><td><%= fa(x.session_no) %></td><td><%= jdate(x.date) %></td><td><%= weekday(new Date(x.date + 'T00:00:00Z').getUTCDay()) %></td><td class="ltr text-right"><%= fa(x.start_time || '') %> - <%= fa(x.end_time || '') %></td></tr><% }) %></tbody>
+        </table></div>
+      </div>
+      <% } %>
+    </div>
+    <div class="stack">
+      <div class="card" style="position:sticky;top:84px">
+        <div class="card-body">
+          <dl class="kv">
+            <% if (cls.code) { %><dt>کد دوره</dt><dd class="ltr text-right"><%= cls.code %></dd><% } %>
+            <% if (cls.start_date) { %><dt>تاریخ شروع</dt><dd><%= jdate(cls.start_date) %></dd><% } %>
+            <% if (cls.end_date) { %><dt>تاریخ پایان</dt><dd><%= jdate(cls.end_date) %></dd><% } %>
+            <% if (cls.week_days) { %><dt>روزهای برگزاری</dt><dd><%= weekDaysLabel(cls.week_days) %></dd><% } %>
+            <% if (cls.start_time) { %><dt>ساعت</dt><dd><%= fa(cls.start_time) %> تا <%= fa(cls.end_time || '') %></dd><% } %>
+            <% if (cls.total_hours) { %><dt>مدت دوره</dt><dd><%= fa(cls.total_hours) %> ساعت</dd><% } %>
+            <% if (cls.level) { %><dt>سطح</dt><dd><%= cls.level %></dd><% } %>
+            <% if (cls.location) { %><dt>محل برگزاری</dt><dd><%= cls.location %></dd><% } %>
+            <% if (cls.capacity) { %><dt>ظرفیت</dt><dd><%= fa(cls.capacity) %> نفر<% if (!cls.full) { %> <span class="text-success text-sm">(<%= fa(Math.max(0, cls.capacity - cls.students)) %> جای خالی)</span><% } %></dd><% } %>
+          </dl>
+        </div>
+        <div class="card-foot">
+          <% if (s('prereg.show_price', true)) { %><div class="flex justify-between items-center mb-3"><span class="text-muted">شهریه</span><span class="price" style="font-size:20px"><%= cls.price ? money(cls.price) : 'رایگان' %><% if (cls.price) { %> <small><%= s('finance.currency', 'تومان') %></small><% } %></span></div><% } %>
+          <% if (cls.canRegister && !cls.full) { %><a class="btn btn-primary btn-block btn-lg" href="<%= url('/register?class=' + cls.id) %>"><%- icon('clipboard-list', 'icon-sm') %>پیش‌ثبت‌نام در این دوره</a>
+          <% } else { %><button class="btn btn-block" disabled><%= cls.full ? 'ظرفیت تکمیل است' : 'پیش‌ثبت‌نام فعال نیست' %></button><% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

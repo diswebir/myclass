@@ -1,0 +1,55 @@
+<% const today = jalali.today(); const isToday = date === today && !query.class; %>
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('clipboard-check') %>حضور و غیاب</h1><p class="page-sub"><%= query.class ? 'همه جلسات کلاس انتخاب‌شده' : (isToday ? 'جلسات امروز، ' : 'جلسات ') + weekday(jalali.weekday(date)) + ' ' + jdate(date) %></p></div>
+</div>
+<div class="grid grid-side">
+  <div class="stack">
+    <form class="filters card" method="get" style="padding:14px 18px">
+      <div class="field"><label class="label">تاریخ</label><div class="input-icon"><%- icon('calendar', 'icon-sm') %><input class="input ltr text-center" name="date" value="<%= query.class ? '' : jinput(date) %>" data-jdp autocomplete="off"></div></div>
+      <div class="field grow"><label class="label">یا انتخاب کلاس</label><select class="input" name="class" data-autosubmit><option value="">— بر اساس تاریخ —</option><% classes.forEach(function (c) { %><option value="<%= c.id %>"<%= String(query.class) === String(c.id) ? ' selected' : '' %>><%= c.title %></option><% }) %></select></div>
+      <button class="btn btn-soft" type="submit">نمایش</button>
+      <div class="flex gap-1">
+        <a class="btn btn-ghost btn-icon" href="?date=<%= jinput(jalali.addDays(date, -1)) %>" title="روز قبل"><%- icon('chevron-right', 'icon-sm') %></a>
+        <a class="btn btn-ghost btn-sm" href="?">امروز</a>
+        <a class="btn btn-ghost btn-icon" href="?date=<%= jinput(jalali.addDays(date, 1)) %>" title="روز بعد"><%- icon('chevron-left', 'icon-sm') %></a>
+      </div>
+    </form>
+    <div class="card">
+      <% if (!sessions.length) { %>
+        <%- include('partials/empty', { emptyIcon: 'calendar-check', emptyTitle: 'جلسه‌ای یافت نشد', emptyText: query.class ? 'برای این کلاس جلسه‌ای ثبت نشده است.' : 'در این تاریخ جلسه‌ای برنامه‌ریزی نشده است.' }) %>
+      <% } else { %>
+      <ul class="list">
+        <% sessions.forEach(function (s) { const r = recorded[s.id] || {}; const done = Object.keys(r).length > 0; const total = studentCounts[s.class_id] || 0; const d = String(s.date).slice(0, 10); %>
+        <li><a class="list-item" href="<%= url('/panel/attendance/session/' + s.id) %>">
+          <span class="color-bar" style="--c:<%= s.color || '#4f46e5' %>;height:44px"></span>
+          <span class="grow">
+            <span class="list-title"><%= s.class_title %> <span class="text-muted text-sm">— جلسه <%= fa(s.session_no || '') %></span></span>
+            <span class="list-sub"><%= query.class ? weekday(jalali.weekday(s.date)) + ' ' + jdate(s.date) + ' · ' : '' %><%= fa((s.start_time || '') + ' تا ' + (s.end_time || '')) %><%= s.location ? ' · ' + s.location : '' %><%= s.topic ? ' · ' + s.topic : '' %></span>
+          </span>
+          <span class="list-end flex items-center gap-2">
+            <% if (s.status === 'canceled') { %><%- badge('session', 'canceled') %>
+            <% } else if (done) { %><span class="flex gap-1"><span class="mark present"><%= fa(r.present || 0) %></span><span class="mark absent"><%= fa(r.absent || 0) %></span><span class="mark late"><%= fa(r.late || 0) %></span></span><span class="badge badge-success">ثبت شده</span>
+            <% } else if (d > today) { %><span class="badge badge-info">آینده</span>
+            <% } else { %><span class="badge badge-warning">در انتظار ثبت · <%= fa(total) %> نفر</span><% } %>
+            <%- icon('chevron-left', 'icon-sm text-muted') %>
+          </span>
+        </a></li>
+        <% }) %>
+      </ul>
+      <% } %>
+    </div>
+  </div>
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><div><h2 class="card-title"><%- icon('alert-triangle') %>جلسات بدون حضور و غیاب</h2><p class="card-sub">جلسات گذشته‌ای که هنوز ثبت نشده‌اند</p></div></div>
+      <% if (!pending.length) { %><div class="card-body text-muted text-sm flex items-center gap-2"><%- icon('check-circle-2', 'icon-sm text-success') %>همه جلسات ثبت شده‌اند.</div><% } else { %>
+      <ul class="list">
+        <% pending.forEach(function (s) { %><li><a class="list-item" href="<%= url('/panel/attendance/session/' + s.id) %>"><span class="list-icon" style="background:var(--warning-bg);color:var(--warning-fg)"><%- icon('clock', 'icon-sm') %></span><span><span class="list-title"><%= s.class_title %></span><span class="list-sub">جلسه <%= fa(s.session_no || '') %> · <%= jdate(s.date) %> (<%= rel(s.date) %>)</span></span></a></li><% }) %>
+      </ul><% } %>
+    </div>
+    <div class="card"><div class="card-body text-sm text-2">
+      <div class="flex gap-2 mb-2 items-center"><span class="mark present">ح</span>حاضر <span class="mark absent">غ</span>غایب <span class="mark late">ت</span>تأخیر <span class="mark excused">م</span>موجه</div>
+      مهلت ثبت/ویرایش حضور و غیاب: <b><%= fa(s('attendance.edit_days', 3)) %> روز</b> پس از جلسه.
+    </div></div>
+  </div>
+</div>

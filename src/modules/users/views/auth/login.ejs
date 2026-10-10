@@ -1,0 +1,19 @@
+<h2>ورود به حساب کاربری</h2>
+<p class="sub">برای ورود، اطلاعات حساب خود را وارد کنید.</p>
+<% const mode = s('security.login_with', 'any'); const ph = { any: 'نام کاربری، موبایل یا کد ملی', username: 'نام کاربری', mobile: 'شماره موبایل', national_code: 'کد ملی' }[mode] || 'نام کاربری'; %>
+<form method="post" action="<%= url('/login') %>" class="stack" autocomplete="on">
+  <%- include('../../../../views/partials/csrf') %>
+  <div class="field">
+    <label class="label" for="username"><%= ph %></label>
+    <div class="input-icon"><%- icon('user', 'icon-sm') %><input class="input" id="username" name="username" value="<%= old('username') %>" required autofocus autocomplete="username" data-en-digits></div>
+  </div>
+  <div class="field">
+    <div class="flex justify-between items-center"><label class="label" for="password">رمز عبور</label><% if (s('security.forgot_password_sms', true)) { %><a class="text-sm" href="<%= url('/forgot') %>">فراموشی رمز؟</a><% } %></div>
+    <div class="input-icon"><%- icon('lock', 'icon-sm') %><input class="input ltr" id="password" type="password" name="password" required autocomplete="current-password"></div>
+  </div>
+  <button class="btn btn-primary btn-lg btn-block" type="submit">ورود به پنل<%- icon('arrow-left', 'icon-sm') %></button>
+</form>
+<% if (moduleOn('preregistration') && s('prereg.enabled', true)) { %>
+<div class="divider"></div>
+<p class="text-center text-sm text-muted mb-0">هنوز ثبت‌نام نکرده‌اید؟ <a href="<%= url('/register') %>">پیش‌ثبت‌نام در دوره‌ها</a></p>
+<% } %>

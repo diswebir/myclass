@@ -1,0 +1,8 @@
+<div class="flex justify-between items-center mb-3"><span class="text-sm text-muted"><%= fa(list.length) %> مدرک صادر شده</span><% if (can('certificates.issue')) { %><a class="btn btn-soft btn-sm" href="<%= url('/panel/certificates/issue?class=' + entity.id) %>"><%- icon('award', 'icon-sm') %>صدور مدرک</a><% } %></div>
+<% if (!list.length) { %><%- include('partials/empty', { emptyIcon: 'award', emptyTitle: 'هنوز مدرکی برای این کلاس صادر نشده است' }) %><% } else { %>
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>دانشجو</th><th>شماره سریال</th><th>نمره</th><th>تاریخ صدور</th><th>وضعیت</th><th></th></tr></thead>
+  <tbody>
+  <% list.forEach(function (c) { %><tr><td><%= c.first_name %> <%= c.last_name %></td><td><a class="ltr d-inline mono" href="<%= url('/panel/certificates/' + c.id) %>"><%= c.serial %></a></td><td><%= c.grade ? fa(c.grade) : '—' %></td><td class="text-sm"><%= jdate(c.issued_date) %></td><td><%- badge('certificate', c.status) %></td><td class="actions"><a class="btn btn-ghost btn-icon btn-sm" href="<%= url('/panel/certificates/' + c.id + '/print') %>" target="_blank"><%- icon('printer', 'icon-sm') %></a></td></tr><% }) %>
+  </tbody>
+</table></div><% } %>

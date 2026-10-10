@@ -1,0 +1,76 @@
+<% const it = item; const name = it.first_name + ' ' + it.last_name; const locked = it.locked_until && String(it.locked_until) > jalali.now(); %>
+<div class="page-head">
+  <div class="flex items-center gap-3">
+    <span class="avatar avatar-lg"><% if (it.avatar) { %><img src="<%= media(it.avatar) %>" alt=""><% } else { %><%= initials(name) %><% } %></span>
+    <div>
+      <h1 class="page-title"><%= name %></h1>
+      <div class="flex gap-2 items-center wrap mt-2">
+        <span class="badge no-dot" style="background:<%= it.role_color || '#64748b' %>1a;color:<%= it.role_color || '#64748b' %>"><%= it.role_name %></span>
+        <%- it.is_active ? badge('active', 1) : badge('active', 0) %>
+        <% if (locked) { %><span class="badge badge-danger">قفل شده</span><% } %>
+        <% if (it.must_change_password) { %><span class="badge badge-warning">در انتظار تغییر رمز</span><% } %>
+      </div>
+    </div>
+  </div>
+  <div class="page-actions">
+    <% if (manageable && can('users.edit')) { %>
+      <a class="btn btn-primary" href="<%= url('/panel/users/' + it.id + '/edit') %>"><%- icon('pencil', 'icon-sm') %>ویرایش</a>
+      <div class="dropdown">
+        <button class="btn" type="button" data-dropdown><%- icon('more-vertical', 'icon-sm') %>عملیات</button>
+        <div class="dropdown-menu">
+          <form method="post" action="<%= url('/panel/users/' + it.id + '/reset-password') %>" data-confirm="رمز عبور جدید تصادفی برای این کاربر ساخته شود؟" data-confirm-danger="false">
+            <%- include('partials/csrf') %><input type="hidden" name="send_sms" value="1">
+            <button class="dropdown-item" type="submit"><%- icon('key-round') %>بازنشانی رمز (و ارسال پیامک)</button>
+          </form>
+          <% if (locked) { %><form method="post" action="<%= url('/panel/users/' + it.id + '/unlock') %>"><%- include('partials/csrf') %><button class="dropdown-item" type="submit"><%- icon('lock') %>رفع قفل حساب</button></form><% } %>
+          <% if (it.id !== user.id) { %>
+          <form method="post" action="<%= url('/panel/users/' + it.id + '/toggle') %>"><%- include('partials/csrf') %><button class="dropdown-item" type="submit"><%- icon(it.is_active ? 'eye-off' : 'check') %><%= it.is_active ? 'غیرفعال‌سازی حساب' : 'فعال‌سازی حساب' %></button></form>
+          <% if (can('users.delete')) { %><div class="dropdown-divider"></div>
+          <form method="post" action="<%= url('/panel/users/' + it.id + '/delete') %>" data-confirm="کاربر «<%= name %>» برای همیشه حذف شود؟ این عملیات قابل بازگشت نیست."><%- include('partials/csrf') %><button class="dropdown-item danger" type="submit"><%- icon('trash-2') %>حذف کاربر</button></form><% } %>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="grid grid-side">
+  <div class="card" style="min-width:0">
+    <% if (tabs.length) { %>
+    <div class="tabs" data-tabs="user-panes">
+      <% tabs.forEach(function (t, i) { %><button type="button" class="tab<%= i === 0 ? ' active' : '' %>" data-tab="<%= t.key %>"><%- icon(t.icon || 'circle-dot', 'icon-sm') %><%= t.label %><% if (t.count !== undefined) { %><span class="count"><%= fa(t.count) %></span><% } %></button><% }) %>
+    </div>
+    <div id="user-panes">
+      <% tabs.forEach(function (t, i) { %><div data-pane="<%= t.key %>" class="<%= i === 0 ? '' : 'hidden' %>"><%- include(t.view, Object.assign({ entity: it }, t.data || {})) %></div><% }) %>
+    </div>
+    <% } else { %>
+      <%- include('partials/empty', { emptyIcon: 'layout-grid', emptyTitle: 'اطلاعات تکمیلی وجود ندارد', emptyText: 'سوابق آموزشی و مالی این کاربر در اینجا نمایش داده می‌شود.' }) %>
+    <% } %>
+  </div>
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 class="card-title"><%- icon('user') %>مشخصات</h2></div>
+      <div class="card-body">
+        <dl class="kv">
+          <dt>نام کاربری</dt><dd class="ltr text-right"><%= it.username %></dd>
+          <dt>موبایل</dt><dd class="ltr text-right"><%= it.mobile ? fa(it.mobile) : '—' %></dd>
+          <dt>کد ملی</dt><dd><%= it.national_code ? fa(it.national_code) : '—' %></dd>
+          <% if (it.father_name) { %><dt>نام پدر</dt><dd><%= it.father_name %></dd><% } %>
+          <% if (it.birth_date) { %><dt>تاریخ تولد</dt><dd><%= jdate(it.birth_date) %></dd><% } %>
+          <% if (it.gender) { %><dt>جنسیت</dt><dd><%= it.gender === 'female' ? 'زن' : 'مرد' %></dd><% } %>
+          <% if (it.email) { %><dt>ایمیل</dt><dd class="ltr text-right"><%= it.email %></dd><% } %>
+          <% if (it.phone) { %><dt>تلفن</dt><dd class="ltr text-right"><%= fa(it.phone) %></dd><% } %>
+          <% if (it.education) { %><dt>تحصیلات</dt><dd><%= it.education %></dd><% } %>
+          <% if (it.job) { %><dt>شغل</dt><dd><%= it.job %></dd><% } %>
+          <% if (it.address) { %><dt>نشانی</dt><dd><%= it.address %></dd><% } %>
+          <dt>تاریخ عضویت</dt><dd><%= jdate(it.created_at) %></dd>
+          <dt>آخرین ورود</dt><dd><%= it.last_login_at ? jdt(it.last_login_at) : 'هرگز' %></dd>
+        </dl>
+      </div>
+    </div>
+    <% if (it.notes) { %><div class="card"><div class="card-head"><h2 class="card-title"><%- icon('file-text') %>یادداشت</h2></div><div class="card-body text-2" style="white-space:pre-line"><%= it.notes %></div></div><% } %>
+    <% if (it.mobile && can('sms.send') && moduleOn('sms')) { %>
+      <a class="btn btn-soft btn-block" href="<%= url('/panel/sms/send') %>?numbers=<%= it.mobile %>"><%- icon('send', 'icon-sm') %>ارسال پیامک به این کاربر</a>
+    <% } %>
+  </div>
+</div>

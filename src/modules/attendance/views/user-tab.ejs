@@ -1,0 +1,15 @@
+<div class="grid grid-4" style="padding:16px 20px">
+  <div class="kv-item"><span>درصد حضور</span><b><%= rateValue === null ? '—' : fa(rateValue) + '٪' %></b></div>
+  <div class="kv-item"><span>حاضر</span><b class="text-success"><%= fa(counts.present || 0) %></b></div>
+  <div class="kv-item"><span>غایب</span><b class="text-danger"><%= fa(counts.absent || 0) %></b></div>
+  <div class="kv-item"><span>تأخیر / موجه</span><b><%= fa(counts.late || 0) %> / <%= fa(counts.excused || 0) %></b></div>
+</div>
+<% if (!rows.length) { %><%- include('partials/empty', { emptyIcon: 'clipboard-check', emptyTitle: 'سابقه حضور و غیابی ثبت نشده است' }) %><% } else { %>
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>کلاس</th><th>جلسه</th><th>تاریخ</th><th>وضعیت</th><th>توضیح</th></tr></thead>
+  <tbody>
+  <% rows.forEach(function (r) { %>
+    <tr><td><a href="<%= url('/panel/classes/' + r.class_id) %>"><%= r.class_title %></a></td><td><%= fa(r.session_no || '') %></td><td class="text-sm"><%= jdate(r.date) %></td><td><%- badge('attendance', r.status) %></td><td class="text-sm text-muted"><%= r.note || '' %></td></tr>
+  <% }) %>
+  </tbody>
+</table></div><% } %>

@@ -1,0 +1,16 @@
+<div class="grid grid-4 mb-4">
+  <div class="kv-item"><span>جمع فاکتورها</span><b><%= money(totals.total) %></b></div>
+  <div class="kv-item"><span>دریافت شده</span><b class="text-success"><%= money(totals.paid) %></b></div>
+  <div class="kv-item"><span>مانده</span><b class="text-danger"><%= money(totals.total - totals.paid) %></b></div>
+  <div class="kv-item"><span>تخفیف‌ها</span><b><%= money(totals.discount) %></b></div>
+</div>
+<div class="flex justify-between items-center mb-3"><span class="text-sm text-muted"><%= fa(invoices.length) %> فاکتور</span><% if (can('finance.invoices')) { %><a class="btn btn-soft btn-sm" href="<%= url('/panel/invoices/new?class=' + entity.id) %>"><%- icon('plus', 'icon-sm') %>فاکتور جدید</a><% } %></div>
+<% if (!invoices.length) { %><%- include('partials/empty', { emptyIcon: 'file-text', emptyTitle: 'فاکتوری برای این کلاس صادر نشده است' }) %><% } else { %>
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>شماره</th><th>دانشجو</th><th>قابل پرداخت</th><th>پرداخت شده</th><th>نوع</th><th>وضعیت</th></tr></thead>
+  <tbody>
+  <% invoices.forEach(function (i) { %>
+    <tr><td><a class="ltr d-inline" href="<%= url('/panel/invoices/' + i.id) %>"><%= i.invoice_no %></a></td><td><%= i.first_name %> <%= i.last_name %></td><td><%= money(i.total) %></td><td class="text-success"><%= num(i.paid) %></td><td class="text-sm"><%= i.payment_type === 'installment' ? 'اقساطی' : 'نقدی' %></td><td><%- badge('invoice', i.status) %></td></tr>
+  <% }) %>
+  </tbody>
+</table></div><% } %>
