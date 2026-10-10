@@ -6,7 +6,7 @@ storage/
 .test-data/
 *.log
 .DS_Store
-# قفل نصبpostos
+# قفل نصب
 .install.lock
 coverage/
 *.sqlite
