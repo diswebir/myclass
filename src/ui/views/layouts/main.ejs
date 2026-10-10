@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title + ' | ' : '' %>سامانه مدیریت مؤسسه آموزشی</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <script src="/assets/js/chart.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <% if (typeof user !== 'undefined' && user) { %>
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          آکادمی رشد
+        </div>
+        <ul class="sidebar-nav">
+          <% if (user.role_name === 'super_admin' || user.permissions.includes('*') || user.permissions.some(p => p.startsWith('courses.') || p.startsWith('finance.'))) { %>
+            <li><a href="/admin" class="<%= typeof activeMenu !== 'undefined' && activeMenu === 'dashboard' ? 'active' : '' %>">📊 داشبورد مدیریت</a></li>
+            <li><a href="/admin/classes" class="<%= typeof activeMenu !== 'undefined' && activeMenu === 'classes' ? 'active' : '' %>">📚 دوره‌ها و کلاس‌ها</a></li>
+            <li><a href="/admin/teachers" class="<%= typeof activeMenu !== 'undefined' && activeMenu === 'teachers' ? 'active' : '' %>">👨‍🏫 اساتید</a></li>
+            <li><a href="/admin/students" class="<%= typeof activeMenu !== 'undefined' && activeMenu === 'students' ? 'active' : '' %>">👨‍🎓 فراگیران</a></li>
+            <li><a href="/admin/attendance" class="<%= typeof activeMenu !== 'undefined' && activeMenu === 'attendance' ? 'active' : '' %>">📋 حضور و غیاب</a></li>
+            <li><a href="/admin/finance" class="<%= typeof activeMenu !== 'undefined' && activeMenu === 'finance' ? 'active' : '' %>">💰 امور مالی و اقساط</a></li>
+            <li><a href="/admin/certificates" class="<%= typeof activeMenu !== 'undefined' && activeMenu === 'certificates' ? 'active' : '' %>">📜 مدارک و گواهی‌ها</a></li>
+            <li><a href="/admin/sms" class="<%= typeof activeMenu !== 'undefined' && activeMenu === 'sms' ? 'active' : '' %>">📩 پیامک و پترن‌ها</a></li>
+            <li><a href="/admin/users" class="<%= typeof activeMenu !== 'undefined' && activeMenu === 'users' ? 'active' : '' %>">👥 کاربران و نقش‌ها</a></li>
+            <li><a href="/admin/settings" class="<%= typeof activeMenu !== 'undefined' && activeMenu === 'settings' ? 'active' : '' %>">⚙️ تنظیمات مؤسسه</a></li>
+          <% } else if (user.role_name === 'teacher') { %>
+            <li><a href="/teacher" class="active">📚 کلاس‌های من</a></li>
+            <li><a href="/teacher/attendance">📋 ثبت حضور و غیاب</a></li>
+          <% } else if (user.role_name === 'student') { %>
+            <li><a href="/student" class="active">🏠 پنل فراگیر</a></li>
+            <li><a href="/student/finance">💳 شهریه و اقساط</a></li>
+            <li><a href="/student/certificates">📜 مدارک من</a></li>
+          <% } %>
+          <li><a href="/auth/logout">🚪 خروج از سامانه</a></li>
+        </ul>
+      </aside>
+    <% } %>
+
+    <div class="main-content">
+      <% if (typeof user !== 'undefined' && user) { %>
+        <header class="topbar">
+          <div>
+            <strong><%= user.full_name %></strong> (<%= user.role_title_fa %>)
+          </div>
+          <div>
+            <a href="/auth/logout" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">خروج</a>
+          </div>
+        </header>
+      <% } %>
+
+      <main class="content-body">
+        <% if (typeof error !== 'undefined' && error) { %>
+          <div class="alert alert-danger"><%= error %></div>
+        <% } %>
+        <% if (typeof success !== 'undefined' && success) { %>
+          <div class="alert alert-success"><%= success %></div>
+        <% } %>
+
+        <%- body %>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<div style="margin-bottom: 2rem;">
+  <h2 style="color: #1e3a8a;">پنل اختصاصی فراگیر</h2>
+  <p style="color: #64748b;">پرونده آموزشی، کلاس‌های ثبت‌نام‌شده، مدارک و وضعیت مالی شما</p>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+  <h3 style="margin-bottom: 1rem; color: #1e3a8a;">کلاس‌های ثبت‌نام‌شده من</h3>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>عنوان کلاس</th>
+          <th>تاریخ شروع</th>
+          <th>برنامه زمانی</th>
+          <th>شهریه مصوب</th>
+          <th>وضعیت ثبت‌نام</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (enrollments.length === 0) { %>
+          <tr><td colspan="5" style="text-align: center; color: #64748b;">شما در هیچ کلاسی ثبت‌نام فعال ندارید.</td></tr>
+        <% } %>
+        <% enrollments.forEach(enr => { %>
+          <tr>
+            <td><strong><%= enr.class_title %></strong></td>
+            <td><%= enr.start_date %></td>
+            <td><%= enr.schedule_days %> (<%= enr.start_time %> تا <%= enr.end_time %>)</td>
+            <td><%= formatCurrency(enr.tuition_agreed) %></td>
+            <td><span class="badge <%= getStatusBadge(enr.enrollment_status).class %>"><%= getStatusBadge(enr.enrollment_status).label %></span></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-bottom: 1rem; color: #1e3a8a;">مدارک و گواهینامه‌های من</h3>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>عنوان گواهی</th>
+          <th>دوره آموزشی</th>
+          <th>کد رهگیری مدرک</th>
+          <th>تاریخ صدور</th>
+          <th>وضعیت</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (certificates.length === 0) { %>
+          <tr><td colspan="5" style="text-align: center; color: #64748b;">تاکنون گواهینامه‌ای برای شما صادر نشده است.</td></tr>
+        <% } %>
+        <% certificates.forEach(cert => { %>
+          <tr>
+            <td><%= cert.title %></td>
+            <td><strong><%= cert.course_title %></strong></td>
+            <td><code><%= cert.certificate_code %></code></td>
+            <td><%= cert.issue_date %></td>
+            <td><span class="badge <%= getStatusBadge(cert.status).class %>"><%= getStatusBadge(cert.status).label %></span></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>

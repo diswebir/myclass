@@ -1,0 +1,50 @@
+<div style="margin-bottom: 2rem;">
+  <h2 style="color: #1e3a8a;">داشبورد مدیریتی آکادمی</h2>
+  <p style="color: #64748b;">نمای کلی وضعیت آموزشی، مالی و ثبت‌نام‌های جاری</p>
+</div>
+
+<div class="card-grid">
+  <div class="card">
+    <div class="card-title">کل فراگیران فعال</div>
+    <div class="card-value"><%= kpis.totalStudents.toLocaleString('fa-IR') %></div>
+  </div>
+  <div class="card">
+    <div class="card-title">اساتید فعال</div>
+    <div class="card-value"><%= kpis.activeTeachers.toLocaleString('fa-IR') %></div>
+  </div>
+  <div class="card">
+    <div class="card-title">کلاس‌های در حال ثبت‌نام / فعال</div>
+    <div class="card-value"><%= kpis.activeClasses.toLocaleString('fa-IR') %></div>
+  </div>
+  <div class="card">
+    <div class="card-title">پیش‌ثبت‌نام‌های در انتظار</div>
+    <div class="card-value"><%= kpis.pendingPreregistrations.toLocaleString('fa-IR') %></div>
+  </div>
+  <div class="card">
+    <div class="card-title">فیش‌های بانکی در انتظار تأیید</div>
+    <div class="card-value"><%= kpis.pendingReceipts.toLocaleString('fa-IR') %></div>
+  </div>
+  <div class="card">
+    <div class="card-title">کل درآمد وصول‌شده</div>
+    <div class="card-value" style="font-size: 1.3rem; color: #15803d;"><%= formatCurrency(kpis.totalRevenue) %></div>
+  </div>
+  <div class="card">
+    <div class="card-title">اقساط معوق سررسیدشده</div>
+    <div class="card-value" style="color: #b91c1c;"><%= kpis.overdueCount.toLocaleString('fa-IR') %></div>
+  </div>
+  <div class="card">
+    <div class="card-title">مدارک صادرشده معتبر</div>
+    <div class="card-value"><%= kpis.activeCertificates.toLocaleString('fa-IR') %></div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+  <h3 style="margin-bottom: 1rem; color: #1e3a8a;">دسترسی‌های سریع</h3>
+  <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+    <a href="/admin/classes" class="btn btn-primary">مدیریت کلاس‌ها</a>
+    <a href="/admin/students" class="btn btn-primary">پرونده فراگیران</a>
+    <a href="/admin/finance" class="btn btn-primary">کارتابل مالی و فیش‌ها</a>
+    <a href="/admin/backup" class="btn btn-secondary">پشتیبان‌گیری دیتابیس</a>
+    <a href="/health" class="btn btn-secondary">بررسی سلامت سرور</a>
+  </div>
+</div>

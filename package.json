@@ -1,0 +1,55 @@
+{
+  "name": "myclass-academy",
+  "version": "1.0.0",
+  "description": "Educational Institution Management Platform for cPanel Shared Hosting without SSH",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc && mkdir -p dist/ui && cp -r src/ui/views dist/ui/",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "cron": "node dist/jobs/run.js"
+  },
+  "keywords": [
+    "cpanel",
+    "academy",
+    "education-management",
+    "persian-rtl",
+    "ippanel"
+  ],
+  "author": "Arena Engineering",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "chart.js": "^4.5.1",
+    "cookie-parser": "^1.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "file-type": "^19.6.0",
+    "helmet": "^8.0.0",
+    "jalaali-js": "^1.2.7",
+    "kysely": "^0.27.6",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.12.0",
+    "qrcode": "^1.5.4",
+    "vazirmatn": "^33.0.3",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^4.17.21",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.13.9",
+    "@types/qrcode": "^1.5.5",
+    "@types/supertest": "^6.0.2",
+    "supertest": "^7.0.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7"
+  }
+}

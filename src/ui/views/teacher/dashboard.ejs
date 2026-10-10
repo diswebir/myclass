@@ -1,0 +1,50 @@
+<div style="margin-bottom: 2rem;">
+  <h2 style="color: #1e3a8a;">پنل اختصاصی استاد</h2>
+  <p style="color: #64748b;">کلاس‌های تخصیص‌یافته به شما و فهرست جلسات جهت ثبت حضور و غیاب</p>
+</div>
+
+<div class="card-grid">
+  <div class="card">
+    <div class="card-title">تعداد کلاس‌های تحت تدریس</div>
+    <div class="card-value"><%= assignedClasses.length.toLocaleString('fa-IR') %></div>
+  </div>
+  <div class="card">
+    <div class="card-title">تعداد کل فراگیران فعال</div>
+    <div class="card-value"><%= totalStudents.toLocaleString('fa-IR') %></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-bottom: 1rem; color: #1e3a8a;">فهرست کلاس‌های من</h3>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>کد کلاس</th>
+          <th>عنوان کلاس</th>
+          <th>برنامه زمانی</th>
+          <th>محل برگزاری</th>
+          <th>وضعیت</th>
+          <th>عملیات</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (assignedClasses.length === 0) { %>
+          <tr><td colspan="6" style="text-align: center; color: #64748b;">هیچ کلاسی به شما تخصیص داده نشده است.</td></tr>
+        <% } %>
+        <% assignedClasses.forEach(cls => { %>
+          <tr>
+            <td><code><%= cls.code %></code></td>
+            <td><strong><%= cls.title %></strong></td>
+            <td><%= cls.schedule_days %> (<%= cls.start_time %> تا <%= cls.end_time %>)</td>
+            <td><%= cls.location %></td>
+            <td><span class="badge <%= getStatusBadge(cls.status).class %>"><%= getStatusBadge(cls.status).label %></span></td>
+            <td>
+              <a href="/teacher/class/<%= cls.id %>" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.85rem;">جلسات و حضور و غیاب</a>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>

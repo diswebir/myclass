@@ -1,0 +1,68 @@
+<div style="max-width: 650px; margin: 3rem auto; background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <h2 style="color: #1e3a8a;">راه‌اندازی سامانه مدیریت مؤسسه (cPanel)</h2>
+    <p style="color: #64748b;">نصب و آماده‌سازی جداول دیتابیس بدون نیاز به SSH</p>
+  </div>
+
+  <div class="card" style="margin-bottom: 2rem; background: #f8fafc;">
+    <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: #334155;">بررسی پیش‌نیازهای هاست:</h3>
+    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem;">
+      <li>
+        <% if (env.nodeValid) { %>
+          <span class="badge badge-green">✓ تأیید</span> نسخه Node.js: <%= env.nodeVersion %>
+        <% } else { %>
+          <span class="badge badge-red">✗ خطا</span> نسخه Node.js باید ۱۸ یا بالاتر باشد.
+        <% } %>
+      </li>
+      <li>
+        <% if (env.storageWritable) { %>
+          <span class="badge badge-green">✓ تأیید</span> دسترسی نوشتن پوشه storage
+        <% } else { %>
+          <span class="badge badge-red">✗ خطا</span> دسترسی نوشتن برای پوشه storage مجاز نیست.
+        <% } %>
+      </li>
+      <li>
+        <% if (env.dbConnected) { %>
+          <span class="badge badge-green">✓ تأیید</span> اتصال به پایگاه داده
+        <% } else { %>
+          <span class="badge badge-red">✗ خطا</span> <%= env.dbError || 'عدم اتصال به دیتابیس' %>
+        <% } %>
+      </li>
+    </ul>
+  </div>
+
+  <form method="POST" action="/install">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: #1e3a8a;">اطلاعات مدیر اصلی و مؤسسه:</h3>
+
+    <div class="form-group">
+      <label for="institutionName">نام رسمی مؤسسه آموزشی</label>
+      <input type="text" id="institutionName" name="institutionName" required value="مؤسسه آموزشی رشد">
+    </div>
+
+    <div class="form-group">
+      <label for="fullName">نام و نام‌خانوادگی مدیر اصلی</label>
+      <input type="text" id="fullName" name="fullName" required placeholder="مثال: علیرضا محمدی">
+    </div>
+
+    <div class="form-group">
+      <label for="mobile">شماره همراه مدیر (نام کاربری جهت ورود)</label>
+      <input type="text" id="mobile" name="mobile" required placeholder="۰۹۱۲۳۴۵۶۷۸۹">
+    </div>
+
+    <div class="form-group">
+      <label for="email">آدرس ایمیل</label>
+      <input type="email" id="email" name="email" placeholder="admin@example.com">
+    </div>
+
+    <div class="form-group">
+      <label for="password">رمز عبور مدیر اصلی (حداقل ۸ کاراکتر)</label>
+      <input type="password" id="password" name="password" required minlength="8">
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+      تأیید و اجرای فرآیند نصب سامانه
+    </button>
+  </form>
+</div>
