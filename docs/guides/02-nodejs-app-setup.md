@@ -17,7 +17,7 @@
 ## گام ۲ — نصب وابستگی‌ها
 
 - روی دکمه‌ی **Run NPM Install** را انتخاب کنید (معادل `npm install`).
-- اگر `dist/` موجود نیست: build را اجرا کنید: **Run NPM Run Script** ← `build` (یا `npm run build`).
+- اگر `dist/` موجود نیست، build را اجرا کنید: **Run NPM Run Script** ← `build` (یا `npm run build`).
 
 > نکته: پروژه در ZIP نهایی `dist/` ساخته‌شده دارد؛ اگر `dist/` را حذف کرده‌اید، `npm run build` را اجرا کنید.
 

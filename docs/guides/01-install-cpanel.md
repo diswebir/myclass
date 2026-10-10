@@ -24,7 +24,7 @@ myclass یک پلتفرم مدیریت مؤسسه آموزشی است.
 2. **Application root**: `/home/USER/myclass`
 3. **Application startup file**: `dist/index.js`
 4. گزینه‌ی **Run NPM Install** را انتخاب کنید (یا `npm install --omit=dev`).
-5. اگر `dist/` نبود: `npm run build` اجرا کنید.
+5. اگر `dist/` نبود: `npm run build` اجرا کنید (ZIP نهایی شامل `dist/` است).
 
 ## گام ۳ متغیرهای محیطی (.env)
 
@@ -63,3 +63,5 @@ myclass یک پلتفرم مدیریت مؤسسه آموزشی است.
 - خطا‌ی اتصال DB (`DB_HOST` = `localhost`),
 - خطا‌ی: `ENCRYPTION_KEY` — طول ۶۴ hex,
 - خطا‌ی راه‌اندازی — لاگ `storage/logs/` و **Error Log** cPanel.
+- خطای `Cannot find module ... dist/index.js` — یعنی `dist/` ساخته نشده است؛ ابتدا `npm run build` را اجرا کنید (راهنمای 09).
+- روی Windows — دستور `PORT=3040 npm start` کار نمی‌کند؛ در CMD: `set PORT=3040 && npm start`، در PowerShell: `$env:PORT=3040; npm start`.
