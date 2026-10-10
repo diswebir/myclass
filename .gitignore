@@ -12,3 +12,5 @@ npm-debug.log*
 installed.lock
 sessions/
 backups/
+src/public/uploads/*
+!src/public/uploads/.gitkeep
