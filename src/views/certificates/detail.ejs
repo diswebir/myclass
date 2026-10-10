@@ -1,0 +1,56 @@
+<div class="flex-between mb-3">
+  <div>
+    <h1 class="mt-0">مدرک <%= cert.serial %></h1>
+    <div class="flex gap-2">
+      <span class="badge badge-<%= fmt.statusClass(cert.status) %>"><%= fmt.statusFa(cert.status) %></span>
+      <span class="chip"><%= cert.first_name %> <%= cert.last_name %></span>
+      <span class="chip"><%= cert.class_title %></span>
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <a href="/panel/certificates" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+    <a class="btn btn-primary" target="_blank" href="/panel/certificates/<%= cert.id %>/print"><%= icon('printer', 16) %> چاپ مدرک</a>
+    <% if (can('certificates.manage') && cert.status === 'issued') { %>
+      <form method="post" action="/panel/certificates/<%= cert.id %>/revoke" data-confirm="این مدرک باطل شود؟">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn btn-danger" type="submit"><%= icon('x', 16) %> ابطال</button>
+      </form>
+    <% } %>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns: 1.4fr 1fr">
+  <div class="card">
+    <div class="card-header"><h2><%= icon('file-text', 18) %> اطلاعات مدرک</h2></div>
+    <div class="card-body">
+      <dl class="kv">
+        <dt>شماره سریال</dt><dd dir="ltr"><strong><%= cert.serial %></strong></dd>
+        <dt>عنوان</dt><dd><%= cert.title || '—' %></dd>
+        <dt>دانش‌آموز</dt>
+        <dd><a href="/panel/students/<%= cert.student_id %>"><%= cert.first_name %> <%= cert.last_name %></a></dd>
+        <dt>دوره</dt><dd><a href="/panel/classes/<%= cert.class_id %>"><%= cert.class_title %></a></dd>
+        <% if (cert.student_code) { %><dt>کد دانش‌آموزی</dt><dd dir="ltr"><%= cert.student_code %></dd><% } %>
+        <dt>بازه دوره</dt>
+        <dd>
+          <%= cert.start_date ? j.jalaliLong(cert.start_date) : '—' %>
+          تا
+          <%= cert.end_date ? j.jalaliLong(cert.end_date) : '—' %>
+        </dd>
+        <dt>نمره</dt><dd><%= cert.final_score !== null && cert.final_score !== undefined ? fmt.numberFa(cert.final_score) : '—' %></dd>
+        <dt>رتبه</dt><dd><%= cert.grade_label || '—' %></dd>
+        <dt>تاریخ صدور</dt><dd><%= cert.issue_date ? j.jalaliLong(cert.issue_date) : '—' %></dd>
+        <dt>صادرکننده</dt><dd><%= cert.i_first ? cert.i_first + ' ' + cert.i_last : '—' %></dd>
+        <dt>توضیحات</dt><dd><%= cert.description || '—' %></dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2><%= icon('link', 18) %> استعلام عمومی</h2></div>
+    <div class="card-body">
+      <p class="text-soft">این مدرک با شماره سریال زیر در سامانه قابل استعلام است:</p>
+      <div class="alert alert-info"><span dir="ltr">/verify/<%= cert.serial %></span></div>
+      <a class="btn btn-outline btn-block" target="_blank" href="/verify/<%= cert.serial %>"><%= icon('eye', 16) % مشاهده صفحه استعلام</a>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,271 @@
+<div class="flex-between mb-3">
+  <div>
+    <h1 class="mt-0">تنظیمات سامانه</h1>
+    <p class="text-soft mb-0">پیکربندی کامل موسسه، مالی، پیامک، مدارک و امنیت</p>
+  </div>
+</div>
+
+<div class="tabs">
+  <% tabs.forEach(function(t){ %>
+    <a class="tab-link <%= tab === t.id ? 'active' : '' %>" href="/panel/settings?tab=<%= t.id %>">
+      <%= icon(t.icon, 16) %> <%= t.title %>
+    </a>
+  <% }); %>
+</div>
+
+<form method="post" action="/panel/settings/save" enctype="multipart/form-data">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="tab" value="<%= tab %>">
+
+  <div class="card">
+    <div class="card-header">
+      <h2><%= tabs.filter(function(t){ return t.id === tab; })[0].title %></h2>
+    </div>
+    <div class="card-body">
+
+    <% if (tab === 'institute') { %>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">نام موسسه <span class="req">*</span></label>
+          <input class="form-control" name="institute_name" value="<%= values.institute_name %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">شعار / توضیح کوتاه</label>
+          <input class="form-control" name="institute_slogan" value="<%= values.institute_slogan %>">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">لوگوی موسسه</label>
+        <input class="form-control" type="file" name="institute_logo" accept="image/*">
+        <% if (values.institute_logo) { %>
+          <div class="form-hint">
+            لوگوی فعلی:
+            <img src="/uploads/<%= values.institute_logo %>" alt="" style="height:38px;border-radius:8px;vertical-align:middle;margin-right:8px">
+          </div>
+        <% } %>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">تلفن</label>
+          <input class="form-control" name="institute_phone" value="<%= values.institute_phone %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ایمیل</label>
+          <input class="form-control" name="institute_email" dir="ltr" value="<%= values.institute_email %>">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">وب‌سایت</label>
+        <input class="form-control" name="institute_website" dir="ltr" value="<%= values.institute_website %>" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">آدرس</label>
+        <textarea class="form-control" name="institute_address" rows="2"><%= values.institute_address %></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">درباره موسسه</label>
+        <textarea class="form-control" name="institute_description" rows="3"><%= values.institute_description %></textarea>
+      </div>
+
+    <% } else if (tab === 'academic') { %>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">سال تحصیلی</label>
+          <input class="form-control" name="academic_year" value="<%= values.academic_year %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ترم جاری</label>
+          <input class="form-control" name="academic_term" value="<%= values.academic_term %>">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">شروع هفته</label>
+          <select class="form-select" name="week_start">
+            <option value="0" <%= values.week_start === '0' ? 'selected' : '' %>>شنبه</option>
+            <option value="1" <%= values.week_start === '1' ? 'selected' : '' %>>یکشنبه</option>
+            <option value="6" <%= values.week_start === '6' ? 'selected' : '' %>>جمعه</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">پیش‌ثبت‌نام آنلاین</label>
+          <label class="switch">
+            <input type="checkbox" name="registration_open" <%= values.registration_open === '1' ? 'checked' : '' %>>
+            <span class="slider"></span>
+            <span>فرم پیش‌ثبت‌نام فعال باشد</span>
+          </label>
+        </div>
+      </div>
+
+    <% } else if (tab === 'payment') { %>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">واحد پول</label>
+          <input class="form-control" name="currency_label" value="<%= values.currency_label %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">تعداد اقساط پیش‌فرض</label>
+          <input class="form-control" type="number" name="installment_default_count" value="<%= values.installment_default_count %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">فاصله سررسید اقساط (روز)</label>
+          <input class="form-control" type="number" name="installment_interval_days" value="<%= values.installment_interval_days %>">
+        </div>
+      </div>
+
+      <div class="flex gap-3 mb-3" style="flex-wrap:wrap">
+        <label class="switch">
+          <input type="checkbox" name="payment_enable_cash" <%= values.payment_enable_cash === '1' ? 'checked' : '' %>>
+          <span class="slider"></span><span>پرداخت نقدی</span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" name="payment_enable_card" <%= values.payment_enable_card === '1' ? 'checked' : '' %>>
+          <span class="slider"></span><span>پرداخت کارت به کارت</span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" name="payment_card_receipt_required" <%= values.payment_card_receipt_required === '1' ? 'checked' : '' %>>
+          <span class="slider"></span><span>رسید تصویری الزامی باشد</span>
+        </label>
+      </div>
+
+      <div class="divider"></div>
+      <div class="flex-between">
+        <h3 class="mt-0"><%= icon('credit-card', 16) %> کارت‌های بانکی موسسه</h3>
+        <button type="button" class="btn btn-outline btn-sm" id="addCardBtn"><%= icon('plus', 14) % افزودن کارت</button>
+      </div>
+      <div id="cardsBox">
+        <% cards.forEach(function(c){ %>
+          <div class="form-row-3 card-row mb-2">
+            <input class="form-control" name="card_bank" value="<%= c.bank || '' %>" placeholder="نام بانک">
+            <input class="form-control" name="card_holder" value="<%= c.holder || '' %>" placeholder="نام صاحب حساب">
+            <div class="input-group">
+              <input class="form-control" name="card_number" dir="ltr" value="<%= c.number || '' %>" placeholder="شماره کارت">
+              <button type="button" class="btn btn-danger btn-sm remove-card">حذف</button>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+
+    <% } else if (tab === 'sms') { %>
+      <div class="alert alert-info">
+        <span>سرویس پیامکی IPPanel (Edge API) — برای دریافت کلید، در پنل IPPanel مسیر «توسعه‌دهندگان ← کلیدهای دسترسی» را ببینید.</span>
+      </div>
+      <div class="flex mb-3">
+        <label class="switch">
+          <input type="checkbox" name="sms_enabled" <%= values.sms_enabled === '1' ? 'checked' : '' %>>
+          <span class="slider"></span><span>سرویس پیامک فعال باشد</span>
+        </label>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">کلید دسترسی (API Key / Token)</label>
+          <input class="form-control" name="sms_api_key" dir="ltr" value="<%= values.sms_api_key %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">شماره فرستنده (E.164)</label>
+          <input class="form-control" name="sms_from_number" dir="ltr" value="<%= values.sms_from_number %>">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">آدرس سرویس (Base URL)</label>
+          <input class="form-control" name="sms_base_url" dir="ltr" value="<%= values.sms_base_url %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاخیر بین ارسال‌های گروهی (میلی‌ثانیه)</label>
+          <input class="form-control" type="number" name="sms_send_delay_ms" value="<%= values.sms_send_delay_ms %>">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">امضا / پسوند پیام‌ها</label>
+        <input class="form-control" name="sms_signature" value="<%= values.sms_signature %>" placeholder="مثال: موسسه ...">
+      </div>
+      <p class="form-hint">
+        الگوهای پیامکی (پترن‌ها) و نگاشت متغیرها در بخش
+        <a href="/panel/sms/patterns">پنل پیامک ← الگوها</a>
+        قابل تنظیم است.
+      </p>
+
+    <% } else if (tab === 'certificate') { %>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">عنوان مدرک</label>
+          <input class="form-control" name="cert_title" value="<%= values.cert_title %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">زیرعنوان</label>
+          <input class="form-control" name="cert_subtitle" value="<%= values.cert_subtitle %>">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">متن پاورقی</label>
+        <textarea class="form-control" name="cert_footer_text" rows="2"><%= values.cert_footer_text %></textarea>
+        <div class="form-hint">از متغیر {institute_name} برای نام موسسه استفاده کنید</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">نام امضاکننده اول</label>
+          <input class="form-control" name="cert_sign1_name" value="<%= values.cert_sign1_name %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">سمت امضاکننده اول</label>
+          <input class="form-control" name="cert_sign1_title" value="<%= values.cert_sign1_title %>">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">نام امضاکننده دوم</label>
+          <input class="form-control" name="cert_sign2_name" value="<%= values.cert_sign2_name %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">سمت امضاکننده دوم</label>
+          <input class="form-control" name="cert_sign2_title" value="<%= values.cert_sign2_title %>">
+        </div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" name="cert_show_qr" <%= values.cert_show_qr === '1' ? 'checked' : '' %>>
+        <span class="slider"></span>
+        <span>نمایش QR استعلام روی مدرک</span>
+      </label>
+
+    <% } else if (tab === 'security') { %>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">حداقل طول رمز عبور</label>
+          <input class="form-control" type="number" name="security_password_min" value="<%= values.security_password_min %>" min="6">
+        </div>
+        <div class="form-group">
+          <label class="form-label">طول عمر جلسه (ساعت)</label>
+          <input class="form-control" type="number" name="security_session_hours" value="<%= values.security_session_hours %>">
+        </div>
+      </div>
+      <div class="alert alert-info">
+        <span>
+          محدودیت تلاش ورود، هدرهای امنیتی (CSP، XSS، ...)، محافظت CSRF، رمزنگاری رمز عبور (bcrypt)
+          و ثبت گزارش رویدادها به‌صورت پیش‌فرض فعال است.
+        </span>
+      </div>
+
+    <% } else if (tab === 'general') { %>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">عنوان سامانه</label>
+          <input class="form-control" name="panel_title" value="<%= values.panel_title %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">رنگ اصلی (Accent)</label>
+          <input class="form-control" type="color" name="theme_accent" value="<%= values.theme_accent || '#4f46e5' %>" style="height:46px">
+        </div>
+      </div>
+    <% } %>
+
+    </div>
+    <div class="card-footer">
+      <% if (can('settings.manage')) { %>
+        <button class="btn btn-primary btn-lg" type="submit"><%= icon('check', 18) %> ذخیره تنظیمات</button>
+      <% } else { %>
+        <div class="alert alert-warning mb-0"><span>شما فقط دسترسی مشاهده دارید.</span></div>
+      <% } %>
+    </div>
+  </div>
+</form>

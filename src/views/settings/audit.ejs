@@ -1,0 +1,45 @@
+<div class="flex-between mb-3">
+  <h1 class="mt-0">گزارش رویدادها (Audit Log)</h1>
+</div>
+
+<div class="flex-between mb-3">
+  <form class="filters-bar" method="get" action="/panel/audit">
+    <input class="form-control" name="q" value="<%= filters.q %>" placeholder="جستجو در جزئیات...">
+    <select class="form-select" name="action" data-auto-submit>
+      <option value="">همه اقدامات</option>
+      <% actions.forEach(function(a){ %>
+        <option value="<%= a.action %>" <%= filters.action === a.action ? 'selected' : '' %>><%= a.action %></option>
+      <% }); %>
+    </select>
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) % جستجو</button>
+  </form>
+</div>
+
+<div class="card">
+  <% if (rows.length === 0) { %>
+    <div class="empty-state"><%= icon('activity', 48) %><h3>رویدادی ثبت نشده است</h3></div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>زمان</th><th>کاربر</th><th>اقدام</th><th>موجودیت</th><th>جزئیات</th><th>IP</th></tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function(r){ %>
+            <tr>
+              <td class="nowrap"><%= j.jalaliLong(r.created_at) %> <%= j.timeFa(r.created_at, true) %></td>
+              <td><%= r.first_name ? r.first_name + ' ' + r.last_name : '—' %></td>
+              <td><span class="chip" dir="ltr"><%= r.action %></span></td>
+              <td dir="ltr"><small><%= r.entity_type %><%= r.entity_id ? ' #' + r.entity_id : '' %></small></td>
+              <td><small class="text-muted"><%= fmt.truncate(r.details, 70) %></small></td>
+              <td dir="ltr"><small><%= r.ip %></small></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <%- include('../partials/pagination', { page: page, pages: pages, basePath: '/panel/audit' }) %>
+    </div>
+  <% } %>
+</div>

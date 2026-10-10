@@ -1,0 +1,105 @@
+<div class="flex-between mb-3">
+  <h1 class="mt-0">طرح‌های اقساط</h1>
+  <div class="flex gap-2">
+    <a href="/panel/payments" class="btn btn-outline"><%= icon('wallet', 16) % پرداخت‌ها</a>
+    <% if (can('payments.manage')) { %>
+      <button class="btn btn-primary" data-toggle-modal="newPlan"><%= icon('plus', 18) % طرح جدید</button>
+    <% } %>
+  </div>
+</div>
+
+<% if (can('payments.manage')) { %>
+<div class="card" id="newPlan" style="display:none">
+  <div class="card-header"><h2><%= icon('plus', 18) %> ایجاد طرح اقساط</h2></div>
+  <div class="card-body">
+    <form method="post" action="/panel/payments/installments/plans">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">دانش‌آموز (شناسه) <span class="req">*</span></label>
+          <input class="form-control" type="number" name="student_id" required placeholder="شناسه کاربر">
+        </div>
+        <div class="form-group">
+          <label class="form-label">کلاس (شناسه)</label>
+          <input class="form-control" type="number" name="class_id" placeholder="اختیاری">
+        </div>
+        <div class="form-group">
+          <label class="form-label">عنوان طرح</label>
+          <input class="form-control" name="title" placeholder="مثال: شهریه ترم اول">
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">مبلغ کل <span class="req">*</span></label>
+          <input class="form-control" type="number" name="total_amount" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">تعداد اقساط</label>
+          <input class="form-control" type="number" name="installments_count" value="3" min="1" max="36">
+        </div>
+        <div class="form-group">
+          <label class="form-label">فاصله سررسید (روز)</label>
+          <input class="form-control" type="number" name="interval_days" value="30">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">تاریخ اولین سررسید</label>
+        <input class="form-control" name="start_due_date" data-jdp style="max-width:240px">
+      </div>
+      <button class="btn btn-primary" type="submit"><%= icon('check', 18) %> ساخت طرح</button>
+    </form>
+  </div>
+</div>
+<% } %>
+
+<div class="card">
+  <% if (rows.length === 0) { %>
+    <div class="empty-state">
+      <%= icon('file-text', 48) %>
+      <h3>طرح اقساطی ثبت نشده است</h3>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>عنوان</th><th>دانش‌آموز</th><th>کلاس</th><th>مبلغ کل</th><th>پیشرفت</th><th>وضعیت</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function(p){ %>
+            <%
+              var pct = p.total_inst > 0 ? Math.round((Number(p.paid_inst) / Number(p.total_inst)) * 100) : 0;
+            %>
+            <tr>
+              <td><strong><%= p.title %></strong></td>
+              <td><%= p.first_name %> <%= p.last_name %></td>
+              <td><%= p.class_title || '—' %></td>
+              <td class="nowrap"><%= fmt.moneyFa(p.total_amount, currencyLabel) %></td>
+              <td style="min-width:130px">
+                <div class="progress"><div class="progress-bar <%= pct === 100 ? 'success' : '' %>" style="width:<%= pct %>%"></div></div>
+                <small class="text-muted"><%= fmt.numberFa(p.paid_inst) %> از <%= fmt.numberFa(p.total_inst) %> قسط</small>
+              </td>
+              <td><span class="badge badge-<%= fmt.statusClass(p.status) %>"><%= fmt.statusFa(p.status) %></span></td>
+              <td><a class="btn btn-primary btn-sm" href="/panel/payments/installments/plans/<%= p.id %>">جزئیات</a></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <%- include('../partials/pagination', { page: page, pages: pages, basePath: '/panel/payments/installments/plans' }) %>
+    </div>
+  <% } %>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var btn = document.querySelector('[data-toggle-modal="newPlan"]');
+  if (btn) {
+    btn.addEventListener('click', function () {
+      var box = document.getElementById('newPlan');
+      box.style.display = box.style.display === 'none' ? '' : 'none';
+      if (box.style.display !== 'none') box.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+});
+</script>

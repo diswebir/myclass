@@ -1,0 +1,59 @@
+<div class="flex-between mb-3">
+  <h1 class="mt-0">گزارش پیامک‌ها</h1>
+  <a href="/panel/sms" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+</div>
+
+<div class="flex-between mb-3">
+  <form class="filters-bar" method="get" action="/panel/sms/logs">
+    <input class="form-control" name="q" value="<%= filters.q %>" placeholder="شماره گیرنده...">
+    <select class="form-select" name="status" data-auto-submit>
+      <option value="">همه وضعیت‌ها</option>
+      <option value="sent" <%= filters.status === 'sent' ? 'selected' : '' %>>ارسال شده</option>
+      <option value="failed" <%= filters.status === 'failed' ? 'selected' : '' %>>ناموفق</option>
+      <option value="skipped" <%= filters.status === 'skipped' ? 'selected' : '' %>>ارسال نشده</option>
+    </select>
+    <input class="form-control" name="event_code" value="<%= filters.event_code %>" placeholder="کد رویداد">
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) % جستجو</button>
+  </form>
+</div>
+
+<div class="card">
+  <% if (rows.length === 0) { %>
+    <div class="empty-state">
+      <%= icon('message', 48) %>
+      <h3>گزارشی یافت نشد</h3>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>گیرنده</th><th>رویداد</th><th>کد پترن</th><th>متغیرها</th><th>وضعیت</th><th>زمان</th></tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function(r){ %>
+            <tr>
+              <td dir="ltr"><%= r.recipient %></td>
+              <td><span class="chip" dir="ltr"><%= r.event_code %></span></td>
+              <td dir="ltr"><small><%= r.pattern_code || '—' %></small></td>
+              <td>
+                <small class="text-muted" style="max-width:220px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                  <%= r.variables %>
+                </small>
+              </td>
+              <td>
+                <span class="badge badge-<%= fmt.statusClass(r.status) %>"><%= fmt.statusFa(r.status) %></span>
+                <% if (r.status === 'failed' && r.provider_response) { %>
+                  <br><small class="text-danger"><%= r.provider_response.slice(0, 60) %></small>
+                <% } %>
+              </td>
+              <td class="nowrap"><%= j.jalaliLong(r.created_at) %> <%= j.timeFa(r.created_at) %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <%- include('../partials/pagination', { page: page, pages: pages, basePath: '/panel/sms/logs' }) %>
+    </div>
+  <% } %>
+</div>

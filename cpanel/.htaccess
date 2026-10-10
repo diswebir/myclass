@@ -1,0 +1,47 @@
+# ── امنیت MyClass Platform ─────────────────────────────
+# این فایل را در ریشه برنامه (public_html یا پوشه اپ) قرار دهید
+
+Options -Indexes
+
+# مسدودسازی دسترسی مستقیم به فایل‌های حساس
+<FilesMatch "\.(env|log|sqlite|sqlite3|db|md)$">
+  Require all denied
+</FilesMatch>
+
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+
+# محافظت از پوشه‌های حساس
+RedirectMatch 403 ^/?(data|node_modules|migrations|seeds|scripts|logs)/?.*$
+
+# هدرهای امنیتی
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# فشرده‌سازی
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
+</IfModule>
+
+# کش استاتیک
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpeg "access plus 7 days"
+  ExpiresByType image/png "access plus 7 days"
+  ExpiresByType image/webp "access plus 7 days"
+  ExpiresByType image/svg+xml "access plus 7 days"
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType font/woff2 "access plus 30 days"
+</IfModule>
+
+# هدایت درخواست‌ها به اپ Node.js (توسط Passenger انجام می‌شود؛ این بخش فقط تکمیلی است)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # اگر برنامه در زیرپوشه نصب شده، خط زیر را تنظیم کنید:
+  # RewriteBase /myclass
+</IfModule>

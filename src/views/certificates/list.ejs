@@ -1,0 +1,53 @@
+<div class="flex-between mb-3">
+  <form class="filters-bar" method="get" action="/panel/certificates">
+    <input class="form-control" name="q" value="<%= q %>" placeholder="نام یا سریال مدرک...">
+    <select class="form-select" name="class_id" data-auto-submit>
+      <option value="">همه کلاس‌ها</option>
+      <% classes.forEach(function(c){ %>
+        <option value="<%= c.id %>" <%= String(classId) === String(c.id) ? 'selected' : '' %>><%= c.title %></option>
+      <% }); %>
+    </select>
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) % جستجو</button>
+  </form>
+  <% if (can('certificates.manage')) { %>
+    <a href="/panel/certificates/create" class="btn btn-primary"><%= icon('award', 18) %> صدور مدرک</a>
+  <% } %>
+</div>
+
+<div class="card">
+  <% if (rows.length === 0) { %>
+    <div class="empty-state">
+      <%= icon('award', 48) %>
+      <h3>مدرکی صادر نشده است</h3>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>سریال</th><th>دانش‌آموز</th><th>دوره</th><th>تاریخ صدور</th><th>نمره</th><th>وضعیت</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function(c){ %>
+            <tr>
+              <td dir="ltr"><strong><%= c.serial %></strong></td>
+              <td><%= c.first_name %> <%= c.last_name %></td>
+              <td><%= c.class_title %></td>
+              <td class="nowrap"><%= c.issue_date ? j.jalaliLong(c.issue_date) : '—' %></td>
+              <td><%= c.grade_label || (c.final_score !== null && c.final_score !== undefined ? fmt.numberFa(c.final_score) : '—') %></td>
+              <td><span class="badge badge-<%= fmt.statusClass(c.status) %>"><%= fmt.statusFa(c.status) %></span></td>
+              <td>
+                <div class="actions">
+                  <a class="btn btn-outline btn-sm" href="/panel/certificates/<%= c.id %>"><%= icon('eye', 15) %></a>
+                  <a class="btn btn-primary btn-sm" target="_blank" href="/panel/certificates/<%= c.id %>/print"><%= icon('printer', 15) %></a>
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <%- include('../partials/pagination', { page: page, pages: pages, basePath: '/panel/certificates' }) %>
+    </div>
+  <% } %>
+</div>

@@ -1,0 +1,49 @@
+<div class="flex-between mb-3">
+  <form class="filters-bar" method="get" action="/panel/teachers">
+    <input class="form-control" name="q" value="<%= q %>" placeholder="نام، موبایل، تخصص...">
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) % جستجو</button>
+  </form>
+  <% if (can('teachers.manage')) { %>
+    <a href="/panel/teachers/create" class="btn btn-primary"><%= icon('user-plus', 18) %> افزودن استاد</a>
+  <% } %>
+</div>
+
+<div class="card">
+  <% if (rows.length === 0) { %>
+    <div class="empty-state">
+      <%= icon('user-check', 48) %>
+      <h3>استادی یافت نشد</h3>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>نام</th><th>تخصص</th><th>موبایل</th><th>کلاس‌ها</th><th>دانش‌آموزان</th><th>وضعیت</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function(t){ %>
+            <tr>
+              <td><a href="/panel/teachers/<%= t.id %>"><strong><%= t.first_name %> <%= t.last_name %></strong></a></td>
+              <td><%= t.expertise || '—' %></td>
+              <td dir="ltr"><%= t.phone || '—' %></td>
+              <td><span class="badge badge-accent"><%= fmt.numberFa(t.classes_count || 0) %></span></td>
+              <td><span class="badge badge-info"><%= fmt.numberFa(t.students_count || 0) %></span></td>
+              <td><span class="badge badge-<%= t.is_active ? 'success' : 'danger' %>"><%= t.is_active ? 'فعال' : 'غیرفعال' %></span></td>
+              <td>
+                <div class="actions">
+                  <a class="btn btn-outline btn-sm" href="/panel/teachers/<%= t.id %>"><%= icon('eye', 15) %></a>
+                  <% if (can('teachers.manage')) { %>
+                    <a class="btn btn-outline btn-sm" href="/panel/teachers/<%= t.id %>/edit"><%= icon('edit', 15) %></a>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <%- include('../partials/pagination', { page: page, pages: pages, basePath: '/panel/teachers' }) %>
+    </div>
+  <% } %>
+</div>

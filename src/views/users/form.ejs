@@ -1,0 +1,91 @@
+<div class="card">
+  <div class="card-header">
+    <h2><%= icon(isEdit ? 'edit' : 'user-plus', 18) %> <%= isEdit ? 'ویرایش کاربر' : 'افزودن کاربر' %></h2>
+    <a href="/panel/users" class="btn btn-outline btn-sm">انصراف</a>
+  </div>
+  <div class="card-body">
+    <form method="post" action="<%= isEdit ? '/panel/users/' + user.id : '/panel/users' %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">نام <span class="req">*</span></label>
+          <input class="form-control" name="first_name" value="<%= user.first_name || '' %>" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">نام خانوادگی <span class="req">*</span></label>
+          <input class="form-control" name="last_name" value="<%= user.last_name || '' %>" required>
+        </div>
+      </div>
+
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">نام کاربری <span class="req">*</span></label>
+          <input class="form-control" name="username" dir="ltr" value="<%= user.username || '' %>" <%= isEdit ? 'readonly' : 'required' %>>
+        </div>
+        <div class="form-group">
+          <label class="form-label">شماره موبایل</label>
+          <input class="form-control" name="phone" dir="ltr" value="<%= user.phone || '' %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ایمیل</label>
+          <input class="form-control" name="email" type="email" dir="ltr" value="<%= user.email || '' %>">
+        </div>
+      </div>
+
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">کد ملی</label>
+          <input class="form-control" name="national_code" dir="ltr" value="<%= user.national_code || '' %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">نوع کاربر</label>
+          <select class="form-select" name="user_type">
+            <option value="staff" <%= user.user_type === 'staff' ? 'selected' : '' %>>کارمند</option>
+            <option value="admin" <%= user.user_type === 'admin' ? 'selected' : '' %>>مدیر</option>
+            <option value="teacher" <%= user.user_type === 'teacher' ? 'selected' : '' %>>استاد</option>
+            <option value="student" <%= user.user_type === 'student' ? 'selected' : '' %>>دانش‌آموز</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">سطح دسترسی (نقش)</label>
+          <select class="form-select" name="role_id">
+            <option value="">— بدون نقش —</option>
+            <% roles.forEach(function(r){ %>
+              <option value="<%= r.id %>" <%= String(user.role_id) === String(r.id) ? 'selected' : '' %>>
+                <%= r.title %>
+              </option>
+            <% }); %>
+          </select>
+        </div>
+      </div>
+
+      <% if (!isEdit) { %>
+        <div class="form-group">
+          <label class="form-label">رمز عبور</label>
+          <div class="input-group" style="max-width:340px">
+            <input class="form-control" type="text" name="password" id="genPass" dir="ltr" value="<%= generatedPassword %>">
+            <button type="button" class="btn btn-outline" data-gen-password="genPass"><%= icon('refresh', 16) %></button>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">رمز عبور جدید (اختیاری)</label>
+            <input class="form-control" type="text" name="new_password" dir="ltr">
+          </div>
+          <div class="form-group">
+            <label class="form-label">وضعیت</label>
+            <label class="switch">
+              <input type="checkbox" name="is_active" <%= user.is_active ? 'checked' : '' %>>
+              <span class="slider"></span>
+              <span>حساب فعال باشد</span>
+            </label>
+          </div>
+        </div>
+      <% } %>
+
+      <button class="btn btn-primary btn-lg" type="submit"><%= icon('check', 18) %> <%= isEdit ? 'ذخیره تغییرات' : 'ایجاد کاربر' %></button>
+    </form>
+  </div>
+</div>

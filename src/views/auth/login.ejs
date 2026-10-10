@@ -1,0 +1,24 @@
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert alert-danger"><span><%= error %></span></div>
+<% } %>
+
+<form method="post" action="/login" autocomplete="off">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="form-group">
+    <label class="form-label">نام کاربری</label>
+    <input class="form-control" name="username" value="<%= typeof username !== 'undefined' ? username : '' %>"
+           placeholder="مثال: admin" required autofocus>
+  </div>
+  <div class="form-group">
+    <label class="form-label">رمز عبور</label>
+    <div class="input-group">
+      <input class="form-control" type="password" name="password" id="loginPass" placeholder="رمز عبور" required>
+      <button type="button" class="btn btn-outline" data-toggle-password="loginPass"><%= icon('eye', 18) %></button>
+    </div>
+  </div>
+  <button class="btn btn-primary btn-block btn-lg" type="submit"><%= icon('lock', 18) %> ورود به سامانه</button>
+</form>
+
+<p class="text-center text-muted mt-3" style="font-size:0.85rem">
+  حساب کاربری ندارید؟ با مدیر موسسه تماس بگیرید.
+</p>

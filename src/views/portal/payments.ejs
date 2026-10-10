@@ -1,0 +1,109 @@
+<div class="flex-between mb-3">
+  <h1 class="mt-0">امور مالی من</h1>
+  <a href="/portal" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+</div>
+
+<% if (cards.length) { %>
+<div class="card">
+  <div class="card-header"><h2><%= icon('credit-card', 18) %> کارت‌های پرداخت موسسه</h2></div>
+  <div class="card-body">
+    <div class="grid grid-3">
+      <% cards.forEach(function(c){ %>
+        <div class="chip" style="flex-direction:column;align-items:flex-start;padding:14px 16px">
+          <strong><%= c.bank || 'بانک' %></strong>
+          <span dir="ltr" style="font-size:1.02rem;letter-spacing:1px"><%= c.number %></span>
+          <small class="text-muted"><%= c.holder %></small>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<div class="grid grid-2">
+  <div class="card">
+    <div class="card-header"><h2><%= icon('file-text', 18) %> طرح‌های اقساط من</h2></div>
+    <div class="card-body">
+      <% if (plans.length === 0) { %>
+        <div class="empty-state"><p>طرح اقساطی ندارید</p></div>
+      <% } else { %>
+        <ul class="list-clean">
+          <% plans.forEach(function(p){
+               var pct = p.installments_count > 0 ? Math.round((Number(p.paid_count) / Number(p.installments_count)) * 100) : 0;
+          %>
+            <li class="list-row">
+              <div class="main">
+                <strong><%= p.title %></strong>
+                <small class="text-muted"><%= fmt.moneyFa(p.total_amount, currencyLabel) %></small>
+                <div class="progress mt-2" style="width:160px"><div class="progress-bar <%= pct === 100 ? 'success' : '' %>" style="width:<%= pct %>%"></div></div>
+              </div>
+              <div class="side">
+                <span class="badge badge-<%= fmt.statusClass(p.status) %>"><%= fmt.statusFa(p.status) %></span>
+                <a class="btn btn-primary btn-sm" href="/portal/installments/<%= p.id %>">اقساط</a>
+              </div>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2><%= icon('send', 18) %> ثبت رسید کارت به کارت</h2></div>
+    <div class="card-body">
+      <form method="post" action="/panel/payments/submit-receipt" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-group">
+          <label class="form-label">مبلغ (<%= currencyLabel %>) <span class="req">*</span></label>
+          <input class="form-control" type="number" name="amount" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">کد پیگیری</label>
+            <input class="form-control" name="tracking_code" dir="ltr">
+          </div>
+          <div class="form-group">
+            <label class="form-label">بانک</label>
+            <input class="form-control" name="bank_name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">تصویر رسید <span class="req">*</span></label>
+          <input class="form-control" type="file" name="receipt_file" accept="image/*,.pdf" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">توضیحات</label>
+          <textarea class="form-control" name="description" rows="2"></textarea>
+        </div>
+        <button class="btn btn-primary" type="submit"><%= icon('send', 16) % ارسال رسید</button>
+        <p class="form-hint">پس از تایید مالی، پرداخت شما نهایی می‌شود.</p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2><%= icon('wallet', 18) % سوابق پرداخت</h2></div>
+  <div class="card-body">
+    <% if (payments.length === 0) { %>
+      <div class="empty-state"><p>پرداختی ثبت نشده است</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>مبلغ</th><th>روش</th><th>کلاس</th><th>وضعیت</th><th>تاریخ</th></tr></thead>
+          <tbody>
+            <% payments.forEach(function(p){ %>
+              <tr>
+                <td class="nowrap"><strong><%= fmt.moneyFa(p.amount, currencyLabel) %></strong></td>
+                <td><%= fmt.statusFa(p.method) %></td>
+                <td><%= p.class_title || '—' %></td>
+                <td><span class="badge badge-<%= fmt.statusClass(p.status) %>"><%= fmt.statusFa(p.status) %></span></td>
+                <td class="nowrap"><%= j.jalaliLong(p.paid_at || p.created_at) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>

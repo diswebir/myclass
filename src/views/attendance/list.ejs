@@ -1,0 +1,61 @@
+<div class="flex-between mb-3">
+  <form class="filters-bar" method="get" action="/panel/attendance">
+    <select class="form-select" name="class_id" data-auto-submit>
+      <option value="">همه کلاس‌ها</option>
+      <% classes.forEach(function(c){ %>
+        <option value="<%= c.id %>" <%= String(filters.class_id) === String(c.id) ? 'selected' : '' %>><%= c.title %></option>
+      <% }); %>
+    </select>
+    <input class="form-control" name="date" data-jdp value="<%= filters.date %>" placeholder="تاریخ شمسی">
+    <select class="form-select" name="status" data-auto-submit>
+      <option value="">همه جلسات</option>
+      <option value="scheduled" <%= filters.status === 'scheduled' ? 'selected' : '' %>>برنامه‌ریزی شده</option>
+      <option value="held" <%= filters.status === 'held' ? 'selected' : '' %>>برگزار شده</option>
+    </select>
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) % جستجو</button>
+    <a class="btn btn-ghost" href="/panel/attendance">پاک کردن</a>
+  </form>
+</div>
+
+<div class="card">
+  <% if (rows.length === 0) { %>
+    <div class="empty-state">
+      <%= icon('check-square', 48) %>
+      <h3>جلسه‌ای یافت نشد</h3>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>کلاس</th><th>تاریخ</th><th>ساعت</th><th>موضوع</th><th>وضعیت جلسه</th><th>ثبت حضور</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function(s){ %>
+            <tr>
+              <td><a href="/panel/classes/<%= s.class_id %>"><strong><%= s.class_title %></strong></a></td>
+              <td class="nowrap"><%= j.jalaliLong(s.session_date) %></td>
+              <td class="nowrap"><%= j.timeFa(s.start_time) %></td>
+              <td><%= s.topic || '—' %></td>
+              <td><span class="badge badge-<%= fmt.statusClass(s.status) %>"><%= fmt.statusFa(s.status) %></span></td>
+              <td>
+                <% if (s.recorded_count > 0) { %>
+                  <span class="badge badge-success"><%= fmt.numberFa(s.recorded_count) %> / <%= fmt.numberFa(s.students_count) %></span>
+                <% } else { %>
+                  <span class="badge badge-warning">ثبت نشده</span>
+                <% } %>
+              </td>
+              <td>
+                <a class="btn btn-primary btn-sm" href="/panel/attendance/session/<%= s.id %>">
+                  <%= s.recorded_count > 0 ? 'ویرایش' : 'ثبت حضور و غیاب' %>
+                </a>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <%- include('../partials/pagination', { page: page, pages: pages, basePath: '/panel/attendance' }) %>
+    </div>
+  <% } %>
+</div>

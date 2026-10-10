@@ -1,0 +1,49 @@
+<div class="flex-between mb-3">
+  <h1 class="mt-0">کارنامه حضور: <%= student.first_name %> <%= student.last_name %></h1>
+  <a href="/panel/attendance" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+</div>
+
+<div class="grid grid-4">
+  <div class="stat-card light">
+    <div class="stat-info"><h3>کل ثبت‌ها</h3><div class="stat-value"><%= fmt.numberFa(summary.total || 0) %></div></div>
+    <div class="stat-icon"><%= icon('file-text', 22) %></div>
+  </div>
+  <div class="stat-card light">
+    <div class="stat-info"><h3>حاضر</h3><div class="stat-value text-success"><%= fmt.numberFa(summary.present || 0) %></div></div>
+    <div class="stat-icon" style="color:var(--success)"><%= icon('check', 22) %></div>
+  </div>
+  <div class="stat-card light">
+    <div class="stat-info"><h3>غایب</h3><div class="stat-value text-danger"><%= fmt.numberFa(summary.absent || 0) %></div></div>
+    <div class="stat-icon" style="color:var(--danger)"><%= icon('x', 22) %></div>
+  </div>
+  <div class="stat-card light">
+    <div class="stat-info"><h3>تاخیر / موجه</h3><div class="stat-value"><%= fmt.numberFa((summary.late || 0) + (summary.excused || 0)) %></div></div>
+    <div class="stat-icon"><%= icon('clock', 22) %></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2><%= icon('calendar', 18) % سوابق جلسات</h2></div>
+  <div class="card-body">
+    <% if (rows.length === 0) { %>
+      <div class="empty-state"><p>سابقه‌ای ثبت نشده است</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>تاریخ</th><th>کلاس</th><th>موضوع</th><th>وضعیت</th><th>یادداشت</th></tr></thead>
+          <tbody>
+            <% rows.forEach(function(r){ %>
+              <tr>
+                <td class="nowrap"><%= j.jalaliLong(r.session_date) %></td>
+                <td><%= r.class_title %></td>
+                <td><%= r.topic || '—' %></td>
+                <td><span class="badge badge-<%= fmt.statusClass(r.status) %>"><%= fmt.statusFa(r.status) %></span></td>
+                <td><%= r.note || '—' %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>

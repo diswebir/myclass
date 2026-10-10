@@ -1,0 +1,49 @@
+<div class="flex-between mb-3">
+  <div>
+    <h1 class="mt-0">سطوح دسترسی</h1>
+    <p class="text-soft mb-0">هر نقش مجموعه‌ای از دسترسی‌هاست که به کاربران تخصیص داده می‌شود.</p>
+  </div>
+  <% if (can('roles.manage')) { %>
+    <a href="/panel/roles/create" class="btn btn-primary"><%= icon('plus', 18) %> سطح دسترسی جدید</a>
+  <% } %>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr><th>عنوان</th><th>توضیحات</th><th>کاربران</th><th>دسترسی‌ها</th><th>نوع</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% roles.forEach(function(r){ %>
+          <tr>
+            <td><strong><%= r.title %></strong></td>
+            <td><%= r.description || '—' %></td>
+            <td><span class="badge badge-accent"><%= fmt.numberFa(r.users_count) %></span></td>
+            <td><span class="badge badge-info"><%= fmt.numberFa(r.perms_count) %></span></td>
+            <td>
+              <% if (r.is_system) { %>
+                <span class="badge badge-muted">سیستمی</span>
+              <% } else { %>
+                <span class="badge badge-success">سفارشی</span>
+              <% } %>
+            </td>
+            <td>
+              <div class="actions">
+                <% if (can('roles.manage')) { %>
+                  <a class="btn btn-outline btn-sm" href="/panel/roles/<%= r.id %>/edit"><%= icon('edit', 15) %></a>
+                  <% if (!r.is_system) { %>
+                    <form method="post" action="/panel/roles/<%= r.id %>/delete" data-confirm="این سطح دسترسی حذف شود؟">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button class="btn btn-danger btn-sm" type="submit"><%= icon('trash', 15) %></button>
+                    </form>
+                  <% } %>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,62 @@
+<section class="container">
+  <div class="hero">
+    <h1><%= instituteName %></h1>
+    <p><%= S && S.institute_slogan ? S.institute_slogan : 'آموزش با کیفیت در کنار شما' %></p>
+    <% if (S && S.institute_description) { %>
+      <p style="opacity:0.85;font-size:0.98rem"><%= S.institute_description %></p>
+    <% } %>
+    <div class="hero-actions">
+      <a href="#classes" class="btn btn-light btn-lg"><%= icon('book', 18) %> مشاهده کلاس‌ها</a>
+      <a href="/login" class="btn btn-lg" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35)">
+        <%= icon('user', 18) %> ورود اعضا
+      </a>
+    </div>
+  </div>
+
+  <div class="flex-between mb-3">
+    <h2 id="classes"><%= icon('book', 22) %> کلاس‌های قابل ثبت‌نام</h2>
+    <span class="chip"><strong><%= fmt.numberFa(openClasses.length) %></strong> کلاس فعال</span>
+  </div>
+
+  <% if (openClasses.length === 0) { %>
+    <div class="card">
+      <div class="empty-state">
+        <%= icon('book', 48) %>
+        <h3>در حال حاضر کلاس بازی برای ثبت‌نام وجود ندارد</h3>
+        <p>به‌زودی دوره‌های جدید اعلام می‌شود.</p>
+      </div>
+    </div>
+  <% } else { %>
+    <div class="grid grid-3">
+      <% openClasses.forEach(function(c, idx){ %>
+        <div class="class-card">
+          <div class="cc-banner" style="background: <%= ['var(--grad-1)','var(--grad-2)','var(--grad-3)','var(--grad-4)','var(--grad-5)'][idx % 5] %>">
+            <% if (c.image_file) { %><img src="/uploads/<%= c.image_file %>" alt="<%= c.title %>"><% } %>
+          </div>
+          <div class="cc-body">
+            <h3><%= c.title %></h3>
+            <div class="cc-meta">
+              <% if (c.t_first || c.t_last) { %>
+                <span><%= icon('user-check', 16) %> استاد: <%= c.t_first %> <%= c.t_last %></span>
+              <% } %>
+              <% if (c.start_date) { %>
+                <span><%= icon('calendar', 16) %> شروع: <%= j.jalaliLong(c.start_date) %></span>
+              <% } %>
+              <% if (c.start_time) { %>
+                <span><%= icon('clock', 16) %> ساعت: <%= j.timeFa(c.start_time) %></span>
+              <% } %>
+              <span><%= icon('users', 16) %> <%= fmt.numberFa(c.students_count || 0) %> نفر ثبت‌نام‌کرده</span>
+              <% if (c.price > 0) { %>
+                <span><%= icon('wallet', 16) %> <%= fmt.moneyFa(c.price, currencyLabel) %></span>
+              <% } %>
+            </div>
+            <div class="cc-foot">
+              <span class="badge badge-<%= fmt.statusClass(c.status) %>"><%= fmt.statusFa(c.status) %></span>
+              <a href="/classes/<%= c.id %>" class="btn btn-primary btn-sm">مشاهده و ثبت‌نام</a>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+</section>

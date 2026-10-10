@@ -1,0 +1,82 @@
+<div class="card">
+  <div class="card-header">
+    <h2><%= icon('wallet', 18) %> ثبت پرداخت جدید</h2>
+    <a href="/panel/payments" class="btn btn-outline btn-sm">انصراف</a>
+  </div>
+  <div class="card-body">
+    <form method="post" action="/panel/payments" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">دانش‌آموز <span class="req">*</span></label>
+          <select class="form-select" name="student_id" required>
+            <option value="">— انتخاب کنید —</option>
+            <% students.forEach(function(s){ %>
+              <option value="<%= s.id %>"><%= s.first_name %> <%= s.last_name %><% if (s.phone) { %> (<span dir="ltr"><%= s.phone %></span>)<% } %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">کلاس (اختیاری)</label>
+          <select class="form-select" name="class_id">
+            <option value="">—</option>
+            <% classes.forEach(function(c){ %>
+              <option value="<%= c.id %>"><%= c.title %></option>
+            <% }); %>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">مبلغ (<%= currencyLabel %>) <span class="req">*</span></label>
+          <input class="form-control" type="number" name="amount" min="1" required data-money-preview="amountPreview">
+          <div class="form-hint">معادل: <strong id="amountPreview">—</strong></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">روش پرداخت</label>
+          <select class="form-select" name="method">
+            <option value="cash">نقدی</option>
+            <option value="card_to_card">کارت به کارت</option>
+            <option value="online">آنلاین</option>
+            <option value="other">سایر</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاریخ پرداخت</label>
+          <input class="form-control" name="paid_date" data-jdp>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">کد پیگیری</label>
+          <input class="form-control" name="tracking_code" dir="ltr">
+        </div>
+        <div class="form-group">
+          <label class="form-label">نام بانک</label>
+          <input class="form-control" name="bank_name">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">شماره کارت</label>
+          <input class="form-control" name="card_number" dir="ltr">
+        </div>
+        <div class="form-group">
+          <label class="form-label">تصویر رسید</label>
+          <input class="form-control" type="file" name="receipt_file" accept="image/*,.pdf">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">توضیحات</label>
+        <textarea class="form-control" name="description" rows="2"></textarea>
+      </div>
+
+      <button class="btn btn-primary btn-lg" type="submit"><%= icon('check', 18) %> ثبت پرداخت</button>
+    </form>
+  </div>
+</div>

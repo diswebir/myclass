@@ -1,0 +1,84 @@
+<div class="grid grid-3 mb-3">
+  <div class="stat-card g4">
+    <div class="stat-info"><h3>کل دریافتی</h3><div class="stat-value" style="font-size:1.25rem"><%= fmt.moneyFa(totals.paid || 0, currencyLabel) %></div></div>
+    <div class="stat-icon"><%= icon('wallet', 24) %></div>
+  </div>
+  <div class="stat-card g3">
+    <div class="stat-info"><h3>در انتظار تایید</h3><div class="stat-value" style="font-size:1.25rem"><%= fmt.moneyFa(totals.pending || 0, currencyLabel) %></div></div>
+    <div class="stat-icon"><%= icon('clock', 24) %></div>
+  </div>
+  <div class="stat-card light">
+    <div class="stat-info"><h3>عملیات</h3></div>
+    <div class="flex gap-2 mt-2" style="flex-wrap:wrap">
+      <% if (can('payments.manage')) { %>
+        <a href="/panel/payments/create" class="btn btn-primary btn-sm"><%= icon('plus', 14) % ثبت پرداخت</a>
+        <a href="/panel/payments/installments/plans" class="btn btn-outline btn-sm"><%= icon('file-text', 14) %> اقساط</a>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="flex-between mb-3">
+  <form class="filters-bar" method="get" action="/panel/payments">
+    <input class="form-control" name="q" value="<%= filters.q %>" placeholder="نام یا کد پیگیری...">
+    <select class="form-select" name="status" data-auto-submit>
+      <option value="">همه وضعیت‌ها</option>
+      <option value="paid" <%= filters.status === 'paid' ? 'selected' : '' %>>پرداخت شده</option>
+      <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>در انتظار تایید</option>
+      <option value="rejected" <%= filters.status === 'rejected' ? 'selected' : '' %>>رد شده</option>
+    </select>
+    <select class="form-select" name="method" data-auto-submit>
+      <option value="">همه روش‌ها</option>
+      <option value="cash" <%= filters.method === 'cash' ? 'selected' : '' %>>نقدی</option>
+      <option value="card_to_card" <%= filters.method === 'card_to_card' ? 'selected' : '' %>>کارت به کارت</option>
+      <option value="online" <%= filters.method === 'online' ? 'selected' : '' %>>آنلاین</option>
+      <option value="other" <%= filters.method === 'other' ? 'selected' : '' %>>سایر</option>
+    </select>
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) % جستجو</button>
+  </form>
+</div>
+
+<div class="card">
+  <% if (rows.length === 0) { %>
+    <div class="empty-state">
+      <%= icon('wallet', 48) %>
+      <h3>پرداختی ثبت نشده است</h3>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>دانش‌آموز</th><th>مبلغ</th><th>روش</th><th>کلاس</th><th>کد پیگیری</th><th>وضعیت</th><th>تاریخ</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function(p){ %>
+            <tr>
+              <td><strong><%= p.first_name ? p.first_name + ' ' + p.last_name : '—' %></strong></td>
+              <td class="nowrap"><strong><%= fmt.moneyFa(p.amount, currencyLabel) %></strong></td>
+              <td><%= fmt.statusFa(p.method) %></td>
+              <td><%= p.class_title || '—' %></td>
+              <td dir="ltr"><%= p.tracking_code || '—' %></td>
+              <td><span class="badge badge-<%= fmt.statusClass(p.status) %>"><%= fmt.statusFa(p.status) %></span></td>
+              <td class="nowrap"><%= j.jalaliLong(p.paid_at || p.created_at) %></td>
+              <td>
+                <div class="actions">
+                  <a class="btn btn-outline btn-sm" href="/panel/payments/<%= p.id %>"><%= icon('eye', 15) %></a>
+                  <% if (p.status === 'pending' && can('payments.manage')) { %>
+                    <form method="post" action="/panel/payments/<%= p.id %>/verify">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="status" value="paid">
+                      <button class="btn btn-success btn-sm" type="submit"><%= icon('check', 14) %></button>
+                    </form>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <%- include('../partials/pagination', { page: page, pages: pages, basePath: '/panel/payments' }) %>
+    </div>
+  <% } %>
+</div>

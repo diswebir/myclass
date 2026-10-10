@@ -1,0 +1,65 @@
+<div class="flex-between mb-3">
+  <h1 class="mt-0">جزئیات پرداخت #<%= fmt.numberFa(payment.id) %></h1>
+  <a href="/panel/payments" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+</div>
+
+<div class="grid" style="grid-template-columns: 1.4fr 1fr">
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('credit-card', 18) %> اطلاعات پرداخت</h2>
+      <span class="badge badge-<%= fmt.statusClass(payment.status) %>"><%= fmt.statusFa(payment.status) %></span>
+    </div>
+    <div class="card-body">
+      <dl class="kv">
+        <dt>دانش‌آموز</dt>
+        <dd>
+          <% if (payment.student_id) { %>
+            <a href="/panel/students/<%= payment.student_id %>"><strong><%= payment.first_name %> <%= payment.last_name %></strong></a>
+          <% } else { %>—<% } %>
+        </dd>
+        <dt>مبلغ</dt><dd><strong><%= fmt.moneyFa(payment.amount, currencyLabel) %></strong></dd>
+        <dt>روش پرداخت</dt><dd><%= fmt.statusFa(payment.method) %></dd>
+        <dt>کلاس</dt><dd><%= payment.class_title || '—' %></dd>
+        <dt>کد پیگیری</dt><dd dir="ltr"><%= payment.tracking_code || '—' %></dd>
+        <dt>بانک</dt><dd><%= payment.bank_name || '—' %></dd>
+        <dt>شماره کارت</dt><dd dir="ltr"><%= payment.card_number || '—' %></dd>
+        <dt>تاریخ پرداخت</dt><dd><%= j.jalaliLong(payment.paid_at || payment.created_at) %></dd>
+        <% if (payment.verified_at) { %>
+          <dt>تاییدکننده</dt><dd><%= payment.v_first ? payment.v_first + ' ' + payment.v_last : '—' %></dd>
+        <% } %>
+        <dt>توضیحات</dt><dd><%= payment.description || '—' %></dd>
+      </dl>
+
+      <% if (payment.status === 'pending' && can('payments.manage')) { %>
+        <div class="divider"></div>
+        <div class="flex gap-2">
+          <form method="post" action="/panel/payments/<%= payment.id %>/verify">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="status" value="paid">
+            <button class="btn btn-success" type="submit"><%= icon('check', 18) %> تایید پرداخت</button>
+          </form>
+          <form method="post" action="/panel/payments/<%= payment.id %>/verify" data-confirm="این پرداخت رد شود؟">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="status" value="rejected">
+            <button class="btn btn-danger" type="submit"><%= icon('x', 18) %> رد پرداخت</button>
+          </form>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2><%= icon('file-text', 18) %> رسید پرداخت</h2></div>
+    <div class="card-body text-center">
+      <% if (payment.receipt_file) { %>
+        <a href="/uploads/<%= payment.receipt_file %>" target="_blank">
+          <img src="/uploads/<%= payment.receipt_file %>" alt="رسید"
+               style="max-width:100%;border-radius:12px;border:1px solid var(--border)">
+        </a>
+        <p class="mt-2"><a class="btn btn-outline btn-sm" href="/uploads/<%= payment.receipt_file %>" download>دانلود رسید</a></p>
+      <% } else { %>
+        <div class="empty-state"><p>رسیدی آپلود نشده است</p></div>
+      <% } %>
+    </div>
+  </div>
+</div>

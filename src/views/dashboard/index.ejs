@@ -1,0 +1,168 @@
+<div class="grid grid-4">
+  <div class="stat-card g1">
+    <div class="stat-info">
+      <h3>دانش‌آموزان فعال</h3>
+      <div class="stat-value"><%= fmt.numberFa(stats.students) %></div>
+      <div class="stat-sub"><%= fmt.numberFa(stats.activeTeachers) %> استاد</div>
+    </div>
+    <div class="stat-icon"><%= icon('users', 26) %></div>
+  </div>
+  <div class="stat-card g2">
+    <div class="stat-info">
+      <h3>کلاس‌های در حال برگزاری</h3>
+      <div class="stat-value"><%= fmt.numberFa(stats.classes) %></div>
+      <div class="stat-sub"><%= fmt.numberFa(stats.sessionsToday) %> جلسه امروز</div>
+    </div>
+    <div class="stat-icon"><%= icon('book', 26) %></div>
+  </div>
+  <div class="stat-card g4">
+    <div class="stat-info">
+      <h3>درآمد این ماه</h3>
+      <div class="stat-value"><%= fmt.moneyFa(stats.monthIncome, currencyLabel) %></div>
+      <div class="stat-sub">نرخ حضور <%= fmt.percentFa(stats.attendanceRate) %></div>
+    </div>
+    <div class="stat-icon"><%= icon('wallet', 26) %></div>
+  </div>
+  <div class="stat-card g3">
+    <div class="stat-info">
+      <h3>در انتظار بررسی</h3>
+      <div class="stat-value"><%= fmt.numberFa(stats.pendingEnrollments) %></div>
+      <div class="stat-sub"><%= fmt.numberFa(stats.unpaidInstallments) %> قسط پرداخت‌نشده</div>
+    </div>
+    <div class="stat-icon"><%= icon('clipboard', 26) %></div>
+  </div>
+</div>
+
+<div class="grid grid-2 mt-3">
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('trending-up', 18) %> روند درآمد (۶ ماه اخیر)</h2>
+    </div>
+    <div class="card-body">
+      <div class="chart-box tall"><canvas id="incomeChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('bar-chart', 18) %> ظرفیت کلاس‌ها</h2>
+    </div>
+    <div class="card-body">
+      <div class="chart-box tall"><canvas id="fillChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('check-square', 18) %> حضور و غیاب کلاس‌ها</h2>
+    </div>
+    <div class="card-body">
+      <% if (charts.attByClass && charts.attByClass.length) { %>
+        <div class="chart-box medium"><canvas id="attChart"></canvas></div>
+      <% } else { %>
+        <div class="empty-state"><p>هنوز داده‌ای ثبت نشده است</p></div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('clipboard', 18) %> وضعیت پیش‌ثبت‌نام‌ها</h2>
+    </div>
+    <div class="card-body">
+      <% if (charts.enrollDist && charts.enrollDist.length) { %>
+        <div class="chart-box medium"><canvas id="enrollChart"></canvas></div>
+      <% } else { %>
+        <div class="empty-state"><p>هنوز درخواستی ثبت نشده است</p></div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('calendar', 18) %> جلسات امروز</h2>
+      <a href="/panel/attendance" class="btn btn-outline btn-sm">همه جلسات</a>
+    </div>
+    <div class="card-body">
+      <% if (todaySessions.length === 0) { %>
+        <div class="empty-state"><p>جلسه‌ای برای امروز برنامه‌ریزی نشده است</p></div>
+      <% } else { %>
+        <ul class="list-clean">
+          <% todaySessions.forEach(function(s){ %>
+            <li class="list-row">
+              <div class="main">
+                <strong><%= s.class_title %></strong>
+                <small class="text-muted">
+                  <%= j.timeFa(s.start_time) %> تا <%= j.timeFa(s.end_time) %>
+                  <% if (s.topic) { %> — <%= s.topic %><% } %>
+                </small>
+              </div>
+              <div class="side">
+                <span class="badge badge-<%= s.recorded > 0 ? 'success' : 'warning' %>">
+                  <%= s.recorded > 0 ? fmt.numberFa(s.recorded) + ' نفر ثبت شد' : 'ثبت نشده' %>
+                </span>
+                <a class="btn btn-primary btn-sm" href="/panel/attendance/session/<%= s.id %>">حضور و غیاب</a>
+              </div>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('user-plus', 18) %> آخرین پیش‌ثبت‌نام‌ها</h2>
+      <a href="/panel/enrollments" class="btn btn-outline btn-sm">همه درخواست‌ها</a>
+    </div>
+    <div class="card-body">
+      <% if (recentEnrollments.length === 0) { %>
+        <div class="empty-state"><p>درخواست جدیدی ثبت نشده است</p></div>
+      <% } else { %>
+        <ul class="list-clean">
+          <% recentEnrollments.forEach(function(e){ %>
+            <li class="list-row">
+              <div class="main">
+                <strong><%= e.full_name %></strong>
+                <small class="text-muted"><%= e.class_title %> — <%= j.jalaliLong(e.created_at) %></small>
+              </div>
+              <div class="side">
+                <span class="badge badge-<%= fmt.statusClass(e.status) %>"><%= fmt.statusFa(e.status) %></span>
+                <a class="btn btn-outline btn-sm" href="/panel/enrollments/<%= e.id %>">بررسی</a>
+              </div>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script src="/js/chart.umd.min.js"></script>
+<script src="/js/charts.js"></script>
+<script>
+(function () {
+  var income = <%- JSON.stringify(charts.income) %>;
+  MyCharts.incomeLine('incomeChart', income.map(function (i) { return i.label; }), income.map(function (i) { return i.value; }));
+
+  var fill = <%- JSON.stringify(charts.classFill) %>;
+  if (fill.length) MyCharts.classFill('fillChart', fill);
+
+  var att = <%- JSON.stringify(charts.attByClass) %>;
+  if (att.length) MyCharts.attendanceBars('attChart', att);
+
+  var dist = <%- JSON.stringify(charts.enrollDist) %>;
+  if (dist.length) {
+    var faMap = { pending: 'در انتظار بررسی', approved: 'تایید شده', rejected: 'رد شده' };
+    MyCharts.donut('enrollChart',
+      dist.map(function (d) { return faMap[d.status] || d.status; }),
+      dist.map(function (d) { return Number(d.c); }),
+      ['#f59e0b', '#10b981', '#ef4444']
+    );
+  }
+})();
+</script>

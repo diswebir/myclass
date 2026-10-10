@@ -1,0 +1,226 @@
+<div class="flex-between mb-3">
+  <div>
+    <h1 class="mt-0"><%= cls.title %></h1>
+    <div class="flex gap-2" style="flex-wrap:wrap">
+      <span class="badge badge-<%= fmt.statusClass(cls.status) %>"><%= fmt.statusFa(cls.status) %></span>
+      <span class="chip">کد: <strong dir="ltr"><%= cls.code %></strong></span>
+      <span class="chip"><%= icon('users', 14) %> <strong><%= fmt.numberFa(students.length) %></strong> از <%= fmt.numberFa(cls.capacity) %></span>
+      <span class="chip"><%= icon('wallet', 14) %> <strong><%= fmt.moneyFa(cls.price, currencyLabel) %></strong></span>
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <a href="/panel/classes" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+    <% if (can('classes.manage')) { %>
+      <a href="/panel/classes/<%= cls.id %>/edit" class="btn btn-primary"><%= icon('edit', 16) %> ویرایش</a>
+    <% } %>
+  </div>
+</div>
+
+<div class="grid grid-4">
+  <div class="stat-card light">
+    <div class="stat-info">
+      <h3>جلسات</h3>
+      <div class="stat-value"><%= fmt.numberFa(sessions.length) %></div>
+    </div>
+    <div class="stat-icon"><%= icon('calendar', 22) %></div>
+  </div>
+  <div class="stat-card light">
+    <div class="stat-info">
+      <h3>دانش‌آموزان</h3>
+      <div class="stat-value"><%= fmt.numberFa(students.length) %></div>
+    </div>
+    <div class="stat-icon"><%= icon('users', 22) %></div>
+  </div>
+  <div class="stat-card light">
+    <div class="stat-info">
+      <h3>دریافتی</h3>
+      <div class="stat-value" style="font-size:1.15rem"><%= fmt.moneyFa(finance.paid || 0, currencyLabel) %></div>
+    </div>
+    <div class="stat-icon"><%= icon('wallet', 22) %></div>
+  </div>
+  <div class="stat-card light">
+    <div class="stat-info">
+      <h3>مانده</h3>
+      <div class="stat-value" style="font-size:1.15rem"><%= fmt.moneyFa(finance.pending || 0, currencyLabel) %></div>
+    </div>
+    <div class="stat-icon"><%= icon('credit-card', 22) %></div>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns: 1.4fr 1fr">
+  <div>
+    <% if (can('classes.manage')) { %>
+    <div class="card">
+      <div class="card-header">
+        <h2><%= icon('calendar', 18) %> جلسات کلاس</h2>
+        <div class="flex gap-2">
+          <form method="post" action="/panel/classes/<%= cls.id %>/sessions/generate">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="btn btn-primary btn-sm" type="submit"><%= icon('refresh', 15) %> تولید خودکار جلسات</button>
+          </form>
+        </div>
+      </div>
+      <div class="card-body">
+        <% if (sessions.length === 0) { %>
+          <div class="empty-state">
+            <p>جلسه‌ای تعریف نشده است. با تعیین تاریخ شروع/پایان و روزهای برگزاری، جلسات را خودکار بسازید.</p>
+          </div>
+        <% } else { %>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr><th>#</th><th>تاریخ</th><th>ساعت</th><th>موضوع</th><th>وضعیت</th><th>حضور ثبت‌شده</th><th></th></tr>
+              </thead>
+              <tbody>
+                <% sessions.forEach(function(s, i){ %>
+                  <tr>
+                    <td><%= fmt.numberFa(i + 1) %></td>
+                    <td class="nowrap"><%= j.jalaliLong(s.session_date) %> <%= j.weekdayName(s.session_date, true) %></td>
+                    <td class="nowrap"><%= j.timeFa(s.start_time) %></td>
+                    <td><%= s.topic || '—' %></td>
+                    <td><span class="badge badge-<%= fmt.statusClass(s.status) %>"><%= fmt.statusFa(s.status) %></span></td>
+                    <td>
+                      <% if (s.recorded_count > 0) { %>
+                        <span class="badge badge-success"><%= fmt.numberFa(s.present_count) %> حاضر</span>
+                      <% } else { %>
+                        <span class="badge badge-muted">ثبت نشده</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <div class="actions">
+                        <a class="btn btn-primary btn-sm" href="/panel/attendance/session/<%= s.id %>">حضور و غیاب</a>
+                        <form method="post" action="/panel/classes/sessions/<%= s.id %>/delete" data-confirm="این جلسه حذف شود؟">
+                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <button class="btn btn-danger btn-sm" type="submit"><%= icon('trash', 14) %></button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+
+        <div class="divider"></div>
+        <h3>افزودن جلسه دستی</h3>
+        <form method="post" action="/panel/classes/<%= cls.id %>/sessions" class="filters-bar">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input class="form-control" name="session_date" data-jdp placeholder="تاریخ شمسی">
+          <input class="form-control" type="time" name="start_time" value="<%= cls.start_time ? String(cls.start_time).slice(0,5) : '' %>">
+          <input class="form-control" type="time" name="end_time" value="<%= cls.end_time ? String(cls.end_time).slice(0,5) : '' %>">
+          <input class="form-control" name="topic" placeholder="موضوع جلسه">
+          <button class="btn btn-primary" type="submit"><%= icon('plus', 16) %> افزودن</button>
+        </form>
+      </div>
+    </div>
+    <% } %>
+
+    <div class="card">
+      <div class="card-header">
+        <h2><%= icon('users', 18) %> اعضای کلاس</h2>
+      </div>
+      <div class="card-body">
+        <% if (students.length === 0) { %>
+          <div class="empty-state"><p>هنوز دانش‌آموزی به کلاس اضافه نشده است</p></div>
+        <% } else { %>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr><th>نام</th><th>کد دانش‌آموزی</th><th>موبایل</th><th>وضعیت</th><th>نمره</th><th></th></tr>
+              </thead>
+              <tbody>
+                <% students.forEach(function(st){ %>
+                  <tr>
+                    <td><a href="/panel/students/<%= st.student_id %>"><strong><%= st.first_name %> <%= st.last_name %></strong></a></td>
+                    <td dir="ltr"><%= st.student_code || '—' %></td>
+                    <td dir="ltr"><%= st.phone || '—' %></td>
+                    <td><span class="badge badge-<%= fmt.statusClass(st.status) %>"><%= fmt.statusFa(st.status) %></span></td>
+                    <td><%= st.final_score !== null && st.final_score !== undefined ? fmt.numberFa(st.final_score) : '—' %></td>
+                    <td>
+                      <% if (can('classes.manage')) { %>
+                        <form method="post" action="/panel/classes/<%= cls.id %>/students/<%= st.student_id %>/remove" data-confirm="این دانش‌آموز از کلاس حذف شود؟">
+                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <button class="btn btn-danger btn-sm" type="submit"><%= icon('trash', 14) %></button>
+                        </form>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-header"><h2><%= icon('file-text', 18) %> اطلاعات کلاس</h2></div>
+      <div class="card-body">
+        <dl class="kv">
+          <dt>استاد</dt><dd><%= cls.t_first ? cls.t_first + ' ' + cls.t_last : '—' %></dd>
+          <dt>دسته‌بندی</dt><dd><%= cls.category || '—' %></dd>
+          <dt>سطح</dt><dd><%= cls.level || '—' %></dd>
+          <dt>تاریخ شروع</dt><dd><%= cls.start_date ? j.jalaliLong(cls.start_date) : '—' %></dd>
+          <dt>تاریخ پایان</dt><dd><%= cls.end_date ? j.jalaliLong(cls.end_date) : '—' %></dd>
+          <dt>ساعت</dt><dd><%= cls.start_time ? j.timeFa(cls.start_time) + ' تا ' + j.timeFa(cls.end_time) : '—' %></dd>
+          <dt>روزها</dt>
+          <dd>
+            <%
+              var dNames = ['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'];
+              var dList = String(cls.days_of_week || '').split(',').filter(Boolean).map(function(x){ return dNames[parseInt(x,10)] || ''; }).filter(Boolean);
+            %>
+            <%= dList.length ? dList.join('، ') : '—' %>
+          </dd>
+          <dt>مکان</dt><dd><%= cls.location || '—' %></dd>
+          <dt>نمره قبولی</dt><dd><%= fmt.numberFa(cls.passing_score) %></dd>
+          <dt>مدرک</dt><dd><%= cls.certificate_enabled ? 'فعال' : 'غیرفعال' %></dd>
+        </dl>
+      </div>
+    </div>
+
+    <% if (can('classes.manage')) { %>
+    <div class="card">
+      <div class="card-header"><h2><%= icon('user-plus', 18) %> افزودن دانش‌آموز</h2></div>
+      <div class="card-body">
+        <form method="post" action="/panel/classes/<%= cls.id %>/students" id="addStudentForm">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="student_id" id="student_id_input">
+          <div class="form-group">
+            <label class="form-label">جستجوی دانش‌آموز</label>
+            <input class="form-control" id="studentSearch" data-class-id="<%= cls.id %>" placeholder="نام، موبایل یا کد ملی...">
+            <div id="studentResults" class="mt-2"></div>
+          </div>
+        </form>
+        <a href="/panel/students/create" class="btn btn-outline btn-sm"><%= icon('plus', 14) %> دانش‌آموز جدید</a>
+      </div>
+    </div>
+    <% } %>
+
+    <% if (enrollments.length && can('enrollments.manage')) { %>
+    <div class="card">
+      <div class="card-header">
+        <h2><%= icon('clipboard', 18) %> پیش‌ثبت‌نام‌های در انتظار</h2>
+        <a href="/panel/enrollments?class_id=<%= cls.id %>" class="btn btn-outline btn-sm">همه</a>
+      </div>
+      <div class="card-body">
+        <ul class="list-clean">
+          <% enrollments.forEach(function(e){ %>
+            <li class="list-row">
+              <div class="main">
+                <strong><%= e.full_name %></strong>
+                <small class="text-muted"><%= j.jalaliLong(e.created_at) %></small>
+              </div>
+              <div class="side">
+                <a class="btn btn-primary btn-sm" href="/panel/enrollments/<%= e.id %>">بررسی</a>
+              </div>
+            </li>
+          <% }); %>
+        </ul>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>

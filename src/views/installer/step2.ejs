@@ -1,0 +1,80 @@
+<div class="install-steps">
+  <div class="install-step done">۱. بررسی پیش‌نیازها</div>
+  <div class="install-step active">۲. پایگاه‌داده</div>
+  <div class="install-step">۳. موسسه و مدیر</div>
+  <div class="install-step">۴. پایان</div>
+</div>
+
+<h2 style="font-size:1.15rem">پیکربندی پایگاه‌داده</h2>
+
+<% if (error) { %><div class="alert alert-danger"><span><%= error %></span></div><% } %>
+
+<form method="post" action="/install/database">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="form-group">
+    <label class="form-label">نوع پایگاه‌داده</label>
+    <div class="grid grid-2" style="gap:12px">
+      <label class="card" style="margin:0;cursor:pointer;padding:16px">
+        <input type="radio" name="db_client" value="sqlite" <%= values.db_client !== 'mysql' ? 'checked' : '' %>>
+        <strong>SQLite (پیشنهادی برای شروع)</strong>
+        <div class="form-hint">بدون نیاز به ساخت دیتابیس — فایلی، خودکار و سریع</div>
+      </label>
+      <label class="card" style="margin:0;cursor:pointer;padding:16px">
+        <input type="radio" name="db_client" value="mysql" <%= values.db_client === 'mysql' ? 'checked' : '' %>>
+        <strong>MySQL / MariaDB (سی‌پنل)</strong>
+        <div class="form-hint">مناسب استفاده حرفه‌ای روی هاست اشتراکی</div>
+      </label>
+    </div>
+  </div>
+
+  <div id="sqliteBox">
+    <div class="form-group">
+      <label class="form-label">مسیر فایل دیتابیس</label>
+      <input class="form-control" name="db_file" value="<%= values.db_file || './data/myclass.sqlite' %>">
+      <div class="form-hint">پیش‌فرض: ./data/myclass.sqlite</div>
+    </div>
+  </div>
+
+  <div id="mysqlBox" style="display:none">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">هاست دیتابیس</label>
+        <input class="form-control" name="db_host" value="<%= values.db_host || 'localhost' %>">
+      </div>
+      <div class="form-group">
+        <label class="form-label">پورت</label>
+        <input class="form-control" name="db_port" value="<%= values.db_port || '3306' %>">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">نام دیتابیس</label>
+      <input class="form-control" name="db_name" value="<%= values.db_name || '' %>" placeholder="cpaneluser_myclass">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">نام کاربری</label>
+        <input class="form-control" name="db_user" value="<%= values.db_user || '' %>">
+      </div>
+      <div class="form-group">
+        <label class="form-label">رمز عبور</label>
+        <input class="form-control" type="password" name="db_password" value="">
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary btn-block btn-lg" type="submit">اتصال و ادامه <%= icon('chevron-left', 18) %></button>
+</form>
+
+<script>
+(function () {
+  var radios = document.querySelectorAll('input[name="db_client"]');
+  function sync() {
+    var v = document.querySelector('input[name="db_client"]:checked').value;
+    document.getElementById('sqliteBox').style.display = v === 'sqlite' ? '' : 'none';
+    document.getElementById('mysqlBox').style.display = v === 'mysql' ? '' : 'none';
+  }
+  radios.forEach(function (r) { r.addEventListener('change', sync); });
+  sync();
+})();
+</script>

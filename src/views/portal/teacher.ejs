@@ -1,0 +1,82 @@
+<div class="profile-head">
+  <div class="avatar"><%= (currentUser.first_name || '?').charAt(0) %></div>
+  <div>
+    <h2>پنل استاد — <%= currentUser.first_name %> <%= currentUser.last_name %></h2>
+    <p>کلاس‌ها، جلسات و دانش‌آموزان شما</p>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('calendar', 18) %> جلسات پیش رو</h2>
+      <a href="/panel/attendance" class="btn btn-outline btn-sm">حضور و غیاب</a>
+    </div>
+    <div class="card-body">
+      <% if (nextSessions.length === 0) { %>
+        <div class="empty-state"><p>جلسه پیش رویی ندارید</p></div>
+      <% } else { %>
+        <ul class="list-clean">
+          <% nextSessions.forEach(function(s){ %>
+            <li class="list-row">
+              <div class="main">
+                <strong><%= s.class_title %></strong>
+                <small class="text-muted"><%= j.jalaliLong(s.session_date) %> — <%= j.timeFa(s.start_time) %></small>
+              </div>
+              <div class="side">
+                <a class="btn btn-primary btn-sm" href="/panel/attendance/session/<%= s.id %>">ثبت حضور</a>
+              </div>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2><%= icon('bar-chart', 18) %> خلاصه</h2></div>
+    <div class="card-body">
+      <dl class="kv">
+        <dt>تعداد کلاس‌ها</dt><dd><%= fmt.numberFa(classes.length) %></dd>
+        <dt>کل دانش‌آموزان</dt>
+        <dd><%= fmt.numberFa(classes.reduce(function(a, c){ return a + Number(c.students_count || 0); }, 0)) %></dd>
+        <dt>کل جلسات</dt>
+        <dd><%= fmt.numberFa(classes.reduce(function(a, c){ return a + Number(c.sessions_count || 0); }, 0)) %></dd>
+      </dl>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2><%= icon('book', 18) %> کلاس‌های من</h2></div>
+  <div class="card-body">
+    <% if (classes.length === 0) { %>
+      <div class="empty-state"><p>کلاسی به شما تخصیص داده نشده است</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>کلاس</th><th>تاریخ</th><th>دانش‌آموزان</th><th>جلسات</th><th>وضعیت</th><th></th></tr>
+          </thead>
+          <tbody>
+            <% classes.forEach(function(c){ %>
+              <tr>
+                <td><strong><%= c.title %></strong></td>
+                <td class="nowrap"><%= c.start_date ? j.jalaliLong(c.start_date) : '—' %></td>
+                <td><span class="badge badge-accent"><%= fmt.numberFa(c.students_count) %></span></td>
+                <td><%= fmt.numberFa(c.sessions_count) %></td>
+                <td><span class="badge badge-<%= fmt.statusClass(c.status) %>"><%= fmt.statusFa(c.status) %></span></td>
+                <td>
+                  <div class="actions">
+                    <a class="btn btn-primary btn-sm" href="/portal/classes/<%= c.id %>">کلاس من</a>
+                    <a class="btn btn-outline btn-sm" href="/panel/classes/<%= c.id %>">مدیریت</a>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>

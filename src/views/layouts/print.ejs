@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : '' %></title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>:root { --accent: <%= typeof themeAccent !== 'undefined' ? themeAccent : '#4f46e5' %>; }</style>
+</head>
+<body class="print-body">
+  <div class="no-print print-toolbar">
+    <button class="btn btn-primary" onclick="window.print()"><%= icon('printer', 18) %> چاپ / ذخیره PDF</button>
+    <button class="btn btn-outline" onclick="window.close()">بستن</button>
+  </div>
+  <%- body %>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<div class="grid grid-4">
+  <div class="stat-card g1">
+    <div class="stat-info"><h3>کل ارسال‌ها</h3><div class="stat-value"><%= fmt.numberFa(stats.total) %></div></div>
+    <div class="stat-icon"><%= icon('message', 24) %></div>
+  </div>
+  <div class="stat-card g4">
+    <div class="stat-info"><h3>ارسال موفق</h3><div class="stat-value"><%= fmt.numberFa(stats.sent) %></div></div>
+    <div class="stat-icon"><%= icon('check', 24) %></div>
+  </div>
+  <div class="stat-card g5">
+    <div class="stat-info"><h3>ناموفق</h3><div class="stat-value"><%= fmt.numberFa(stats.failed) %></div></div>
+    <div class="stat-icon"><%= icon('alert-circle', 24) %></div>
+  </div>
+  <div class="stat-card g2">
+    <div class="stat-info"><h3>امروز</h3><div class="stat-value"><%= fmt.numberFa(stats.today) %></div></div>
+    <div class="stat-icon"><%= icon('send', 24) %></div>
+  </div>
+</div>
+
+<div class="grid grid-2 mt-3">
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('settings', 18) %> وضعیت سرویس پیامک (IPPanel)</h2>
+    </div>
+    <div class="card-body">
+      <dl class="kv">
+        <dt>وضعیت</dt>
+        <dd>
+          <span class="badge badge-<%= gateway.enabled ? 'success' : 'danger' %>">
+            <%= gateway.enabled ? 'فعال' : 'غیرفعال' %>
+          </span>
+        </dd>
+        <dt>شماره فرستنده</dt><dd dir="ltr"><%= gateway.from_number || '—' %></dd>
+        <dt>کلید API</dt>
+        <dd dir="ltr"><%= gateway.api_key ? gateway.api_key.slice(0, 8) + '...' + gateway.api_key.slice(-4) : '— تنظیم نشده —' %></dd>
+        <dt>آدرس سرویس</dt><dd dir="ltr"><small><%= gateway.base_url %></small></dd>
+      </dl>
+      <div class="flex gap-2 mt-3">
+        <a href="/panel/settings?tab=sms" class="btn btn-primary"><%= icon('settings', 16) %> تنظیمات پیامک</a>
+        <form method="post" action="/panel/sms/test-connection">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn btn-outline" type="submit"><%= icon('refresh', 16) %> تست اتصال</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('send', 18) %> ارسال سریع</h2>
+    </div>
+    <div class="card-body">
+      <div class="flex gap-2" style="flex-wrap:wrap">
+        <% if (can('sms.send')) { %>
+          <a href="/panel/sms/send" class="btn btn-primary"><%= icon('message', 16) % ارسال پیامک</a>
+        <% } %>
+        <a href="/panel/sms/patterns" class="btn btn-outline"><%= icon('file-text', 16) %> الگوهای پیامکی</a>
+        <a href="/panel/sms/logs" class="btn btn-outline"><%= icon('bar-chart', 16) %> گزارش ارسال</a>
+      </div>
+      <div class="divider"></div>
+      <h3>الگوهای تعریف‌شده</h3>
+      <div class="flex gap-2" style="flex-wrap:wrap">
+        <% patterns.forEach(function(p){ %>
+          <span class="chip">
+            <%= p.title %>
+            <% if (!p.ippanel_pattern_code) { %><span class="badge badge-warning">بدون کد</span><% } %>
+            <% if (!p.is_enabled) { %><span class="badge badge-danger">غیرفعال</span><% } %>
+          </span>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2><%= icon('clock', 18) %> آخرین ارسال‌ها</h2>
+    <a href="/panel/sms/logs" class="btn btn-outline btn-sm">همه گزارش‌ها</a>
+  </div>
+  <div class="card-body">
+    <% if (recent.length === 0) { %>
+      <div class="empty-state"><p>هنوز پیامکی ارسال نشده است</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>گیرنده</th><th>رویداد</th><th>وضعیت</th><th>زمان</th></tr></thead>
+          <tbody>
+            <% recent.forEach(function(r){ %>
+              <tr>
+                <td dir="ltr"><%= r.recipient %></td>
+                <td><%= r.event_code %></td>
+                <td><span class="badge badge-<%= fmt.statusClass(r.status) %>"><%= fmt.statusFa(r.status) %></span></td>
+                <td class="nowrap"><%= j.jalaliLong(r.created_at) %> <%= j.timeFa(r.created_at) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>

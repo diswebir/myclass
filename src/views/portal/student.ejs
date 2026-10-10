@@ -1,0 +1,115 @@
+<div class="profile-head">
+  <div class="avatar"><%= (currentUser.first_name || '?').charAt(0) %></div>
+  <div>
+    <h2>سلام، <%= currentUser.first_name %> عزیز 👋</h2>
+    <p>پنل کاربری شما — همه چیز در یک نگاه</p>
+  </div>
+</div>
+
+<div class="grid grid-4">
+  <div class="stat-card g1">
+    <div class="stat-info"><h3>کلاس‌های من</h3><div class="stat-value"><%= fmt.numberFa(classes.length) %></div></div>
+    <div class="stat-icon"><%= icon('book', 24) %></div>
+  </div>
+  <div class="stat-card g4">
+    <div class="stat-info"><h3>پرداخت‌شده</h3><div class="stat-value" style="font-size:1.15rem"><%= fmt.moneyFa(finance.paid, currencyLabel) %></div></div>
+    <div class="stat-icon"><%= icon('wallet', 24) %></div>
+  </div>
+  <div class="stat-card g3">
+    <div class="stat-info"><h3>اقساط پیش رو</h3><div class="stat-value"><%= fmt.numberFa(unpaidInstallments.length) %></div></div>
+    <div class="stat-icon"><%= icon('clock', 24) %></div>
+  </div>
+  <div class="stat-card g5">
+    <div class="stat-info"><h3>مدارک من</h3><div class="stat-value"><%= fmt.numberFa(certs.length) %></div></div>
+    <div class="stat-icon"><%= icon('award', 24) %></div>
+  </div>
+</div>
+
+<div class="grid grid-2 mt-3">
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('calendar', 18) %> جلسات پیش رو</h2>
+    </div>
+    <div class="card-body">
+      <% if (nextSessions.length === 0) { %>
+        <div class="empty-state"><p>جلسه‌ای پیش رو ندارید</p></div>
+      <% } else { %>
+        <ul class="list-clean">
+          <% nextSessions.forEach(function(s){ %>
+            <li class="list-row">
+              <div class="main">
+                <strong><%= s.class_title %></strong>
+                <small class="text-muted"><%= j.jalaliLong(s.session_date) %> <%= j.weekdayName(s.session_date, true) %> — <%= j.timeFa(s.start_time) %></small>
+              </div>
+              <div class="side">
+                <a class="btn btn-outline btn-sm" href="/portal/classes/<%= s.class_id %>">جزئیات</a>
+              </div>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('wallet', 18) %> اقساط پیش رو</h2>
+      <a href="/portal/payments" class="btn btn-outline btn-sm">امور مالی</a>
+    </div>
+    <div class="card-body">
+      <% if (unpaidInstallments.length === 0) { %>
+        <div class="empty-state"><p>قسط پرداخت‌نشده‌ای ندارید 🎉</p></div>
+      <% } else { %>
+        <ul class="list-clean">
+          <% unpaidInstallments.forEach(function(i){ %>
+            <li class="list-row">
+              <div class="main">
+                <strong><%= fmt.moneyFa(i.amount, currencyLabel) %></strong>
+                <small class="text-muted"><%= i.plan_title %> — سررسید: <%= j.jalaliLong(i.due_date) %></small>
+              </div>
+              <div class="side">
+                <span class="badge badge-<%= fmt.statusClass(i.status) %>"><%= fmt.statusFa(i.status) %></span>
+              </div>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2><%= icon('book', 18) %> کلاس‌های من</h2>
+  </div>
+  <div class="card-body">
+    <% if (classes.length === 0) { %>
+      <div class="empty-state"><p>در کلاسی ثبت‌نام نکرده‌اید</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>کلاس</th><th>استاد</th><th>تاریخ</th><th>حضور من</th><th>وضعیت</th><th></th></tr>
+          </thead>
+          <tbody>
+            <% classes.forEach(function(c){
+                 var pct = c.sessions_total > 0 ? Math.round((Number(c.sessions_present) / Number(c.sessions_total)) * 100) : 0;
+            %>
+              <tr>
+                <td><strong><%= c.title %></strong></td>
+                <td><%= c.t_first ? c.t_first + ' ' + c.t_last : '—' %></td>
+                <td class="nowrap"><%= c.start_date ? j.jalaliLong(c.start_date) : '—' %></td>
+                <td>
+                  <div class="progress" style="width:110px"><div class="progress-bar <%= pct >= 75 ? 'success' : pct >= 50 ? 'warning' : 'danger' %>" style="width:<%= pct %>%"></div></div>
+                  <small class="text-muted"><%= fmt.numberFa(c.sessions_present) %> از <%= fmt.numberFa(c.sessions_total) %></small>
+                </td>
+                <td><span class="badge badge-<%= fmt.statusClass(c.class_status) %>"><%= fmt.statusFa(c.class_status) %></span></td>
+                <td><a class="btn btn-primary btn-sm" href="/portal/classes/<%= c.id %>">مشاهده</a></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>

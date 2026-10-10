@@ -1,0 +1,116 @@
+<div class="flex-between mb-3">
+  <div>
+    <h1 class="mt-0">الگوهای پیامکی (پترن‌ها)</h1>
+    <p class="text-soft mb-0">برای هر رویداد سیستم، یک الگوی تاییدشده در پنل IPPanel بسازید و کد آن را اینجا وارد کنید.</p>
+  </div>
+  <a href="/panel/sms" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+</div>
+
+<div class="alert alert-info">
+  <span>
+    متغیرهای قابل استفاده: نام کامل، عنوان کلاس، تاریخ، مبلغ، نام کاربری، رمز عبور و...
+    نگاشت هر متغیر به پارامتر پترن در هر ردیف قابل تنظیم است.
+  </span>
+</div>
+
+<% patterns.forEach(function(p){ %>
+<div class="card">
+  <div class="card-header">
+    <h2>
+      <%= icon('message', 18) %> <%= p.title %>
+      <span class="badge badge-<%= p.is_enabled ? 'success' : 'danger' %>"><%= p.is_enabled ? 'فعال' : 'غیرفعال' %></span>
+      <% if (!p.ippanel_pattern_code) { %><span class="badge badge-warning">کد پترن تنظیم نشده</span><% } %>
+    </h2>
+    <span class="chip" dir="ltr"><%= p.event_code %></span>
+  </div>
+  <div class="card-body">
+    <form method="post" action="/panel/sms/patterns/<%= p.id %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">عنوان</label>
+          <input class="form-control" name="title" value="<%= p.title %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">کد الگو (IPPanel Pattern Code)</label>
+          <input class="form-control" name="ippanel_pattern_code" dir="ltr" value="<%= p.ippanel_pattern_code || '' %>" placeholder="مثال: abcdef123456">
+        </div>
+        <div class="form-group">
+          <label class="form-label">وضعیت</label>
+          <label class="switch">
+            <input type="checkbox" name="is_enabled" <%= p.is_enabled ? 'checked' : '' %>>
+            <span class="slider"></span>
+            <span>فعال باشد</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">توضیحات</label>
+        <input class="form-control" name="description" value="<%= p.description || '' %>">
+      </div>
+
+      <div class="divider"></div>
+      <div class="flex-between">
+        <h3 class="mt-0"><%= icon('link', 16) %> نگاشت متغیرها</h3>
+        <button type="button" class="btn btn-outline btn-sm" id="addMapRow_<%= p.id %>" onclick="addMapRow(this)"><%= icon('plus', 14) % افزودن متغیر</button>
+      </div>
+      <p class="form-hint">
+        در ستون اول، «کلید پارامتر» را دقیقاً مطابق تعریف پترن در IPPanel وارد کنید؛ در ستون دوم، متغیر سیستمی را انتخاب کنید.
+      </p>
+
+      <div id="mapBox_<%= p.id %>">
+        <%
+          var map = {};
+          try { map = JSON.parse(p.ippanel_params_map || '{}'); } catch(e) { map = {}; }
+          var keys = Object.keys(map);
+          if (keys.length === 0) keys = [''];
+        %>
+        <% keys.forEach(function(k){ %>
+          <div class="form-row mb-2 map-row">
+            <input class="form-control" name="map_key" dir="ltr" value="<%= k %>" placeholder="کلید در پترن (مثال: name)">
+            <div class="input-group">
+              <select class="form-select" name="map_val">
+                <% Object.keys(systemVars).forEach(function(v){ %>
+                  <option value="<%= v %>" <%= map[k] === v ? 'selected' : '' %>><%= systemVars[v] %></option>
+                <% }); %>
+              </select>
+              <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.map-row').remove()">حذف</button>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+
+      <div class="alert alert-info mt-3" style="margin-bottom:12px">
+        <small>
+          <strong>متغیرهای موجود:</strong>
+          <% Object.keys(systemVars).forEach(function(v){ %>
+            <span class="chip" dir="ltr" style="margin:2px"><%= v %></span>
+          <% }); %>
+        </small>
+      </div>
+
+      <button class="btn btn-primary" type="submit"><%= icon('check', 16) %> ذخیره الگو</button>
+    </form>
+  </div>
+</div>
+<% }); %>
+
+<script>
+function addMapRow(btn) {
+  var pId = btn.id.split('_')[1];
+  var box = document.getElementById('mapBox_' + pId);
+  var div = document.createElement('div');
+  div.className = 'form-row mb-2 map-row';
+  var options = '';
+  <% Object.keys(systemVars).forEach(function(v){ %>
+    options += '<option value="<%= v %>"><%= systemVars[v] %></option>';
+  <% }); %>
+  div.innerHTML =
+    '<input class="form-control" name="map_key" dir="ltr" placeholder="کلید در پترن">' +
+    '<div class="input-group"><select class="form-select" name="map_val">' + options + '</select>' +
+    '<button type="button" class="btn btn-danger btn-sm" onclick="this.closest(\'.map-row\').remove()">حذف</button></div>';
+  box.appendChild(div);
+}
+</script>

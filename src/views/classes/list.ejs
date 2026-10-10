@@ -1,0 +1,79 @@
+<div class="flex-between mb-3">
+  <form class="filters-bar" method="get" action="/panel/classes">
+    <input class="form-control" name="q" value="<%= q %>" placeholder="جستجوی عنوان یا کد...">
+    <select class="form-select" name="status" data-auto-submit>
+      <option value="">همه وضعیت‌ها</option>
+      <option value="draft" <%= status === 'draft' ? 'selected' : '' %>>پیش‌نویس</option>
+      <option value="open" <%= status === 'open' ? 'selected' : '' %>>ثبت‌نام باز</option>
+      <option value="in_progress" <%= status === 'in_progress' ? 'selected' : '' %>>در حال برگزاری</option>
+      <option value="completed" <%= status === 'completed' ? 'selected' : '' %>>پایان‌یافته</option>
+      <option value="cancelled" <%= status === 'cancelled' ? 'selected' : '' %>>لغو شده</option>
+    </select>
+    <select class="form-select" name="teacher" data-auto-submit>
+      <option value="">همه اساتید</option>
+      <% teachers.forEach(function(t){ %>
+        <option value="<%= t.id %>" <%= String(teacherId) === String(t.id) ? 'selected' : '' %>><%= t.first_name %> <%= t.last_name %></option>
+      <% }); %>
+    </select>
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) % جستجو</button>
+  </form>
+  <% if (can('classes.manage')) { %>
+    <a href="/panel/classes/create" class="btn btn-primary"><%= icon('plus', 18) %> ایجاد کلاس جدید</a>
+  <% } %>
+</div>
+
+<div class="card">
+  <% if (rows.length === 0) { %>
+    <div class="empty-state">
+      <%= icon('book', 48) %>
+      <h3>کلاسی یافت نشد</h3>
+      <% if (can('classes.manage')) { %>
+        <a href="/panel/classes/create" class="btn btn-primary mt-2">ایجاد اولین کلاس</a>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>عنوان کلاس</th>
+            <th>کد</th>
+            <th>استاد</th>
+            <th>تاریخ شروع</th>
+            <th>دانش‌آموزان</th>
+            <th>شهریه</th>
+            <th>وضعیت</th>
+            <th>عملیات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function(c){ %>
+            <tr>
+              <td><a href="/panel/classes/<%= c.id %>"><strong><%= c.title %></strong></a></td>
+              <td dir="ltr"><span class="chip"><%= c.code %></span></td>
+              <td><%= c.t_first ? (c.t_first + ' ' + c.t_last) : '—' %></td>
+              <td class="nowrap"><%= c.start_date ? j.jalaliLong(c.start_date) : '—' %></td>
+              <td>
+                <span class="badge badge-accent"><%= fmt.numberFa(c.students_count || 0) %></span>
+                <small class="text-muted">از <%= fmt.numberFa(c.capacity) %></small>
+              </td>
+              <td class="nowrap"><%= c.price > 0 ? fmt.moneyFa(c.price, currencyLabel) : 'رایگان' %></td>
+              <td><span class="badge badge-<%= fmt.statusClass(c.status) %>"><%= fmt.statusFa(c.status) %></span></td>
+              <td>
+                <div class="actions">
+                  <a class="btn btn-outline btn-sm" href="/panel/classes/<%= c.id %>"><%= icon('eye', 15) %></a>
+                  <% if (can('classes.manage')) { %>
+                    <a class="btn btn-outline btn-sm" href="/panel/classes/<%= c.id %>/edit"><%= icon('edit', 15) %></a>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <%- include('../partials/pagination', { page: page, pages: pages, basePath: '/panel/classes' }) %>
+    </div>
+  <% } %>
+</div>
