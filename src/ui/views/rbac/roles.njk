@@ -1,0 +1,47 @@
+{% extends "layout.njk" %}
+{% block title %}نقش‌ها و مجوزها — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>نقش‌ها و مجوزها</h1>
+</div>
+<div class="card">
+  <h2>نقش جدید</h2>
+  <form method="post" action="/rbac/roles" class="grid2">
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <div class="field"><label>نام نقش</label><input name="name" required maxlength="191"></div>
+    <div class="field"><label>slug (لاتین)</label><input name="slug" required pattern="[a-z0-9_]+" maxlength="64"></div>
+    <div class="field" style="grid-column:1/-1"><label>توضیحات</label><input name="description" maxlength="500"></div>
+    <div class="field" style="grid-column:1/-1">
+      <label>مجوزها</label>
+      <div class="perm-grid">
+        {% for p in permissions %}
+        <label class="perm-item"><input type="checkbox" name="permissions" value="{{ p.module }}.{{ p.resource }}.{{ p.action }}"> <code>{{ p.module }}.{{ p.resource }}.{{ p.action }}</code> — {{ p.description }}</label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="actions"><button type="submit" class="btn btn-primary">ایجاد نقش</button></div>
+  </form>
+</div>
+<table class="table">
+  <thead><tr><th>نام</th><th>slug</th><th>نوع</th><th>عملیات</th></tr></thead>
+  <tbody>
+    {% for r in roles %}
+    <tr>
+      <td>{{ r.name }}</td>
+      <td><code>{{ r.slug }}</code></td>
+      <td>{% if r.is_system %}<span class="badge">سیستمی</span>{% else %}<span class="badge ok">سفارشی</span>{% endif %}</td>
+      <td>
+        {% if not r.is_system %}
+        <form method="post" action="/rbac/roles/{{ r.id }}/delete" class="inline-form" onsubmit="return confirm('حذف نقش؟');">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <button type="submit" class="btn btn-sm btn-ghost">حذف</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="empty">نقشی یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

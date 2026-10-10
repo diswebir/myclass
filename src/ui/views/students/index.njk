@@ -1,0 +1,31 @@
+{% extends "layout.njk" %}
+{% block title %}فراگیران — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>فراگیران</h1>
+  <div>
+    <a href="/students/export.csv" class="btn btn-ghost">خروجی CSV</a>
+    <a href="/students/new" class="btn btn-primary">فراگیر جدید</a>
+  </div>
+</div>
+<form method="post" action="/students/import/preview" enctype="multipart/form-data" class="search-form">
+  <input type="file" name="file" accept=".csv" required>
+  <button class="btn btn-ghost">پیش‌نمایش ورود گروهی</button>
+</form>
+<table class="table">
+  <thead><tr><th>کد</th><th>نام</th><th>موبایل</th><th>سرپرست</th><th>وضعیت</th></tr></thead>
+  <tbody>
+    {% for s in students %}
+    <tr>
+      <td><a href="/students/{{ s.id }}">{{ s.code }}</a></td>
+      <td>{{ s.first_name }} {{ s.last_name }}</td>
+      <td>{{ s.phone | faNum }}</td>
+      <td>{{ s.guardian_name or '' }}</td>
+      <td>{% if s.status == 'active' %}<span class="badge ok">فعال</span>{% else %}<span class="badge">{{ s.status }}</span>{% endif %}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="empty">فراگیری یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

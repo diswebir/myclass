@@ -1,0 +1,14 @@
+{% extends "layout.njk" %}
+{% block title %}نصب با موفقیت انجام شد — myclass{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>✅ نصب با موفقیت انجام شد</h1>
+  <p>نکات پس از نصب:</p>
+  <ul>
+    <li>مسیر نصب (/install) غیرفعال شد.</li>
+    <li>فایل قفل خارج از webroot ساخته شد.</li>
+    <li> تنظیمات در فایل .env (خارج از webroot) ذخیره شد.</li>
+  </ul>
+  <a href="/auth/login" class="btn btn-primary">ورود به سیستم</a>
+</div>
+{% endblock %}

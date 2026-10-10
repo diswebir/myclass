@@ -1,0 +1,35 @@
+{% extends "layout.njk" %}
+{% block title %}{{ 'ویرایش کاربر' if user else 'کاربر جدید' }} — myclass{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>{{ 'ویرایش کاربر' if user else 'کاربر جدید' }}</h1>
+  <form method="post" action="{{ '/users/' + user.id if user else '/users' }}">
+    {% if user %}<input type="hidden" name="_method" value="put">{% endif %}
+    <div class="grid2">
+      <div class="field"><label>نام کاربری</label><input name="username" value="{{ user.username if user else '' }}" {{ 'readonly' if user }} required></div>
+      <div class="field"><label>نام کامل</label><input name="fullName" value="{{ user.full_name if user else '' }}" required></div>
+      <div class="field"><label>ایمیل</label><input type="email" name="email" value="{{ user.email if user else '' }}"></div>
+      <div class="field"><label>موبایل</label><input name="phone" value="{{ user.phone if user else '' }}"></div>
+      {% if not user %}
+      <div class="field"><label>رمز عبور</label><input type="password" name="password" required></div>
+      {% endif %}
+      <div class="field"><label>فعال</label>
+        <select name="isActive">
+          <option value="1" {{ 'selected' if not user or user.is_active == 1 }}>فعال</option>
+          <option value="0" {{ 'selected' if user and user.is_active == 0 }}>غیرفعال</option>
+        </select>
+      </div>
+    </div>
+    <h2>نقش‌ها</h2>
+    <div class="roles-grid">
+      {% for r in roles %}
+      <label class="checkbox"><input type="checkbox" name="roleIds" value="{{ r.id }}"> {{ r.name }}</label>
+      {% endfor %}
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">ذخیره</button>
+      <a href="/users" class="btn btn-ghost">بازگشت</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "layout.njk" %}
+{% block title %}گزارش‌های مالی — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>گزارش‌های مالی</h1>
+  <a href="/finance/payments" class="btn btn-ghost">پرداخت‌ها</a>
+</div>
+<div class="card">
+  <h2>درآمد (پرداخت‌های تأییدشده)</h2>
+  <p>کل درآمد: <strong>{{ revenue.total | faMoney }}</strong></p>
+  <table class="table">
+    <thead><tr><th>روش پرداخت</th><th>تعداد</th><th>مبلغ کل</th></tr></thead>
+    <tbody>
+      {% for m in revenue.byMethod %}
+      <tr><td>{{ m.method }}</td><td>{{ m.count | faNum }}</td><td>{{ m.total | faMoney }}</td></tr>
+      {% else %}
+      <tr><td colspan="3" class="empty">درآمدی ثبت نشده است.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="card">
+  <h2>بدهکاران</h2>
+  <table class="table">
+    <thead><tr><th>کد</th><th>فراگیر</th><th>کلاس</th><th>بدهی</th><th>پرداخت‌شده</th><th>مانده</th></tr></thead>
+    <tbody>
+      {% for d in debtors %}
+      <tr>
+        <td>{{ d.student_code }}</td>
+        <td>{{ d.first_name }} {{ d.last_name }}</td>
+        <td>{{ d.class_title }} ({{ d.class_code }})</td>
+        <td>{{ d.due | faMoney }}</td>
+        <td>{{ d.paid | faMoney }}</td>
+        <td><strong>{{ d.balance | faMoney }}</strong></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="empty">بدهکاری وجود ندارد.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

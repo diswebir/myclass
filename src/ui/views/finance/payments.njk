@@ -1,0 +1,61 @@
+{% extends "layout.njk" %}
+{% block title %}پرداخت‌ها — myclass{% endblock %}
+{% block content %}
+{% set statusLabels = { 'pending': 'در انتظار', 'approved': 'تأییدشده', 'rejected': 'ردشده', 'reversed': 'برگشت‌خورده' } %}
+<div class="page-head">
+  <h1>پرداخت‌ها</h1>
+  <div>
+    <a href="/finance/receipts" class="btn btn-ghost">رسیدهای کارت‌به‌کارت</a>
+    <a href="/finance/installments" class="btn btn-ghost">اقساط</a>
+    <a href="/finance/reports" class="btn btn-ghost">گزارش‌های مالی</a>
+  </div>
+</div>
+<div class="card">
+  <form method="get" class="grid2">
+    <div class="field"><label>وضعیت</label>
+      <select name="status">
+        <option value="">همه</option>
+        {% for k, v in statusLabels %}<option value="{{ k }}" {{ 'selected' if filters.status == k }}>{{ v }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field"><label>از تاریخ</label><input name="from" value="{{ filters.from or '' }}" placeholder="۱۴۰۳/۰۱/۰۱"></div>
+    <div class="field"><label>تا تاریخ</label><input name="to" value="{{ filters.to or '' }}" placeholder="۱۴۰۳/۱۲/۲۹"></div>
+    <div class="actions"><button type="submit" class="btn btn-primary">فیلتر</button></div>
+  </form>
+</div>
+<table class="table">
+  <thead><tr><th>کد</th><th>فراگیر</th><th>روش</th><th>مبلغ</th><th>وضعیت</th><th>تاریخ</th><th>عملیات</th></tr></thead>
+  <tbody>
+    {% for p in rows %}
+    <tr>
+      <td>{{ p.id | faNum }}</td>
+      <td>{{ p.first_name }} {{ p.last_name }} ({{ p.student_code }})</td>
+      <td>{{ p.method_name }}</td>
+      <td>{{ p.amount | faMoney }}</td>
+      <td><span class="badge {{ 'ok' if p.status == 'approved' else ('fail' if p.status == 'rejected' or p.status == 'reversed' else '') }}">{{ statusLabels[p.status] or p.status }}</span></td>
+      <td>{{ p.created_at | faDateTime }}</td>
+      <td>
+        {% if p.status == 'pending' %}
+        <form method="post" action="/finance/payments/{{ p.id }}/approve" class="inline-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <button type="submit" class="btn btn-sm btn-primary">تأیید</button>
+        </form>
+        <form method="post" action="/finance/payments/{{ p.id }}/reject" class="inline-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <button type="submit" class="btn btn-sm btn-ghost">رد</button>
+        </form>
+        {% elif p.status == 'approved' %}
+        <form method="post" action="/finance/payments/{{ p.id }}/reverse" class="inline-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="hidden" name="reason" value="برگشت توسط مالی">
+          <button type="submit" class="btn btn-sm btn-ghost">برگشت</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="empty">پرداختی یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "layout.njk" %}
+{% block title %}مدیریت ماژول‌ها — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>مدیریت ماژول‌ها</h1>
+</div>
+<div class="card">
+  <p class="muted">غیرفعال‌سازی یک ماژول، مسیرهای آن را از دسترس خارج می‌کند ( تا ۵ ثانیه (cache)). ماژول‌های وابسته باید ابتدا غیرفعال شوند.</p>
+</div>
+<table class="table">
+  <thead><tr><th>ماژول</th><th>نسخه</th><th>مسیرها</th><th>وابستگی‌ها</th><th>وضعیت</th><th>عملیات</th></tr></thead>
+  <tbody>
+    {% for m in rows %}
+    <tr>
+      <td>{{ m.name }} <div class="muted"><code>{{ m.slug }}</code></div></td>
+      <td>{{ m.version }}</td>
+      <td>{% for p in m.manifestData.mountPaths %}<code>{{ p }}</code> {% endfor %}</td>
+      <td>{% for d in m.manifestData.dependsOn %}<span class="badge">{{ d }}</span> {% else %}<span class="muted">—</span>{% endfor %}</td>
+      <td>
+        {% if m.core %}<span class="badge">هسته</span>
+        {% elif m.status == 'enabled' %}<span class="badge ok">فعال</span>
+        {% else %}<span class="badge fail">غیرفعال</span>{% endif %}
+      </td>
+      <td>
+        {% if not m.core %}
+        <form method="post" action="/admin/modules/{{ m.slug }}/toggle" class="inline-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="hidden" name="enabled" value="{{ 'false' if m.status == 'enabled' else 'true' }}">
+          <button type="submit" class="btn btn-sm {{ 'btn-ghost' if m.status == 'enabled' else 'btn-primary' }}">{{ 'غیرفعال‌سازی' if m.status == 'enabled' else 'فعال‌سازی' }}</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="empty">ماژولی یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

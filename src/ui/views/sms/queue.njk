@@ -1,0 +1,43 @@
+{% extends "layout.njk" %}
+{% block title %}صف پیامک — myclass{% endblock %}
+{% block content %}
+{% set statusLabels = { 'pending': 'در انتظار', 'sent': 'ارسال‌شده', 'failed': 'ناموفق' } %}
+<div class="page-head">
+  <h1>صف پیامک</h1>
+  <div>
+    <a href="/sms/patterns" class="btn btn-ghost">پترن‌ها</a>
+    <a href="/sms/events" class="btn btn-ghost">رویدادها</a>
+  </div>
+</div>
+<div class="card">
+  <form method="get" class="grid2">
+    <div class="field"><label>وضعیت</label>
+      <select name="status">
+        <option value="">همه</option>
+        {% for k, v in statusLabels %}<option value="{{ k }}" {{ 'selected' if filters.status == k }}>{{ v }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="actions"><button type="submit" class="btn btn-primary">فیلتر</button></div>
+  </form>
+  <p class="muted">آمار: {% for k, v in stats %}<span class="badge">{{ k }}: {{ v | faNum }}</span> {% endfor %}</p>
+</div>
+<table class="table">
+  <thead><tr><th>شناسه</th><th>گیرنده</th><th>رویداد</th><th>متغیرها</th><th>وضعیت</th><th>تلاش</th><th>خطا</th><th>تاریخ</th></tr></thead>
+  <tbody>
+    {% for q in rows %}
+    <tr>
+      <td>{{ q.id | faNum }}</td>
+      <td>{{ q.recipient }}</td>
+      <td>{{ q.event_name or q.event_key or '—' }}</td>
+      <td><code>{{ q.variables }}</code></td>
+      <td><span class="badge {{ 'ok' if q.status == 'sent' else ('fail' if q.status == 'failed' else '') }}">{{ statusLabels[q.status] or q.status }}</span></td>
+      <td>{{ q.attempts | faNum }}</td>
+      <td class="muted">{{ q.last_error or '' }}</td>
+      <td>{{ q.created_at | faDateTime }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8" class="empty">صف خالی است.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

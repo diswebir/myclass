@@ -1,0 +1,9 @@
+{% extends "layout.njk" %}
+{% block title %}خطا — myclass{% endblock %}
+{% block content %}
+<div class="card error-card">
+  <h1>{{ statusCode }}</h1>
+  <p>{{ message }}</p>
+  <a href="/" class="btn btn-primary">بازگشت به داشبورد</a>
+</div>
+{% endblock %}

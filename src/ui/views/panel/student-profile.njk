@@ -1,0 +1,34 @@
+{% extends "layout.njk" %}
+{% block title %}پروفایل فراگیر — myclass{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>پروفایل من</h1>
+  <table class="table">
+    <tbody>
+      <tr><th>کد داخلی</th><td>{{ profile.code }}</td></tr>
+      <tr><th>نام و نام خانوادگی</th><td>{{ profile.first_name }} {{ profile.last_name }}</td></tr>
+      <tr><th>وضعیت</th><td><span class="badge">{{ profile.status }}</span></td></tr>
+      <tr><th>نام سرپرست</th><td>{{ profile.guardian_name or '—' }}</td></tr>
+      <tr><th>موبایل سرپرست</th><td>{{ profile.guardian_phone | faNum }}</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="card">
+  <h2>ویرایش اطلاعات تماس</h2>
+  <form method="post" action="/panel/student/profile">
+    <input type="hidden" name="_method" value="put">
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <div class="grid2">
+      <div class="field"><label>موبایل</label><input name="phone" value="{{ profile.phone }}" required></div>
+      <div class="field"><label>ایمیل</label><input type="email" name="email" value="{{ profile.email or '' }}"></div>
+      <div class="field"><label>نام سرپرست</label><input name="guardianName" value="{{ profile.guardian_name or '' }}"></div>
+      <div class="field"><label>موبایل سرپرست</label><input name="guardianPhone" value="{{ profile.guardian_phone or '' }}"></div>
+    </div>
+    <div class="field"><label>یادداشت</label><textarea name="notes" rows="3">{{ profile.notes or '' }}</textarea></div>
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">ذخیره</button>
+      <a href="/panel/student" class="btn btn-ghost">بازگشت</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

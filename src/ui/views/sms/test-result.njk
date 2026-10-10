@@ -1,0 +1,24 @@
+{% extends "layout.njk" %}
+{% block title %}نتیجه ارسال آزمایشی — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>نتیجه ارسال آزمایشی</h1>
+  <div><a href="/sms/patterns" class="btn btn-ghost">بازگشت به پترن‌ها</a></div>
+</div>
+<div class="card">
+  {% if result.ok %}
+  <p><span class="badge ok">ارسال شد (provider: {{ result.provider }})</span></p>
+  {% else %}
+  <p><span class="badge fail">ناموفق — {{ result.error }}</span></p>
+  {% endif %}
+  <table class="table">
+    <tbody>
+      <tr><th>گیرنده</th><td>{{ input.recipient }}</td></tr>
+      <tr><th>Provider</th><td>{{ result.provider }}</td></tr>
+      {% if result.providerMessageId %}<tr><th>شناسه پیام</th><td><code>{{ result.providerMessageId }}</code></td></tr>{% endif %}
+      <tr><th>متغیرها</th><td><code>{{ result.variables | dump }}</code></td></tr>
+    </tbody>
+  </table>
+  <p class="muted">اگر SMS_LIVE_TESTS=0 باشد، ارسال با Fake Provider بوده و پیامک واقعی ارسال نشده است.</p>
+</div>
+{% endblock %}

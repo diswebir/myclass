@@ -1,0 +1,45 @@
+{% extends "layout.njk" %}
+{% block title %}{{ 'ویرایش کلاس' if cls else 'کلاس جدید' }} — myclass{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>{{ 'ویرایش کلاس' if cls else 'کلاس جدید' }}</h1>
+  <form method="post" action="{{ '/classes/' + cls.id if cls else '/classes' }}">
+    {% if cls %}<input type="hidden" name="_method" value="put">{% endif %}
+    <div class="grid2">
+      <div class="field"><label>عنوان</label><input name="title" value="{{ cls.title if cls else '' }}" required></div>
+      <div class="field"><label>کد</label><input name="code" value="{{ cls.code if cls else '' }}" required></div>
+      <div class="field"><label>ظرفیت</label><input name="capacity" value="{{ cls.capacity if cls else 20 }}" required></div>
+      <div class="field"><label>شهریه (تومان)</label><input name="fee" value="{{ cls.fee if cls else '0' }}" required></div>
+      <div class="field"><label>تاریخ شروع (شمسی)</label><input name="startDate" value="{{ cls.start_date | faDate if cls else '' }}" placeholder="۱۴۰۳/۰۸/۰۱"></div>
+      <div class="field"><label>تاریخ پایان (شمسی)</label><input name="endDate" value="{{ cls.end_date | faDate if cls else '' }}"></div>
+      <div class="field"><label>ساعت شروع</label><input name="startTime" value="{{ cls.start_time if cls else '' }}" placeholder="16:00"></div>
+      <div class="field"><label>ساعت پایان</label><input name="endTime" value="{{ cls.end_time if cls else '' }}"></div>
+      <div class="field"><label>مکان</label><input name="location" value="{{ cls.location if cls else '' }}"></div>
+      <div class="field"><label>وضعیت</label>
+        <select name="status">
+          {% for st in ['draft', 'open', 'full', 'running', 'finished', 'cancelled'] %}
+          <option value="{{ st }}" {{ 'selected' if cls and cls.status == st }}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>توضیحات</label><textarea name="description" rows="3">{{ cls.description if cls else '' }}</textarea></div>
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">ذخیره</button>
+      <a href="/classes" class="btn btn-ghost">بازگشت</a>
+    </div>
+  </form>
+</div>
+{% if cls %}
+<div class="card">
+  <h2>اساتید کلاس</h2>
+  <ul>
+    {% for t in teachers %}
+    <li>{{ t.first_name }} {{ t.last_name }} ({{ t.code }}) — {{ 'فعال' if not t.removed_at else 'برداشته‌شده' }}</li>
+    {% else %}
+    <li class="empty">استادی تخصیص نیافته است.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

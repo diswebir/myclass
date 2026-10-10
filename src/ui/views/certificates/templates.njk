@@ -1,0 +1,36 @@
+{% extends "layout.njk" %}
+{% block title %}قالب‌های مدرک — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>قالب‌های مدرک</h1>
+  <div><a href="/certificates" class="btn btn-ghost">بازگشت به مدارک</a></div>
+</div>
+<div class="card">
+  <h2>قالب جدید</h2>
+  <form method="post" action="/certificates/templates" class="grid2">
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <div class="field"><label>نام قالب</label><input name="name" required maxlength="191"></div>
+    <div class="field"><label>رنگ اصلی (hex)</label><input name="design.primaryColor" placeholder="#1d4ed8"></div>
+    <div class="field"><label>حداقل درصد حضور</label><input name="conditions.min_attendance_percent" placeholder="۷۰"></div>
+    <div class="field"><label><input type="checkbox" name="conditions.require_payment_cleared" value="true" checked> شرط تسویه مالی</label></div>
+    <div class="actions"><button type="submit" class="btn btn-primary">ایجاد قالب</button></div>
+  </form>
+  <p class="muted">design و conditions به‌صورت JSON ثبت می‌شوند.</p>
+</div>
+<table class="table">
+  <thead><tr><th>شناسه</th><th>نام</th><th>طرح</th><th>شرایط</th><th>وضعیت</th></tr></thead>
+  <tbody>
+    {% for t in rows %}
+    <tr>
+      <td>{{ t.id | faNum }}</td>
+      <td>{{ t.name }}</td>
+      <td><code>{{ t.design }}</code></td>
+      <td><code>{{ t.conditions }}</code></td>
+      <td><span class="badge {{ 'ok' if t.is_active else 'fail' }}">{{ 'فعال' if t.is_active else 'غیرفعال' }}</span></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="empty">قالبی یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

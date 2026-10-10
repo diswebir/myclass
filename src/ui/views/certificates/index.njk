@@ -1,0 +1,71 @@
+{% extends "layout.njk" %}
+{% block title %}مدارک — myclass{% endblock %}
+{% block content %}
+{% set statusLabels = { 'active': 'فعال', 'revoked': 'لغو شده' } %}
+<div class="page-head">
+  <h1>مدارک</h1>
+  <div>
+    <a href="/certificates/templates" class="btn btn-ghost">قالب‌ها</a>
+  </div>
+</div>
+<div class="card">
+  <h2>صدور مدرک</h2>
+  <form method="post" action="/certificates/issue" class="grid2">
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <div class="field"><label>شناسه فراگیر</label><input name="studentId" required placeholder="شناسه عددی فراگیر"></div>
+    <div class="field"><label>شناسه کلاس</label><input name="classId" required placeholder="شناسه عددی کلاس"></div>
+    <div class="field"><label>قالب (اختیاری)</label><input name="templateId" placeholder="شناسه قالب"></div>
+    <div class="actions"><button type="submit" class="btn btn-primary">صدور مدرک</button></div>
+  </form>
+</div>
+<div class="card">
+  <h2>صدور دسته‌ای برای کلاس</h2>
+  <form method="post" action="/certificates/issue-batch" class="grid2">
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <div class="field"><label>شناسه کلاس</label><input name="classId" required placeholder="شناسه عددی کلاس"></div>
+    <div class="field"><label>قالب (اختیاری)</label><input name="templateId" placeholder="شناسه قالب"></div>
+    <div class="field"><label><input type="checkbox" name="dryRun" value="true"> اجرای آزمایشی (بدون صدور)</label></div>
+    <div class="actions"><button type="submit" class="btn btn-primary">صدور دسته‌ای</button></div>
+  </form>
+</div>
+<div class="card">
+  <form method="get" class="grid2">
+    <div class="field"><label>وضعیت</label>
+      <select name="status">
+        <option value="">همه</option>
+        {% for k, v in statusLabels %}<option value="{{ k }}" {{ 'selected' if filters.status == k }}>{{ v }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field"><label>شناسه کلاس</label><input name="classId" value="{{ filters.classId or '' }}"></div>
+    <div class="actions"><button type="submit" class="btn btn-primary">فیلتر</button></div>
+  </form>
+</div>
+<table class="table">
+  <thead><tr><th>کد مدرک</th><th>فراگیر</th><th>کلاس</th><th>وضعیت</th><th>تاریخ صدور</th><th>عملیات</th></tr></thead>
+  <tbody>
+    {% for c in rows %}
+    <tr>
+      <td><code>{{ c.code }}</code></td>
+      <td>{{ c.first_name }} {{ c.last_name }} ({{ c.student_code }})</td>
+      <td>{{ c.class_title or '—' }}</td>
+      <td><span class="badge {{ 'ok' if c.status == 'active' else 'fail' }}">{{ statusLabels[c.status] or c.status }}</span>
+        {% if c.status == 'revoked' and c.revoke_reason %}<div class="muted">{{ c.revoke_reason }}</div>{% endif %}</td>
+      <td>{{ c.issued_at | faDateTime }}</td>
+      <td>
+        {% if c.file_id %}<a href="/files/{{ c.file_id }}" class="btn btn-sm btn-ghost" target="_blank">مشاهده فایل</a>{% endif %}
+        <a href="/verify/{{ c.verification_token }}" class="btn btn-sm btn-ghost" target="_blank">صفحه عمومی</a>
+        {% if c.status == 'active' %}
+        <form method="post" action="/certificates/{{ c.id }}/revoke" class="inline-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input name="reason" required placeholder="علت لغو" style="width:9rem">
+          <button type="submit" class="btn btn-sm btn-ghost">لغو مدرک</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="empty">مدرکی یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

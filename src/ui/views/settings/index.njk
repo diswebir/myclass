@@ -1,0 +1,56 @@
+{% extends "layout.njk" %}
+{% block title %}تنظیمات — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>تنظیمات</h1>
+  <form method="get">
+    <select name="category" onchange="this.form.submit()">
+      <option value="">همه دسته‌ها</option>
+      {% for c in categories %}
+      <option value="{{ c }}" {{ 'selected' if category == c }}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+<table class="table">
+  <thead><tr><th>کلید</th><th>مقدار</th><th>توضیح</th><th></th></tr></thead>
+  <tbody>
+    {% for s in settings %}
+    <tr data-key="{{ s.key }}">
+      <td><code>{{ s.key }}</code></td>
+      <td>
+        {% if s.isSecret %}
+        <input type="password" value="{{ s.value }}" readonly class="readonly-input">
+        <span class="badge">secret</span>
+        {% else %}
+        <input type="text" value="{{ s.value if s.value is not string else s.value }}" data-value>
+        {% endif %}
+      </td>
+      <td>{{ s.description }}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" data-save>ذخیره</button>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="empty">تنظیمی یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<script>
+document.querySelectorAll('[data-save]').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var row = btn.closest('tr');
+    var key = row.getAttribute('data-key');
+    var input = row.querySelector('[data-value]');
+    if (!input) return;
+    fetch('/settings/' + encodeURIComponent(key), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '{{ csrfToken }}' },
+      body: JSON.stringify({ value: input.value }),
+    }).then(function (r) {
+      if (r.ok) { btn.textContent = 'ذخیره شد ✓'; } else { btn.textContent = 'خطا'; }
+    });
+  });
+});
+</script>
+{% endblock %}
