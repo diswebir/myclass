@@ -1,0 +1,62 @@
+<div class="flex-between mb-3">
+  <div>
+    <h1 class="mt-0"><%= teacher.first_name %> <%= teacher.last_name %></h1>
+    <div class="flex gap-2" style="flex-wrap:wrap">
+      <span class="badge badge-<%= teacher.is_active ? 'success' : 'danger' %>"><%= teacher.is_active ? 'فعال' : 'غیرفعال' %></span>
+      <% if (profile && profile.expertise) { %><span class="chip"><%= profile.expertise %></span><% } %>
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <a href="/panel/teachers" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+    <% if (can('teachers.manage')) { %>
+      <a href="/panel/teachers/<%= teacher.id %>/edit" class="btn btn-primary"><%= icon('edit', 16) %> ویرایش</a>
+    <% } %>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns: 1.5fr 1fr">
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('book', 18) %> کلاس‌های این استاد</h2>
+    </div>
+    <div class="card-body">
+      <% if (classes.length === 0) { %>
+        <div class="empty-state"><p>کلاسی تخصیص داده نشده است</p></div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>کلاس</th><th>تاریخ شروع</th><th>دانش‌آموزان</th><th>وضعیت</th><th></th></tr></thead>
+            <tbody>
+              <% classes.forEach(function(c){ %>
+                <tr>
+                  <td><strong><%= c.title %></strong></td>
+                  <td class="nowrap"><%= c.start_date ? j.jalaliLong(c.start_date) : '—' %></td>
+                  <td><span class="badge badge-accent"><%= fmt.numberFa(c.students_count) %></span></td>
+                  <td><span class="badge badge-<%= fmt.statusClass(c.status) %>"><%= fmt.statusFa(c.status) %></span></td>
+                  <td><a class="btn btn-outline btn-sm" href="/panel/classes/<%= c.id %>">مشاهده</a></td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2><%= icon('user', 18) %> اطلاعات استاد</h2></div>
+    <div class="card-body">
+      <dl class="kv">
+        <dt>نام کاربری</dt><dd dir="ltr"><%= teacher.username %></dd>
+        <dt>موبایل</dt><dd dir="ltr"><%= teacher.phone || '—' %></dd>
+        <dt>ایمیل</dt><dd dir="ltr"><%= teacher.email || '—' %></dd>
+        <% if (profile) { %>
+          <dt>تخصص</dt><dd><%= profile.expertise || '—' %></dd>
+          <dt>تاریخ استخدام</dt><dd><%= profile.hire_date ? j.jalaliLong(profile.hire_date) : '—' %></dd>
+          <dt>بیوگرافی</dt><dd><%= profile.bio || '—' %></dd>
+        <% } %>
+        <dt>تاریخ عضویت</dt><dd><%= j.jalaliLong(teacher.created_at) %></dd>
+      </dl>
+    </div>
+  </div>
+</div>

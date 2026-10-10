@@ -1,0 +1,68 @@
+<div class="grid grid-3 mb-3">
+  <div class="stat-card g3">
+    <div class="stat-info"><h3>در انتظار بررسی</h3><div class="stat-value"><%= fmt.numberFa(counts.pending || 0) %></div></div>
+    <div class="stat-icon"><%= icon('clipboard', 24) %></div>
+  </div>
+  <div class="stat-card g4">
+    <div class="stat-info"><h3>تایید شده</h3><div class="stat-value"><%= fmt.numberFa(counts.approved || 0) %></div></div>
+    <div class="stat-icon"><%= icon('check', 24) %></div>
+  </div>
+  <div class="stat-card g5">
+    <div class="stat-info"><h3>رد شده</h3><div class="stat-value"><%= fmt.numberFa(counts.rejected || 0) %></div></div>
+    <div class="stat-icon"><%= icon('x', 24) %></div>
+  </div>
+</div>
+
+<div class="flex-between mb-3">
+  <form class="filters-bar" method="get" action="/panel/enrollments">
+    <input class="form-control" name="q" value="<%= filters.q %>" placeholder="نام، موبایل...">
+    <select class="form-select" name="status" data-auto-submit>
+      <option value="">همه وضعیت‌ها</option>
+      <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>در انتظار بررسی</option>
+      <option value="approved" <%= filters.status === 'approved' ? 'selected' : '' %>>تایید شده</option>
+      <option value="rejected" <%= filters.status === 'rejected' ? 'selected' : '' %>>رد شده</option>
+    </select>
+    <select class="form-select" name="class_id" data-auto-submit>
+      <option value="">همه کلاس‌ها</option>
+      <% classes.forEach(function(c){ %>
+        <option value="<%= c.id %>" <%= String(filters.class_id) === String(c.id) ? 'selected' : '' %>><%= c.title %></option>
+      <% }); %>
+    </select>
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) %> جستجو</button>
+  </form>
+</div>
+
+<div class="card">
+  <% if (rows.length === 0) { %>
+    <div class="empty-state">
+      <%= icon('clipboard', 48) %>
+      <h3>درخواستی یافت نشد</h3>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>متقاضی</th><th>کلاس</th><th>موبایل</th><th>تاریخ ثبت</th><th>وضعیت</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function(e){ %>
+            <tr>
+              <td><strong><%= e.full_name %></strong><% if (e.national_code) { %><br><small class="text-muted" dir="ltr"><%= e.national_code %></small><% } %></td>
+              <td><%= e.class_title %></td>
+              <td dir="ltr"><%= e.phone %></td>
+              <td class="nowrap"><%= j.jalaliLong(e.created_at) %></td>
+              <td>
+                <span class="badge badge-<%= fmt.statusClass(e.status) %>"><%= fmt.statusFa(e.status) %></span>
+                <% if (e.source === 'web') { %><small class="text-muted">آنلاین</small><% } %>
+              </td>
+              <td><a class="btn btn-primary btn-sm" href="/panel/enrollments/<%= e.id %>">بررسی</a></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <%- include('../partials/pagination', { page: page, pages: pages, basePath: '/panel/enrollments' }) %>
+    </div>
+  <% } %>
+</div>

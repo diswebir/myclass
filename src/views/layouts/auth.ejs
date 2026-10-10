@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <% if (typeof icon !== 'function') { icon = function(){ return ''; }; } %>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+  <title><%= typeof title !== 'undefined' ? title + ' | ' : '' %>سامانه مدیریت کلاس‌ها</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>:root { --accent: <%= typeof themeAccent !== 'undefined' ? themeAccent : '#4f46e5' %>; }</style>
+</head>
+<body class="auth-body" data-theme="light">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <% if (typeof S !== 'undefined' && S && S.institute_logo) { %>
+          <img src="/uploads/<%= S.institute_logo %>" alt="لوگو" class="auth-logo">
+        <% } else { %>
+          <div class="auth-logo auth-logo--default"><%= icon('layers', 28) %></div>
+        <% } %>
+        <h1><%= typeof instituteName !== 'undefined' ? instituteName : 'سامانه مدیریت کلاس‌ها' %></h1>
+        <p><%= typeof panelTitle !== 'undefined' ? panelTitle : '' %></p>
+      </div>
+      <%- include('../partials/flash') %>
+      <%- body %>
+    </div>
+    <p class="auth-footer">طراحی‌شده برای موسسات آموزشی — فارسی، شمسی، امن</p>
+  </div>
+  <script src="/js/jalaali.min.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

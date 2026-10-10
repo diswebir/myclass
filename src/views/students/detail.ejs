@@ -1,0 +1,158 @@
+<div class="flex-between mb-3">
+  <div>
+    <h1 class="mt-0"><%= student.first_name %> <%= student.last_name %></h1>
+    <div class="flex gap-2" style="flex-wrap:wrap">
+      <span class="badge badge-<%= student.is_active ? 'success' : 'danger' %>"><%= student.is_active ? 'فعال' : 'غیرفعال' %></span>
+      <% if (profile && profile.student_code) { %><span class="chip">کد: <strong dir="ltr"><%= profile.student_code %></strong></span><% } %>
+      <% if (student.phone) { %><span class="chip"><%= icon('phone', 14) %> <span dir="ltr"><%= student.phone %></span></span><% } %>
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <a href="/panel/students" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+    <% if (can('students.manage')) { %>
+      <a href="/panel/students/<%= student.id %>/edit" class="btn btn-primary"><%= icon('edit', 16) %> ویرایش</a>
+    <% } %>
+  </div>
+</div>
+
+<div class="grid grid-4">
+  <div class="stat-card light">
+    <div class="stat-info"><h3>کلاس‌ها</h3><div class="stat-value"><%= fmt.numberFa(classes.length) %></div></div>
+    <div class="stat-icon"><%= icon('book', 22) %></div>
+  </div>
+  <div class="stat-card light">
+    <div class="stat-info"><h3>نرخ حضور</h3>
+      <div class="stat-value">
+        <%= attSummary && attSummary.total > 0 ? fmt.percentFa((Number(attSummary.present) / Number(attSummary.total)) * 100) : '—' %>
+      </div>
+    </div>
+    <div class="stat-icon"><%= icon('check-square', 22) %></div>
+  </div>
+  <div class="stat-card light">
+    <div class="stat-info"><h3>مدارک</h3><div class="stat-value"><%= fmt.numberFa(certs.length) %></div></div>
+    <div class="stat-icon"><%= icon('award', 22) %></div>
+  </div>
+  <div class="stat-card light">
+    <div class="stat-info"><h3>طرح‌های اقساط</h3><div class="stat-value"><%= fmt.numberFa(plans.length) %></div></div>
+    <div class="stat-icon"><%= icon('wallet', 22) %></div>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns: 1.5fr 1fr">
+  <div>
+    <div class="card">
+      <div class="card-header"><h2><%= icon('book', 18) %> کلاس‌ها</h2></div>
+      <div class="card-body">
+        <% if (classes.length === 0) { %>
+          <div class="empty-state"><p>در کلاسی ثبت‌نام نکرده است</p></div>
+        <% } else { %>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>کلاس</th><th>تاریخ</th><th>حضور</th><th>نمره</th><th>وضعیت</th></tr></thead>
+              <tbody>
+                <% classes.forEach(function(c){ %>
+                  <tr>
+                    <td><a href="/panel/classes/<%= c.class_id %>"><strong><%= c.title %></strong></a></td>
+                    <td class="nowrap"><%= c.start_date ? j.jalaliLong(c.start_date) : '—' %></td>
+                    <td>
+                      <span class="badge badge-success"><%= fmt.numberFa(c.sessions_present || 0) %></span>
+                      <small class="text-muted">از <%= fmt.numberFa(c.sessions_total || 0) %></small>
+                    </td>
+                    <td><%= c.final_score !== null && c.final_score !== undefined ? fmt.numberFa(c.final_score) : '—' %></td>
+                    <td><span class="badge badge-<%= fmt.statusClass(c.status) %>"><%= fmt.statusFa(c.status) %></span></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2><%= icon('wallet', 18) %> پرداخت‌های اخیر</h2>
+        <% if (can('payments.manage')) { %>
+          <a class="btn btn-primary btn-sm" href="/panel/payments/create"><%= icon('plus', 14) %> ثبت پرداخت</a>
+        <% } %>
+      </div>
+      <div class="card-body">
+        <% if (payments.length === 0) { %>
+          <div class="empty-state"><p>پرداختی ثبت نشده است</p></div>
+        <% } else { %>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>مبلغ</th><th>روش</th><th>وضعیت</th><th>تاریخ</th><th></th></tr></thead>
+              <tbody>
+                <% payments.forEach(function(p){ %>
+                  <tr>
+                    <td class="nowrap"><strong><%= fmt.moneyFa(p.amount, currencyLabel) %></strong></td>
+                    <td><%= fmt.statusFa(p.method) %></td>
+                    <td><span class="badge badge-<%= fmt.statusClass(p.status) %>"><%= fmt.statusFa(p.status) %></span></td>
+                    <td class="nowrap"><%= j.jalaliLong(p.paid_at || p.created_at) %></td>
+                    <td><a class="btn btn-outline btn-sm" href="/panel/payments/<%= p.id %>"><%= icon('eye', 14) %></a></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-header"><h2><%= icon('user', 18) %> اطلاعات پرونده</h2></div>
+      <div class="card-body">
+        <dl class="kv">
+          <dt>نام کاربری</dt><dd dir="ltr"><%= student.username %></dd>
+          <dt>کد ملی</dt><dd dir="ltr"><%= student.national_code || '—' %></dd>
+          <dt>ایمیل</dt><dd dir="ltr"><%= student.email || '—' %></dd>
+          <% if (profile) { %>
+            <dt>تاریخ تولد</dt><dd><%= profile.birth_date ? j.jalaliLong(profile.birth_date) : '—' %></dd>
+            <dt>جنسیت</dt><dd><%= profile.gender === 'male' ? 'آقا' : profile.gender === 'female' ? 'خانم' : '—' %></dd>
+            <dt>مقطع</dt><dd><%= profile.education_level || '—' %></dd>
+            <dt>ولی</dt><dd><%= profile.guardian_name || '—' %><% if (profile.guardian_phone) { %> (<span dir="ltr"><%= profile.guardian_phone %></span>)<% } %></dd>
+            <dt>آدرس</dt><dd><%= profile.address || '—' %></dd>
+          <% } %>
+          <dt>تاریخ عضویت</dt><dd><%= j.jalaliLong(student.created_at) %></dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h2><%= icon('award', 18) %> مدارک</h2></div>
+      <div class="card-body">
+        <% if (certs.length === 0) { %>
+          <div class="empty-state"><p>مدرکی صادر نشده است</p></div>
+        <% } else { %>
+          <ul class="list-clean">
+            <% certs.forEach(function(c){ %>
+              <li class="list-row">
+                <div class="main">
+                  <strong><%= c.class_title %></strong>
+                  <small class="text-muted" dir="ltr"><%= c.serial %></small>
+                </div>
+                <div class="side">
+                  <a class="btn btn-outline btn-sm" href="/panel/certificates/<%= c.id %>">مشاهده</a>
+                </div>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (can('students.manage')) { %>
+    <div class="card">
+      <div class="card-body">
+        <form method="post" action="/panel/students/<%= student.id %>/deactivate" data-confirm="حساب این دانش‌آموز غیرفعال شود؟">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn btn-danger btn-block" type="submit"><%= icon('lock', 16) %> غیرفعال‌سازی حساب</button>
+        </form>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>

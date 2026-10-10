@@ -1,0 +1,126 @@
+<section class="container">
+  <div class="flex-between mb-3">
+    <div>
+      <h1><%= cls.title %></h1>
+      <p class="text-soft mb-0">
+        <span class="badge badge-<%= fmt.statusClass(cls.status) %>"><%= fmt.statusFa(cls.status) %></span>
+        <% if (cls.category) { %><span class="chip"><%= cls.category %></span><% } %>
+        <% if (cls.level) { %><span class="chip"><%= cls.level %></span><% } %>
+      </p>
+    </div>
+    <a href="/?public=1" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+  </div>
+
+  <div class="grid" style="grid-template-columns: 1.6fr 1fr">
+    <div>
+      <div class="card">
+        <div class="card-header"><h2><%= icon('book', 18) %> درباره این کلاس</h2></div>
+        <div class="card-body">
+          <% if (cls.description) { %>
+            <p style="white-space:pre-line"><%= cls.description %></p>
+          <% } else { %>
+            <p class="text-muted">توضیحاتی ثبت نشده است.</p>
+          <% } %>
+
+          <dl class="kv mt-3">
+            <% if (cls.t_first || cls.t_last) { %>
+              <dt>استاد</dt><dd><%= cls.t_first %> <%= cls.t_last %></dd>
+            <% } %>
+            <% if (cls.start_date) { %>
+              <dt>تاریخ شروع</dt><dd><%= j.jalaliLong(cls.start_date) %></dd>
+            <% } %>
+            <% if (cls.end_date) { %>
+              <dt>تاریخ پایان</dt><dd><%= j.jalaliLong(cls.end_date) %></dd>
+            <% } %>
+            <% if (cls.start_time) { %>
+              <dt>ساعت برگزاری</dt><dd><%= j.timeFa(cls.start_time) %> تا <%= j.timeFa(cls.end_time) %></dd>
+            <% } %>
+            <% if (cls.location) { %>
+              <dt>مکان</dt><dd><%= cls.location %></dd>
+            <% } %>
+            <dt>شهریه</dt>
+            <dd><%= cls.price > 0 ? fmt.moneyFa(cls.price, currencyLabel) : 'رایگان' %></dd>
+            <% if (cls.installments_count > 1) { %>
+              <dt>اقساط</dt><dd>امکان پرداخت در <%= fmt.numberFa(cls.installments_count) %> قسط</dd>
+            <% } %>
+          </dl>
+        </div>
+      </div>
+
+      <% if (sessions.length) { %>
+        <div class="card">
+          <div class="card-header"><h2><%= icon('calendar', 18) %> برنامه جلسات</h2></div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th>#</th><th>تاریخ</th><th>ساعت</th><th>موضوع</th></tr></thead>
+                <tbody>
+                  <% sessions.forEach(function(s, i){ %>
+                    <tr>
+                      <td><%= fmt.numberFa(i + 1) %></td>
+                      <td><%= j.jalaliLong(s.session_date) %></td>
+                      <td><%= j.timeFa(s.start_time) %></td>
+                      <td><%= s.topic || '—' %></td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+    <div>
+      <div class="card" id="prereg">
+        <div class="card-header"><h2><%= icon('user-plus', 18) %> پیش‌ثبت‌نام</h2></div>
+        <div class="card-body">
+          <% if (typeof sent !== 'undefined' && sent) { %>
+            <div class="alert alert-success">
+              <span>درخواست شما ثبت شد. پس از بررسی، همکاران ما تماس می‌گیرند.</span>
+            </div>
+          <% } %>
+
+          <% if (cls.status !== 'open') { %>
+            <div class="alert alert-warning"><span>ثبت‌نام این کلاس در حال حاضر باز نیست.</span></div>
+          <% } else { %>
+            <form method="post" action="/classes/<%= cls.id %>/preregister">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div class="form-group">
+                <label class="form-label">نام و نام خانوادگی <span class="req">*</span></label>
+                <input class="form-control" name="full_name" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">شماره موبایل <span class="req">*</span></label>
+                <input class="form-control" name="phone" dir="ltr" placeholder="09120000000" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">کد ملی</label>
+                <input class="form-control" name="national_code" dir="ltr">
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">جنسیت</label>
+                  <select class="form-select" name="gender">
+                    <option value="">—</option>
+                    <option value="male">آقا</option>
+                    <option value="female">خانم</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">تحصیلات</label>
+                  <input class="form-control" name="education" placeholder="مثال: دیپلم">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">توضیحات</label>
+                <textarea class="form-control" name="message" rows="3"></textarea>
+              </div>
+              <button class="btn btn-primary btn-block" type="submit"><%= icon('send', 18) %> ثبت درخواست</button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

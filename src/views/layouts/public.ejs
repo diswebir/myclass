@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <% if (typeof panelTitle === 'undefined') { panelTitle = 'سامانه مدیریت کلاس‌ها'; } %>
+  <% if (typeof instituteName === 'undefined') { instituteName = 'موسسه آموزشی'; } %>
+  <% if (typeof themeAccent === 'undefined') { themeAccent = '#4f46e5'; } %>
+  <% if (typeof S === 'undefined') { S = {}; } %>
+  <% if (typeof icon !== 'function') { icon = function(){ return ''; }; } %>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+  <title><%= typeof title !== 'undefined' ? title + ' | ' : '' %><%= instituteName %></title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>:root { --accent: <%= themeAccent %>; }</style>
+</head>
+<body class="public-body" data-theme="light">
+  <header class="public-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <% if (S && S.institute_logo) { %>
+          <img src="/uploads/<%= S.institute_logo %>" alt="لوگو" class="brand-logo">
+        <% } else { %>
+          <div class="brand-logo brand-logo--default"><%= icon('layers', 22) %></div>
+        <% } %>
+        <strong><%= instituteName %></strong>
+      </a>
+      <nav class="public-nav">
+        <a href="/?public=1">خانه</a>
+        <% if (S && S.institute_website) { %><a href="<%= S.institute_website %>" target="_blank" rel="noopener">وب‌سایت</a><% } %>
+        <a href="/login" class="btn btn-sm btn-primary"><%= icon('user', 16) %> ورود به سامانه</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="public-main">
+    <%- include('../partials/flash') %>
+    <%- body %>
+  </main>
+
+  <footer class="public-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <h4><%= instituteName %></h4>
+          <p><%= S && S.institute_slogan ? S.institute_slogan : '' %></p>
+        </div>
+        <div>
+          <h4>تماس</h4>
+          <p><%= S && S.institute_phone ? S.institute_phone : '' %></p>
+          <p><%= S && S.institute_address ? S.institute_address : '' %></p>
+        </div>
+        <div>
+          <h4>سامانه مدیریت کلاس‌ها</h4>
+          <p>مدیریت کلاس، حضور و غیاب، مالی و صدور مدرک</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <script src="/js/jalaali.min.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

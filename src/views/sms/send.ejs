@@ -1,0 +1,107 @@
+<div class="flex-between mb-3">
+  <h1 class="mt-0">ارسال پیامک</h1>
+  <a href="/panel/sms" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+</div>
+
+<div class="grid" style="grid-template-columns: 1.4fr 1fr">
+  <div class="card">
+    <div class="card-header"><h2><%= icon('send', 18) %> ارسال تکی / تستی</h2></div>
+    <div class="card-body">
+      <form method="post" action="/panel/sms/send">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">شماره موبایل گیرنده <span class="req">*</span></label>
+            <input class="form-control" name="phone" dir="ltr" placeholder="09120000000" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">رویداد / الگو</label>
+            <select class="form-select" name="event_code">
+              <% patterns.forEach(function(p){ %>
+                <option value="<%= p.event_code %>"><%= p.title %></option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+
+        <h3>مقادیر متغیرها</h3>
+        <div id="varBox">
+          <div class="form-row mb-2 var-row">
+            <select class="form-select" name="var_key">
+              <% Object.keys(systemVars).forEach(function(v){ %>
+                <option value="<%= v %>"><%= systemVars[v] %> (<%= v %>)</option>
+              <% }); %>
+            </select>
+            <div class="input-group">
+              <input class="form-control" name="var_val" placeholder="مقدار">
+              <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.var-row').remove()">حذف</button>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="addVarRow()"><%= icon('plus', 14) %> افزودن متغیر</button>
+
+        <div class="form-group mt-3">
+          <label class="form-label">متن پیام (برای رویداد سفارشی)</label>
+          <textarea class="form-control" name="message" rows="3" placeholder="در صورت استفاده از رویداد custom"></textarea>
+        </div>
+
+        <label class="form-check">
+          <input type="checkbox" name="force" value="1">
+          <span>ارسال حتی اگر سرویس پیامک غیرفعال است (تست)</span>
+        </label>
+
+        <button class="btn btn-primary btn-lg" type="submit"><%= icon('send', 18) %> ارسال پیامک</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2><%= icon('users', 18) %> ارسال گروهی به کلاس</h2></div>
+    <div class="card-body">
+      <form method="post" action="/panel/sms/send-class/0" id="bulkForm">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-group">
+          <label class="form-label">کلاس (شناسه)</label>
+          <input class="form-control" type="number" name="class_id_proxy" id="bulkClassId" placeholder="مثال: 1" required>
+          <div class="form-hint">شناسه کلاس را از صفحه کلاس‌ها ببینید</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">رویداد</label>
+          <select class="form-select" name="event_code">
+            <option value="class_reminder">یادآوری جلسه کلاس</option>
+            <option value="class_cancelled">لغو جلسه کلاس</option>
+            <option value="custom">پیام سفارشی</option>
+            <option value="absence_notice">اطلاع غیبت</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">متن پیام (برای پیام سفارشی)</label>
+          <textarea class="form-control" name="message" rows="3"></textarea>
+        </div>
+        <button class="btn btn-warning" type="submit"><%= icon('send', 16) %> ارسال به همه اعضا</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function addVarRow() {
+  var box = document.getElementById('varBox');
+  var div = document.createElement('div');
+  div.className = 'form-row mb-2 var-row';
+  var options = '';
+  <% Object.keys(systemVars).forEach(function(v){ %>
+    options += '<option value="<%= v %>"><%= systemVars[v] %> (<%= v %>)</option>';
+  <% }); %>
+  div.innerHTML =
+    '<select class="form-select" name="var_key">' + options + '</select>' +
+    '<div class="input-group"><input class="form-control" name="var_val" placeholder="مقدار">' +
+    '<button type="button" class="btn btn-danger btn-sm" onclick="this.closest(\'.var-row\').remove()">حذف</button></div>';
+  box.appendChild(div);
+}
+document.getElementById('bulkForm').addEventListener('submit', function (e) {
+  var id = document.getElementById('bulkClassId').value;
+  this.action = '/panel/sms/send-class/' + id;
+});
+</script>

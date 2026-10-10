@@ -1,0 +1,29 @@
+<div class="install-steps">
+  <div class="install-step active">۱. بررسی پیش‌نیازها</div>
+  <div class="install-step">۲. پایگاه‌داده</div>
+  <div class="install-step">۳. موسسه و مدیر</div>
+  <div class="install-step">۴. پایان</div>
+</div>
+
+<h2 style="font-size:1.15rem">نصب سامانه مدیریت کلاس‌ها</h2>
+<p class="text-soft">به نصب‌کننده وب‌محور خوش آمدید. برای شروع، وضعیت سرور بررسی می‌شود.</p>
+
+<div class="card">
+  <div class="card-body">
+    <% checks.forEach(function(c){ %>
+      <div class="check-row">
+        <span><%= c.label %></span>
+        <span>
+          <small class="text-muted"><%= c.value %></small>
+          <% if (c.ok) { %>
+            <span class="check-ok"><%= icon('check', 16) %></span>
+          <% } else { %>
+            <span class="check-bad"><%= icon('x', 16) %></span>
+          <% } %>
+        </span>
+      </div>
+    <% }); %>
+  </div>
+</div>
+
+<a href="/install/database" class="btn btn-primary btn-block btn-lg">شروع نصب <%= icon('chevron-left', 18) %></a>

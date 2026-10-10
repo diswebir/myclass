@@ -1,0 +1,78 @@
+<div class="flex-between mb-3">
+  <h1 class="mt-0">پیش‌ثبت‌نام: <%= en.full_name %></h1>
+  <a href="/panel/enrollments" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+</div>
+
+<div class="grid" style="grid-template-columns: 1.4fr 1fr">
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('clipboard', 18) %> جزئیات درخواست</h2>
+      <span class="badge badge-<%= fmt.statusClass(en.status) %>"><%= fmt.statusFa(en.status) %></span>
+    </div>
+    <div class="card-body">
+      <dl class="kv">
+        <dt>نام متقاضی</dt><dd><strong><%= en.full_name %></strong></dd>
+        <dt>شماره موبایل</dt><dd dir="ltr"><%= en.phone %></dd>
+        <dt>کد ملی</dt><dd dir="ltr"><%= en.national_code || '—' %></dd>
+        <dt>ایمیل</dt><dd dir="ltr"><%= en.email || '—' %></dd>
+        <dt>جنسیت</dt><dd><%= en.gender === 'male' ? 'آقا' : en.gender === 'female' ? 'خانم' : '—' %></dd>
+        <dt>تحصیلات</dt><dd><%= en.education || '—' %></dd>
+        <dt>کلاس درخواستی</dt><dd><a href="/panel/classes/<%= en.class_id %>"><strong><%= en.class_title %></strong></a></dd>
+        <dt>شهریه کلاس</dt><dd><%= fmt.moneyFa(en.class_price, currencyLabel) %></dd>
+        <dt>تاریخ ثبت</dt><dd><%= j.jalaliLong(en.created_at) %></dd>
+        <dt>پیام متقاضی</dt><dd><%= en.message || '—' %></dd>
+        <% if (en.reviewed_at) { %>
+          <dt>تاریخ بررسی</dt><dd><%= j.jalaliLong(en.reviewed_at) %></dd>
+          <dt>یادداشت بررسی</dt><dd><%= en.review_note || '—' %></dd>
+        <% } %>
+      </dl>
+
+      <% if (en.status === 'pending') { %>
+        <div class="divider"></div>
+        <form method="post" action="/panel/enrollments/<%= en.id %>/approve" class="mb-2">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="form-group">
+            <label class="form-label">یادداشت بررسی (اختیاری)</label>
+            <input class="form-control" name="review_note" placeholder="مثال: هماهنگی تلفنی انجام شد">
+          </div>
+          <button class="btn btn-success" type="submit"><%= icon('check', 18) %> تایید و تشکیل پرونده</button>
+        </form>
+        <form method="post" action="/panel/enrollments/<%= en.id %>/reject" data-confirm="این درخواست رد شود؟">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="form-group">
+            <label class="form-label">دلیل رد (اختیاری)</label>
+            <input class="form-control" name="review_note">
+          </div>
+          <button class="btn btn-danger" type="submit"><%= icon('x', 18) %> رد درخواست</button>
+        </form>
+      <% } %>
+    </div>
+  </div>
+
+  <div>
+    <% if (existingStudent) { %>
+      <div class="card">
+        <div class="card-header"><h2><%= icon('user', 18) %> دانش‌آموز موجود</h2></div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <span>کاربری با این مشخصات قبلاً در سامانه ثبت شده است. با تایید، همین حساب به کلاس اضافه می‌شود.</span>
+          </div>
+          <p><strong><%= existingStudent.first_name %> <%= existingStudent.last_name %></strong></p>
+          <a class="btn btn-outline" href="/panel/students/<%= existingStudent.id %>">مشاهده پرونده</a>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="card">
+      <div class="card-header"><h2><%= icon('message', 18) %> راهنمای تایید</h2></div>
+      <div class="card-body">
+        <ul class="list-clean">
+          <li class="list-row"><span class="main"><small>با تایید این درخواست، پرونده دانش‌آموز ساخته یا لینک می‌شود</small></span></li>
+          <li class="list-row"><span class="main"><small>دانش‌آموز به لیست اعضای کلاس اضافه می‌شود</small></span></li>
+          <li class="list-row"><span class="main"><small>پیامک تاییدیه به‌همراه نام کاربری و رمز عبور ارسال می‌شود</small></span></li>
+          <li class="list-row"><span class="main"><small>پس از آن می‌توانید شهریه را در بخش مالی ثبت کنید</small></span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

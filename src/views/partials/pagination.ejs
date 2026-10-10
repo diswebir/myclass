@@ -1,0 +1,31 @@
+<% /* صفحه‌بندی — استفاده: include('partials/pagination', { page, pages, basePath: '/panel/x' }) */ %>
+<% if (typeof pages !== 'undefined' && pages > 1) { %>
+<%
+  var qs = [];
+  for (var k in (typeof query !== 'undefined' ? query : {})) {
+    if (k !== 'page' && query[k] !== '' && query[k] !== undefined) qs.push(encodeURIComponent(k) + '=' + encodeURIComponent(query[k]));
+  }
+  var qstr = qs.length ? '&' + qs.join('&') : '';
+  function pageLink(p, label, disabled, active) {
+    return '<a class="page-item ' + (active ? 'active' : '') + (disabled ? ' disabled' : '') + '" href="' + (disabled ? '#' : (typeof basePath !== 'undefined' ? basePath : '') + '?page=' + p + qstr) + '">' + label + '</a>';
+  }
+  var start = Math.max(1, page - 2);
+  var end = Math.min(pages, page + 2);
+  var html = '<nav class="pagination">';
+  html += pageLink(page - 1, '‹', page <= 1, false);
+  if (start > 1) {
+    html += pageLink(1, '۱', false, page === 1);
+    if (start > 2) html += '<span class="page-item disabled">…</span>';
+  }
+  for (var p = start; p <= end; p++) {
+    html += pageLink(p, j.toPersianDigits(p), false, p === page);
+  }
+  if (end < pages) {
+    if (end < pages - 1) html += '<span class="page-item disabled">…</span>';
+    html += pageLink(pages, j.toPersianDigits(pages), false, page === pages);
+  }
+  html += pageLink(page + 1, '›', page >= pages, false);
+  html += '</nav>';
+%>
+<%- html %>
+<% } %>

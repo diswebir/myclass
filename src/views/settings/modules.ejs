@@ -1,0 +1,44 @@
+<div class="flex-between mb-3">
+  <div>
+    <h1 class="mt-0">ماژول‌های سیستم</h1>
+    <p class="text-soft mb-0">قابلیت‌ها را می‌توانید به‌صورت ماژولار فعال یا غیرفعال کنید.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr><th>ماژول</th><th>کد</th><th>وضعیت</th><th>نوع</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% modules.forEach(function(m){ %>
+          <tr>
+            <td>
+              <strong><%= icon(m.icon || 'package', 16) %> <%= m.title %></strong>
+            </td>
+            <td dir="ltr"><span class="chip"><%= m.code %></span></td>
+            <td>
+              <span class="badge badge-<%= m.is_enabled ? 'success' : 'danger' %>">
+                <%= m.is_enabled ? 'فعال' : 'غیرفعال' %>
+              </span>
+            </td>
+            <td><%= m.is_system ? '<span class="badge badge-muted">سیستمی</span>' : '<span class="badge badge-accent">اختیاری</span>' %></td>
+            <td>
+              <% if (!m.is_system) { %>
+                <form method="post" action="/panel/modules/<%= m.code %>/toggle">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn-<%= m.is_enabled ? 'danger' : 'success' %> btn-sm" type="submit">
+                    <%= m.is_enabled ? 'غیرفعال‌سازی' : 'فعال‌سازی' %>
+                  </button>
+                </form>
+              <% } else { %>
+                <small class="text-muted">همیشه فعال</small>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>

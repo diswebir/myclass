@@ -1,0 +1,58 @@
+<div class="cert-page">
+  <div class="cert-inner">
+    <% if (certSettings.institute_logo) { %>
+      <img class="cert-logo" src="/uploads/<%= certSettings.institute_logo %>" alt="">
+    <% } %>
+
+    <div style="color:#64748b;font-size:0.95rem"><%= certSettings.institute_name %></div>
+    <h1><%= certSettings.title || 'گواهی پایان دوره' %></h1>
+    <% if (certSettings.subtitle) { %>
+      <p style="color:#64748b"><%= certSettings.subtitle %></p>
+    <% } %>
+
+    <p style="margin-top:26px">بدین‌وسیله گواهی می‌شود</p>
+    <div class="cert-name"><%= cert.first_name %> <%= cert.last_name %></div>
+
+    <p class="cert-desc">
+      دوره آموزشی «<strong><%= cert.class_title %></strong>» را با موفقیت به پایان رسانده است.
+      <% if (cert.description) { %><br><%= cert.description %><% } %>
+    </p>
+
+    <div class="cert-meta">
+      <% if (cert.start_date || cert.end_date) { %>
+        <span><strong>بازه دوره:</strong> <%= cert.start_date ? j.jalaliLong(cert.start_date) : '' %> تا <%= cert.end_date ? j.jalaliLong(cert.end_date) : '' %></span>
+      <% } %>
+      <% if (cert.final_score !== null && cert.final_score !== undefined) { %>
+        <span><strong>نمره نهایی:</strong> <%= fmt.numberFa(cert.final_score) %></span>
+      <% } %>
+      <% if (cert.grade_label) { %>
+        <span><strong>رتبه:</strong> <%= cert.grade_label %></span>
+      <% } %>
+      <span><strong>تاریخ صدور:</strong> <%= j.jalaliLong(cert.issue_date) %></span>
+    </div>
+
+    <div class="cert-signs">
+      <div class="sign">
+        <div class="line"></div>
+        <strong><%= certSettings.sign1_name || ' ' %></strong>
+        <small><%= certSettings.sign1_title || '' %></small>
+      </div>
+      <div class="sign">
+        <div class="line"></div>
+        <strong><%= certSettings.sign2_name || ' ' %></strong>
+        <small><%= certSettings.sign2_title || '' %></small>
+      </div>
+    </div>
+
+    <% if (certSettings.footer) { %>
+      <p class="cert-footer-text"><%= certSettings.footer %></p>
+    <% } %>
+    <p class="cert-serial">شماره سریال: <span dir="ltr"><%= cert.serial %></span></p>
+  </div>
+
+  <% if (certSettings.show_qr) { %>
+    <div class="cert-qr">
+      <img src="<%= qrDataUrl %>" alt="QR">
+    </div>
+  <% } %>
+</div>

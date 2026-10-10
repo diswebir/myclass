@@ -1,0 +1,111 @@
+<div class="flex-between mb-3">
+  <h1 class="mt-0">گزارش‌ها و تحلیل‌ها</h1>
+  <div class="flex gap-2">
+    <a href="/panel/reports/financial" class="btn btn-primary"><%= icon('wallet', 16) %> گزارش مالی</a>
+    <a href="/panel/reports/attendance" class="btn btn-outline"><%= icon('check-square', 16) %> گزارش حضور</a>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <div class="card-header"><h2><%= icon('trending-up', 18) %> روند ماهانه مالی</h2></div>
+    <div class="card-body">
+      <% if (monthly.length) { %>
+        <div class="chart-box medium"><canvas id="monthlyChart"></canvas></div>
+      <% } else { %>
+        <div class="empty-state"><p>داده‌ای موجود نیست</p></div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2><%= icon('star', 18) %> برترین دانش‌آموزان</h2></div>
+    <div class="card-body">
+      <% if (topStudents.length === 0) { %>
+        <div class="empty-state"><p>نمره‌ای ثبت نشده است</p></div>
+      <% } else { %>
+        <ul class="list-clean">
+          <% topStudents.forEach(function(s, i){ %>
+            <li class="list-row">
+              <div class="main">
+                <strong><%= fmt.numberFa(i + 1) %>. <%= s.first_name %> <%= s.last_name %></strong>
+                <small class="text-muted"><%= fmt.numberFa(s.classes_count) %> دوره</small>
+              </div>
+              <div class="side">
+                <span class="badge badge-success"><%= fmt.numberFa(s.avg_score) %></span>
+              </div>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2><%= icon('book', 18) %> آمار کلاس‌ها</h2></div>
+  <div class="card-body">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>کلاس</th><th>وضعیت</th><th>دانش‌آموز</th><th>جلسات</th><th>درآمد</th><th>مدارک</th><th>پر ظرفیت</th></tr>
+        </thead>
+        <tbody>
+          <% classStats.forEach(function(c){
+               var pct = c.capacity > 0 ? Math.round((Number(c.students) / Number(c.capacity)) * 100) : 0;
+          %>
+            <tr>
+              <td><a href="/panel/classes/<%= c.id %>"><strong><%= c.title %></strong></a></td>
+              <td><span class="badge badge-<%= fmt.statusClass(c.status) %>"><%= fmt.statusFa(c.status) %></span></td>
+              <td><%= fmt.numberFa(c.students) %> / <%= fmt.numberFa(c.capacity) %></td>
+              <td><%= fmt.numberFa(c.sessions) %></td>
+              <td class="nowrap"><%= fmt.moneyFa(c.income, currencyLabel) %></td>
+              <td><%= fmt.numberFa(c.certs) %></td>
+              <td style="min-width:110px">
+                <div class="progress"><div class="progress-bar <%= pct > 90 ? 'danger' : pct > 60 ? 'warning' : 'success' %>" style="width:<%= Math.min(100, pct) %>%"></div></div>
+                <small class="text-muted"><%= fmt.percentFa(pct) %></small>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2><%= icon('alert-circle', 18) %> مطالبات — اقساط معوق</h2>
+  </div>
+  <div class="card-body">
+    <% if (receivables.length === 0) { %>
+      <div class="empty-state"><p>همه اقساط پرداخت شده‌اند 🎉</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>دانش‌آموز</th><th>طرح</th><th>تعداد اقساط</th><th>مبلغ معوق</th><th></th></tr></thead>
+          <tbody>
+            <% receivables.forEach(function(r){ %>
+              <tr>
+                <td><strong><%= r.first_name %> <%= r.last_name %></strong><br><small class="text-muted" dir="ltr"><%= r.phone %></small></td>
+                <td><%= r.plan_title %></td>
+                <td><span class="badge badge-warning"><%= fmt.numberFa(r.unpaid_count) %></span></td>
+                <td class="nowrap"><strong><%= fmt.moneyFa(r.unpaid_sum, currencyLabel) %></strong></td>
+                <td><a class="btn btn-outline btn-sm" href="/panel/payments/installments/plans">پیگیری</a></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script src="/js/chart.umd.min.js"></script>
+<script src="/js/charts.js"></script>
+<script>
+(function () {
+  var monthly = <%- JSON.stringify(monthly.map(function(m){ return { label: m.ym, value: Number(m.total) }; })) %>;
+  MyCharts.incomeLine('monthlyChart', monthly.map(function (m) { return m.label; }), monthly.map(function (m) { return m.value; }));
+})();
+</script>

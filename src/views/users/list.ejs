@@ -1,0 +1,64 @@
+<div class="flex-between mb-3">
+  <form class="filters-bar" method="get" action="/panel/users">
+    <input class="form-control" name="q" value="<%= filters.q %>" placeholder="نام، نام کاربری، موبایل...">
+    <select class="form-select" name="user_type" data-auto-submit>
+      <option value="">همه انواع</option>
+      <option value="admin" <%= filters.user_type === 'admin' ? 'selected' : '' %>>مدیر</option>
+      <option value="staff" <%= filters.user_type === 'staff' ? 'selected' : '' %>>کارمند</option>
+      <option value="teacher" <%= filters.user_type === 'teacher' ? 'selected' : '' %>>استاد</option>
+      <option value="student" <%= filters.user_type === 'student' ? 'selected' : '' %>>دانش‌آموز</option>
+    </select>
+    <select class="form-select" name="role_id" data-auto-submit>
+      <option value="">همه نقش‌ها</option>
+      <% roles.forEach(function(r){ %>
+        <option value="<%= r.id %>" <%= String(filters.role_id) === String(r.id) ? 'selected' : '' %>><%= r.title %></option>
+      <% }); %>
+    </select>
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) %> جستجو</button>
+  </form>
+  <% if (can('users.manage')) { %>
+    <a href="/panel/users/create" class="btn btn-primary"><%= icon('user-plus', 18) %> افزودن کاربر</a>
+  <% } %>
+</div>
+
+<div class="card">
+  <% if (rows.length === 0) { %>
+    <div class="empty-state"><%= icon('users', 48) %><h3>کاربری یافت نشد</h3></div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>نام</th><th>نام کاربری</th><th>نوع</th><th>نقش</th><th>موبایل</th><th>آخرین ورود</th><th>وضعیت</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% var typeFa = { admin: 'مدیر', staff: 'کارمند', teacher: 'استاد', student: 'دانش‌آموز' }; %>
+          <% rows.forEach(function(u){ %>
+            <tr>
+              <td><strong><%= u.first_name %> <%= u.last_name %></strong></td>
+              <td dir="ltr"><%= u.username %></td>
+              <td><span class="badge badge-accent"><%= typeFa[u.user_type] || u.user_type %></span></td>
+              <td><%= u.role_title || '—' %></td>
+              <td dir="ltr"><%= u.phone || '—' %></td>
+              <td class="nowrap"><%= u.last_login_at ? j.jalaliLong(u.last_login_at) : '—' %></td>
+              <td><span class="badge badge-<%= u.is_active ? 'success' : 'danger' %>"><%= u.is_active ? 'فعال' : 'غیرفعال' %></span></td>
+              <td>
+                <div class="actions">
+                  <% if (can('users.manage')) { %>
+                    <a class="btn btn-outline btn-sm" href="/panel/users/<%= u.id %>/edit"><%= icon('edit', 15) %></a>
+                    <form method="post" action="/panel/users/<%= u.id %>/reset-password" data-confirm="رمز عبور این کاربر بازنشانی شود؟">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button class="btn btn-warning btn-sm" type="submit" title="بازنشانی رمز"><%= icon('lock', 15) %></button>
+                    </form>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <%- include('../partials/pagination', { page: page, pages: pages, basePath: '/panel/users' }) %>
+    </div>
+  <% } %>
+</div>

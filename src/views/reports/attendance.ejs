@@ -1,0 +1,54 @@
+<div class="flex-between mb-3">
+  <h1 class="mt-0">گزارش حضور و غیاب</h1>
+  <a href="/panel/reports" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+</div>
+
+<div class="flex-between mb-3">
+  <form class="filters-bar" method="get" action="/panel/reports/attendance">
+    <select class="form-select" name="class_id" data-auto-submit>
+      <option value="">— انتخاب کلاس —</option>
+      <% classes.forEach(function(c){ %>
+        <option value="<%= c.id %>" <%= String(classId) === String(c.id) ? 'selected' : '' %>><%= c.title %></option>
+      <% }); %>
+    </select>
+    <button class="btn btn-outline" type="button" onclick="window.print()"><%= icon('printer', 16) %> چاپ</button>
+  </form>
+</div>
+
+<div class="card">
+  <% if (!classId) { %>
+    <div class="empty-state">
+      <%= icon('check-square', 48) %>
+      <h3>یک کلاس را برای نمایش گزارش انتخاب کنید</h3>
+    </div>
+  <% } else if (rows.length === 0) { %>
+    <div class="empty-state"><p>این کلاس دانش‌آموزی ندارد</p></div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>دانش‌آموز</th><th>کد</th><th>کل جلسات</th><th>حاضر</th><th>غایب</th><th>تاخیر</th><th>موجه</th><th>نرخ حضور</th></tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function(r){
+               var pct = r.total > 0 ? Math.round(((Number(r.present) + Number(r.late)) / Number(r.total)) * 100) : 0;
+          %>
+            <tr>
+              <td><strong><%= r.first_name %> <%= r.last_name %></strong></td>
+              <td dir="ltr"><%= r.student_code || '—' %></td>
+              <td><%= fmt.numberFa(r.total || 0) %></td>
+              <td><span class="badge badge-success"><%= fmt.numberFa(r.present || 0) %></span></td>
+              <td><span class="badge badge-danger"><%= fmt.numberFa(r.absent || 0) %></span></td>
+              <td><span class="badge badge-warning"><%= fmt.numberFa(r.late || 0) %></span></td>
+              <td><span class="badge badge-info"><%= fmt.numberFa(r.excused || 0) %></span></td>
+              <td style="min-width:120px">
+                <div class="progress"><div class="progress-bar <%= pct >= 80 ? 'success' : pct >= 50 ? 'warning' : 'danger' %>" style="width:<%= pct %>%"></div></div>
+                <small class="text-muted"><%= fmt.percentFa(pct) %></small>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>

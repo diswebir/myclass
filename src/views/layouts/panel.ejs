@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <% if (typeof panelTitle === 'undefined') { panelTitle = 'سامانه مدیریت کلاس‌ها'; } %>
+  <% if (typeof instituteName === 'undefined') { instituteName = 'موسسه آموزشی'; } %>
+  <% if (typeof themeAccent === 'undefined') { themeAccent = '#4f46e5'; } %>
+  <% if (typeof S === 'undefined') { S = {}; } %>
+  <% if (typeof icon !== 'function') { icon = function(){ return ''; }; } %>
+  <% if (typeof j === 'undefined') { j = { jalaliLong: function(){ return ''; }, timeFa: function(){ return ''; } }; } %>
+  <% if (typeof navItems === 'undefined') { navItems = []; } %>
+  <% if (typeof currentPath === 'undefined') { currentPath = ''; } %>
+  <% if (typeof currentUser === 'undefined') { currentUser = null; } %>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+  <title><%= typeof title !== 'undefined' ? title + ' | ' : '' %><%= panelTitle %></title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>:root { --accent: <%= themeAccent %>; }</style>
+</head>
+<body class="panel-body" data-theme="light">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <% if (S && S.institute_logo) { %>
+          <img src="/uploads/<%= S.institute_logo %>" alt="لوگو" class="brand-logo">
+        <% } else { %>
+          <div class="brand-logo brand-logo--default"><%= icon('layers', 22) %></div>
+        <% } %>
+        <div class="brand-text">
+          <strong><%= instituteName %></strong>
+          <small><%= panelTitle %></small>
+        </div>
+        <button class="sidebar-close d-lg-none" id="sidebarClose" aria-label="بستن"><%= icon('x', 20) %></button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <ul>
+          <% navItems.forEach(function(item){ %>
+            <li>
+              <a href="<%= item.href %>"
+                 class="nav-link <%= (currentPath === item.href || (item.href !== '/panel' && currentPath.indexOf(item.href) === 0)) ? 'active' : '' %>">
+                <span class="nav-icon"><%= icon(item.icon, 19) %></span>
+                <span class="nav-label"><%= item.title %></span>
+              </a>
+            </li>
+          <% }); %>
+          <li class="nav-divider"></li>
+          <li>
+            <a href="/portal" class="nav-link <%= currentPath.indexOf('/portal') === 0 ? 'active' : '' %>">
+              <span class="nav-icon"><%= icon('home', 19) %></span>
+              <span class="nav-label">پنل کاربری من</span>
+            </a>
+          </li>
+          <% if (S && S.institute_website) { %>
+          <li>
+            <a href="<%= S.institute_website %>" class="nav-link" target="_blank" rel="noopener">
+              <span class="nav-icon"><%= icon('link', 19) %></span>
+              <span class="nav-label">وب‌سایت موسسه</span>
+            </a>
+          </li>
+          <% } %>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="avatar"><%= ((currentUser && currentUser.first_name) || '?').charAt(0) %></div>
+          <div class="user-meta">
+            <strong><%= currentUser ? (currentUser.first_name + ' ' + currentUser.last_name) : '' %></strong>
+            <small><%= currentUser ? (currentUser.role_title || '') : '' %></small>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="main-column">
+      <header class="topbar">
+        <div class="topbar-right">
+          <button class="icon-btn d-lg-none" id="sidebarOpen" aria-label="منو"><%= icon('menu', 22) %></button>
+          <h1 class="page-heading"><%= typeof title !== 'undefined' ? title : '' %></h1>
+        </div>
+        <div class="topbar-left">
+          <span class="jalali-date d-none d-md-inline"><%= icon('calendar', 16) %> <%= j.jalaliLong(new Date()) %></span>
+          <button class="icon-btn" id="themeToggle" aria-label="تغییر تم"><%= icon('moon', 20) %></button>
+          <a href="/panel/profile" class="icon-btn" aria-label="پروفایل"><%= icon('user', 20) %></a>
+          <form method="post" action="/logout" class="d-inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="icon-btn danger" aria-label="خروج"><%= icon('logout', 20) %></button>
+          </form>
+        </div>
+      </header>
+
+      <main class="content">
+        <%- include('../partials/flash') %>
+        <%- body %>
+      </main>
+
+      <footer class="app-footer">
+        <span><%= instituteName %> — <%= panelTitle %></span>
+        <span>نسخه ۱.۰</span>
+      </footer>
+    </div>
+  </div>
+
+  <script src="/js/jalaali.min.js"></script>
+  <script src="/js/app.js"></script>
+  <%- typeof script !== 'undefined' ? script : '' %>
+</body>
+</html>

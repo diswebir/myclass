@@ -1,0 +1,6 @@
+<% if (typeof flash !== 'undefined' && flash) { %>
+  <div class="alert alert-<%= flash.type %>" role="alert">
+    <span><%= flash.text %></span>
+    <button type="button" class="alert-close" onclick="this.parentElement.remove()" aria-label="بستن">&times;</button>
+  </div>
+<% } %>

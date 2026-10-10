@@ -1,0 +1,37 @@
+<section class="container" style="max-width:760px">
+  <div class="card">
+    <div class="card-header">
+      <h2><%= icon('award', 20) %> استعلام اصالت مدرک</h2>
+    </div>
+    <div class="card-body">
+      <form method="get" action="/verify" class="filters-bar mb-3">
+        <input class="form-control" name="serial" value="<%= serial %>" placeholder="شماره سریال مدرک" dir="ltr" style="min-width:240px">
+        <button class="btn btn-primary" type="submit"><%= icon('search', 18) %> استعلام</button>
+      </form>
+
+      <% if (!serial) { %>
+        <p class="text-muted">شماره سریال درج‌شده روی مدرک را وارد کنید.</p>
+      <% } else if (!cert) { %>
+        <div class="alert alert-danger">
+          <span>مدرکی با شماره سریال «<%= serial %>» یافت نشد.</span>
+        </div>
+      <% } else if (cert.status !== 'issued') { %>
+        <div class="alert alert-warning">
+          <span>این مدرک باطل شده است.</span>
+        </div>
+      <% } else { %>
+        <div class="alert alert-success">
+          <span><%= icon('check', 18) %></span>
+          <span>این مدرک معتبر است و در سامانه <%= instituteName %> صادر شده است.</span>
+        </div>
+        <dl class="kv">
+          <dt>شماره سریال</dt><dd dir="ltr"><strong><%= cert.serial %></strong></dd>
+          <dt>نام دانش‌آموز</dt><dd><%= cert.first_name %> <%= cert.last_name %></dd>
+          <dt>عنوان دوره</dt><dd><%= cert.class_title %></dd>
+          <dt>تاریخ صدور</dt><dd><%= j.jalaliLong(cert.issue_date) %></dd>
+          <% if (cert.grade_label) { %><dt>رتبه / نمره</dt><dd><%= cert.grade_label %><% if (cert.final_score) { %> (<%= fmt.numberFa(cert.final_score) %>)<% } %></dd><% } %>
+        </dl>
+      <% } %>
+    </div>
+  </div>
+</section>

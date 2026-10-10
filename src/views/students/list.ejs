@@ -1,0 +1,66 @@
+<div class="flex-between mb-3">
+  <form class="filters-bar" method="get" action="/panel/students">
+    <input class="form-control" name="q" value="<%= q %>" placeholder="نام، موبایل، کد ملی...">
+    <select class="form-select" name="gender" data-auto-submit>
+      <option value="">همه</option>
+      <option value="male" <%= gender === 'male' ? 'selected' : '' %>>آقا</option>
+      <option value="female" <%= gender === 'female' ? 'selected' : '' %>>خانم</option>
+    </select>
+    <select class="form-select" name="class_id" data-auto-submit>
+      <option value="">همه کلاس‌ها</option>
+      <% classes.forEach(function(c){ %>
+        <option value="<%= c.id %>" <%= String(classId) === String(c.id) ? 'selected' : '' %>><%= c.title %></option>
+      <% }); %>
+    </select>
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) %> جستجو</button>
+  </form>
+  <% if (can('students.manage')) { %>
+    <a href="/panel/students/create" class="btn btn-primary"><%= icon('user-plus', 18) %> افزودن دانش‌آموز</a>
+  <% } %>
+</div>
+
+<div class="card">
+  <% if (rows.length === 0) { %>
+    <div class="empty-state">
+      <%= icon('users', 48) %>
+      <h3>دانش‌آموزی یافت نشد</h3>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>نام</th><th>کد دانش‌آموزی</th><th>موبایل</th><th>کلاس‌ها</th><th>پرداختی</th><th>وضعیت</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function(s){ %>
+            <tr>
+              <td>
+                <a href="/panel/students/<%= s.id %>">
+                  <strong><%= s.first_name %> <%= s.last_name %></strong>
+                </a>
+                <% if (!s.is_active) { %><span class="badge badge-danger">غیرفعال</span><% } %>
+              </td>
+              <td dir="ltr"><%= s.student_code || '—' %></td>
+              <td dir="ltr"><%= s.phone || '—' %></td>
+              <td><span class="badge badge-accent"><%= fmt.numberFa(s.classes_count || 0) %></span></td>
+              <td class="nowrap"><%= fmt.moneyFa(s.total_paid || 0, currencyLabel) %></td>
+              <td><span class="badge badge-<%= s.is_active ? 'success' : 'danger' %>"><%= s.is_active ? 'فعال' : 'غیرفعال' %></span></td>
+              <td>
+                <div class="actions">
+                  <a class="btn btn-outline btn-sm" href="/panel/students/<%= s.id %>"><%= icon('eye', 15) %></a>
+                  <% if (can('students.manage')) { %>
+                    <a class="btn btn-outline btn-sm" href="/panel/students/<%= s.id %>/edit"><%= icon('edit', 15) %></a>
+                  <% } %>
+                  <a class="btn btn-outline btn-sm" href="/panel/attendance/student/<%= s.id %>"><%= icon('check-square', 15) %></a>
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <%- include('../partials/pagination', { page: page, pages: pages, basePath: '/panel/students' }) %>
+    </div>
+  <% } %>
+</div>

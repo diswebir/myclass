@@ -1,0 +1,31 @@
+<div class="install-steps">
+  <div class="install-step done">۱. بررسی پیش‌نیازها</div>
+  <div class="install-step done">۲. پایگاه‌داده</div>
+  <div class="install-step done">۳. موسسه و مدیر</div>
+  <div class="install-step active">۴. پایان</div>
+</div>
+
+<div class="text-center" style="padding:20px 0">
+  <div style="width:86px;height:86px;border-radius:26px;background:var(--success-soft);color:var(--success);display:inline-flex;align-items:center;justify-content:center">
+    <%= icon('check', 44) %>
+  </div>
+  <h2 class="mt-3">نصب با موفقیت انجام شد! 🎉</h2>
+  <p class="text-soft">سامانه مدیریت کلاس‌های شما آماده استفاده است.</p>
+
+  <div class="card" style="max-width:420px;margin:22px auto">
+    <div class="card-body">
+      <dl class="kv">
+        <dt>نام کاربری</dt>
+        <dd dir="ltr"><strong><%= username %></strong></dd>
+        <dt>صفحه ورود</dt>
+        <dd><a href="/login">/login</a></dd>
+      </dl>
+    </div>
+  </div>
+
+  <a href="/login" class="btn btn-primary btn-lg"><%= icon('logout', 18) %> ورود به پنل مدیریت</a>
+</div>
+
+<p class="text-center text-muted" style="font-size:0.82rem">
+  نکته امنیتی: پوشه data و فایل .env را از دسترس عموم خارج کنید (فایل .htaccess پیشنهادی در پوشه cpanel موجود است).
+</p>

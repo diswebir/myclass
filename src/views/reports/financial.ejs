@@ -1,0 +1,59 @@
+<div class="flex-between mb-3">
+  <h1 class="mt-0">گزارش مالی</h1>
+  <a href="/panel/reports" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+</div>
+
+<div class="flex-between mb-3">
+  <form class="filters-bar" method="get" action="/panel/reports/financial">
+    <input class="form-control" name="from" data-jdp value="<%= filters.from %>" placeholder="از تاریخ">
+    <input class="form-control" name="to" data-jdp value="<%= filters.to %>" placeholder="تا تاریخ">
+    <button class="btn btn-primary" type="submit"><%= icon('filter', 16) %> اعمال فیلتر</button>
+    <button class="btn btn-outline" type="button" onclick="window.print()"><%= icon('printer', 16) %> چاپ</button>
+  </form>
+</div>
+
+<div class="grid grid-4">
+  <div class="stat-card g4">
+    <div class="stat-info"><h3>کل دریافتی</h3><div class="stat-value" style="font-size:1.2rem"><%= fmt.moneyFa(totals.paid, currencyLabel) %></div></div>
+    <div class="stat-icon"><%= icon('wallet', 22) %></div>
+  </div>
+  <div class="stat-card g3">
+    <div class="stat-info"><h3>در انتظار</h3><div class="stat-value" style="font-size:1.2rem"><%= fmt.moneyFa(totals.pending, currencyLabel) %></div></div>
+    <div class="stat-icon"><%= icon('clock', 22) %></div>
+  </div>
+  <div class="stat-card light">
+    <div class="stat-info"><h3>نقدی</h3><div class="stat-value" style="font-size:1.2rem"><%= fmt.moneyFa(totals.cash, currencyLabel) %></div></div>
+    <div class="stat-icon"><%= icon('credit-card', 22) %></div>
+  </div>
+  <div class="stat-card light">
+    <div class="stat-info"><h3>کارت به کارت</h3><div class="stat-value" style="font-size:1.2rem"><%= fmt.moneyFa(totals.card, currencyLabel) %></div></div>
+    <div class="stat-icon"><%= icon('credit-card', 22) %></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2><%= icon('file-text', 18) %> ریز تراکنش‌ها</h2></div>
+  <div class="card-body">
+    <% if (rows.length === 0) { %>
+      <div class="empty-state"><p>تراکنشی در این بازه ثبت نشده است</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>تاریخ</th><th>دانش‌آموز</th><th>کلاس</th><th>مبلغ</th><th>روش</th><th>وضعیت</th></tr></thead>
+          <tbody>
+            <% rows.forEach(function(r){ %>
+              <tr>
+                <td class="nowrap"><%= j.jalaliLong(r.paid_at || r.created_at) %></td>
+                <td><%= r.first_name ? r.first_name + ' ' + r.last_name : '—' %></td>
+                <td><%= r.class_title || '—' %></td>
+                <td class="nowrap"><strong><%= fmt.moneyFa(r.amount, currencyLabel) %></strong></td>
+                <td><%= fmt.statusFa(r.method) %></td>
+                <td><span class="badge badge-<%= fmt.statusClass(r.status) %>"><%= fmt.statusFa(r.status) %></span></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>

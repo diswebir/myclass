@@ -1,0 +1,68 @@
+<div class="flex-between mb-3">
+  <div>
+    <h1 class="mt-0"><%= cls.title %></h1>
+    <div class="flex gap-2">
+      <span class="badge badge-<%= fmt.statusClass(cls.status) %>"><%= fmt.statusFa(cls.status) %></span>
+      <% if (cls.t_first) { %><span class="chip"><%= icon('user-check', 14) %> استاد: <%= cls.t_first %> <%= cls.t_last %></span><% } %>
+      <% if (cls.start_time) { %><span class="chip"><%= icon('clock', 14) %> <%= j.timeFa(cls.start_time) %> تا <%= j.timeFa(cls.end_time) %></span><% } %>
+    </div>
+  </div>
+  <a href="/portal" class="btn btn-outline"><%= icon('chevron-right', 16) %> بازگشت</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2><%= icon('calendar', 18) %> برنامه جلسات و حضور من</h2>
+  </div>
+  <div class="card-body">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>#</th><th>تاریخ</th><th>ساعت</th><th>موضوع</th><th>وضعیت حضور من</th></tr>
+        </thead>
+        <tbody>
+          <% sessions.forEach(function(s, i){ %>
+            <tr>
+              <td><%= fmt.numberFa(i + 1) %></td>
+              <td class="nowrap"><%= j.jalaliLong(s.session_date) %> <%= j.weekdayName(s.session_date, true) %></td>
+              <td class="nowrap"><%= j.timeFa(s.start_time) %></td>
+              <td><%= s.topic || '—' %></td>
+              <td>
+                <% if (s.my_status) { %>
+                  <span class="badge badge-<%= fmt.statusClass(s.my_status) %>"><%= fmt.statusFa(s.my_status) %></span>
+                <% } else if (s.status === 'cancelled') { %>
+                  <span class="badge badge-danger">لغو شده</span>
+                <% } else { %>
+                  <span class="badge badge-muted">—</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<% if (typeof classmates !== 'undefined' && classmates.length) { %>
+<div class="card">
+  <div class="card-header"><h2><%= icon('users', 18) %> دانش‌آموزان کلاس</h2></div>
+  <div class="card-body">
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>نام</th><th>کد</th><th>موبایل</th><th>نمره</th></tr></thead>
+        <tbody>
+          <% classmates.forEach(function(s){ %>
+            <tr>
+              <td><strong><%= s.first_name %> <%= s.last_name %></strong></td>
+              <td dir="ltr"><%= s.student_code || '—' %></td>
+              <td dir="ltr"><%= s.phone || '—' %></td>
+              <td><%= s.final_score !== null && s.final_score !== undefined ? fmt.numberFa(s.final_score) : '—' %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% } %>
