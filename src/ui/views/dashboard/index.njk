@@ -1,0 +1,107 @@
+{% extends "layout.njk" %}
+{% block title %}داشبورد — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>داشبورد</h1>
+  <div>
+    <form method="get" class="inline-form">
+      <select name="range" onchange="this.form.submit()">
+        {% for r in ranges %}<option value="{{ r }}" {{ 'selected' if range == r }}>{{ r }} روز گذشته</option>{% endfor %}
+      </select>
+    </form>
+  </div>
+</div>
+
+{% if kpis.scope == 'full' %}
+<div class="kpi-grid">
+  <div class="card kpi"><div class="kpi-num">{{ kpis.students.active | faNum }}</div><div class="kpi-label">فراگیران فعال (کل: {{ kpis.students.total | faNum }})</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.teachers.active | faNum }}</div><div class="kpi-label">اساتید فعال</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.classes.running or 0 | faNum }}</div><div class="kpi-label">کلاس‌های در حال برگزاری</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.prereg.pending | faNum }}</div><div class="kpi-label">پیش‌ثبت‌نام در انتظار (کل: {{ kpis.prereg.total | faNum }})</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.sessionsToday | faNum }}</div><div class="kpi-label">جلسات امروز</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ (kpis.attendanceToday.present or 0) + (kpis.attendanceToday.late or 0) | faNum }}</div><div class="kpi-label">حضور امروز (غیبت: {{ kpis.attendanceToday.absent or 0 | faNum }})</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.finance.received | faMoney }}</div><div class="kpi-label">دریافتی (شهریه ثبت‌شده: {{ kpis.finance.feeRegistered | faMoney }})</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.finance.receivables | faMoney }}</div><div class="kpi-label">مانده مطالبات</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.installmentsOverdue | faNum }}</div><div class="kpi-label">اقساط سررسیدشده</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.paymentsPending | faNum }}</div><div class="kpi-label">پرداخت‌های منتظر تأیید</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.certificatesActive | faNum }}</div><div class="kpi-label">مدارک صادرشده (فعال)</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.sms.sent or 0 | faNum }}</div><div class="kpi-label">پیامک ارسال‌شده (در صف: {{ kpis.sms.pending or 0 | faNum }}، ناموفق: {{ kpis.sms.failed or 0 | faNum }})</div></div>
+</div>
+
+<div class="grid2">
+  <div class="card"><h2>روند ثبت‌نام</h2><canvas id="ch-enrollment" height="160"></canvas></div>
+  <div class="card"><h2>روند درآمد</h2><canvas id="ch-revenue" height="160"></canvas></div>
+  <div class="card"><h2>مقایسه کلاس‌ها</h2><canvas id="ch-classes" height="160"></canvas></div>
+  <div class="card"><h2>ظرفیت در برابر ثبت‌نام</h2><canvas id="ch-capacity" height="160"></canvas></div>
+  <div class="card"><h2>توزیع وضعیت پرداخت</h2><canvas id="ch-payment-status" height="160"></canvas></div>
+  <div class="card"><h2>حضور و غیاب</h2><canvas id="ch-attendance" height="160"></canvas></div>
+  <div class="card"><h2>آمار پیامک</h2><canvas id="ch-sms" height="160"></canvas></div>
+</div>
+<script src="/public/vendor/chart.umd.min.js"></script>
+<script>
+(function () {
+  var RANGE = {{ range }};
+  var fa = new Intl.NumberFormat('fa-IR');
+  Chart.defaults.font.family = 'Vazirmatn, Tahoma, sans-serif';
+  function bar(id, labels, data, label, color) {
+    new Chart(document.getElementById(id), {
+      type: 'bar',
+      data: { labels: labels, datasets: [{ label: label, data: data, backgroundColor: color || '#1d4ed8' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: function (v) { return fa.format(v); } } } } },
+    });
+  }
+  function line(id, labels, data, label, color) {
+    new Chart(document.getElementById(id), {
+      type: 'line',
+      data: { labels: labels, datasets: [{ label: label, data: data, borderColor: color || '#0f766e', tension: 0.25, fill: false }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: function (v) { return fa.format(v); } } } } },
+    });
+  }
+  function doughnut(id, labels, data) {
+    new Chart(document.getElementById(id), {
+      type: 'doughnut',
+      data: { labels: labels, datasets: [{ data: data, backgroundColor: ['#1d4ed8', '#0f766e', '#d97706', '#dc2626', '#7c3aed'] }] },
+      options: { responsive: true },
+    });
+  }
+  fetch('/dashboard/api/charts?range=' + RANGE)
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      line('ch-enrollment', d.enrollmentTrend.map(function (x) { return x.date.slice(5); }), d.enrollmentTrend.map(function (x) { return x.count; }), 'ثبت‌نام');
+      line('ch-revenue', d.revenueTrend.map(function (x) { return x.date.slice(5); }), d.revenueTrend.map(function (x) { return x.count; }), 'درآمد');
+      bar('ch-classes', d.classComparison.map(function (x) { return x.title; }), d.classComparison.map(function (x) { return x.enrolled; }), 'ثبت‌نام فعال');
+      bar('ch-capacity', d.capacityVsEnrollment.map(function (x) { return x.title; }), d.capacityVsEnrollment.map(function (x) { return x.enrolled; }), 'ثبت‌نام', '#0f766e');
+      doughnut('ch-payment-status', d.paymentStatus.map(function (x) { return x.status; }), d.paymentStatus.map(function (x) { return x.count; }));
+      doughnut('ch-attendance', d.attendance.map(function (x) { return x.status; }), d.attendance.map(function (x) { return x.count; }));
+      doughnut('ch-sms', d.sms.map(function (x) { return x.status; }), d.sms.map(function (x) { return x.count; }));
+    })
+    .catch(function () { /* نمودارها در دسترس نیستند */ });
+})();
+</script>
+
+{% elif kpis.scope == 'teacher' %}
+<div class="kpi-grid">
+  <div class="card kpi"><div class="kpi-num">{{ kpis.students | faNum }}</div><div class="kpi-label">فراگیران فعال کلاس‌های شما</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.sessions | faNum }}</div><div class="kpi-label">جلسات کلاس‌های شما</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.attendance.present or 0 | faNum }}</div><div class="kpi-label">حضور (کلاس‌های شما)</div></div>
+</div>
+<div class="actions">
+  <a href="/panel/teacher" class="btn btn-primary">پنل استاد</a>
+</div>
+
+{% else %}
+<div class="kpi-grid">
+  <div class="card kpi"><div class="kpi-num">{{ kpis.enrollments | faNum }}</div><div class="kpi-label">ثبت‌نام‌های فعال شما</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.balance | faMoney }}</div><div class="kpi-label">مانده مالی شما</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.certificates | faNum }}</div><div class="kpi-label">مدارک فعال شما</div></div>
+  <div class="card kpi"><div class="kpi-num">{{ kpis.attendancePercent | faNum }}٪</div><div class="kpi-label">درصد حضور شما</div></div>
+</div>
+<div class="actions">
+  <a href="/panel/student" class="btn btn-primary">پنل فراگیر</a>
+</div>
+{% endif %}
+
+{% if user.mustChangePassword %}
+<div class="alert alert-warn">رمز عبور شما باید تغییر کند. <a href="/auth/change-password?force=1">تغییر رمز</a></div>
+{% endif %}
+{% endblock %}

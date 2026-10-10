@@ -40,6 +40,8 @@ export async function createTestDb(overrides: Record<string, string> = {}): Prom
   await settings.seedDefaults();
   const { SmsService } = await import('../../src/modules/sms/sms.service');
   await new SmsService(db, config).seedDefaults();
+  const { RegistryService } = await import('../../src/modules/registry/registry');
+  await new RegistryService(db).syncManifests();
   for (const m of [
     { name: 'نقدی', type: 'cash' },
     { name: 'کارت‌به‌کارت', type: 'card' },

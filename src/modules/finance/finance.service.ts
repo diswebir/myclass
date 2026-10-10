@@ -470,6 +470,15 @@ export class FinanceService {
       entityId: receiptId,
       meta: { paymentId, amount: String(receipt.amount) },
     });
+    if (this.config) {
+      const { notifyPaymentApproved } = await import('../sms/hooks');
+      await notifyPaymentApproved(this.db, this.config, {
+        paymentId,
+        studentId: Number(receipt.student_id),
+        enrollmentId: receipt.enrollment_id ? Number(receipt.enrollment_id) : null,
+        amount: String(receipt.amount),
+      });
+    }
     return { status: 'approved', paymentId };
   }
 

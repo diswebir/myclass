@@ -19,6 +19,9 @@
         {% if user.permissions.includes('*:*') or user.permissions.includes('users.*') %}
         <a href="/users" class="{{ 'active' if currentPath.startsWith('/users') }}">کاربران</a>
         {% endif %}
+        {% if user.permissions.includes('*:*') or user.permissions.includes('rbac.*') %}
+        <a href="/rbac/roles" class="{{ 'active' if currentPath.startsWith('/rbac') }}">نقش‌ها</a>
+        {% endif %}
         {% if user.permissions.includes('*:*') or user.permissions.includes('settings.*') %}
         <a href="/settings" class="{{ 'active' if currentPath.startsWith('/settings') }}">تنظیمات</a>
         {% endif %}
@@ -36,6 +39,12 @@
         {% endif %}
         {% if user.permissions.includes('*:*') or user.permissions.includes('sms.*') %}
         <a href="/sms/patterns" class="{{ 'active' if currentPath.startsWith('/sms') }}">پیامک‌ها</a>
+        {% endif %}
+        {% if user.permissions.includes('*:*') or user.permissions.includes('backup.*') %}
+        <a href="/admin/backup" class="{{ 'active' if currentPath.startsWith('/admin/backup') }}">پشتیبان‌گیری</a>
+        {% endif %}
+        {% if user.permissions.includes('*:*') or user.permissions.includes('modules.*') %}
+        <a href="/admin/modules" class="{{ 'active' if currentPath.startsWith('/admin/modules') }}">ماژول‌ها</a>
         {% endif %}
         {% if user.roles.includes('teacher') %}
         <a href="/panel/teacher" class="{{ 'active' if currentPath.startsWith('/panel/teacher') }}">پنل استاد</a>

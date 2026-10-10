@@ -157,6 +157,9 @@ export class InstallerService {
       // 2b. seed — پترن‌ها و رویدادهای پیش‌فرض پیامک
       const { SmsService } = await import('../sms/sms.service');
       await new SmsService(db, this.config).seedDefaults();
+      // 2c. seed — manifestهای ماژول‌ها
+      const { RegistryService } = await import('../registry/registry');
+      await new RegistryService(db).syncManifests();
       // 3. متدهای پرداخت پیش‌فرض
       const methods = [
         { name: 'نقدی', type: 'cash' },

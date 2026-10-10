@@ -105,3 +105,8 @@ input:focus, select:focus, textarea:focus { outline: 2px solid #bfdbfe; border-c
 .checklist li { padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
 .checklist li.ok { border-color: #bbf7d0; background: #f0fdf4; }
 .checklist li.fail { border-color: #fecaca; background: #fef2f2; }
+
+/* RBAC roles — permission checkboxes */
+.perm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:.35rem; max-height:24rem; overflow:auto; border:1px solid var(--border,#e2e8f0); border-radius:.5rem; padding:.6rem; }
+.perm-item { display:flex; align-items:center; gap:.4rem; font-size:.8rem; }
+.perm-item code { direction:ltr; }

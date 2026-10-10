@@ -1,0 +1,40 @@
+{% extends "layout.njk" %}
+{% block title %}پشتیبان‌گیری — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>پشتیبان‌گیری و بازیابی</h1>
+  <div>
+    <form method="post" action="/admin/backup/create" class="inline-form">
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <button type="submit" class="btn btn-primary">ساخت پشتیبان جدید</button>
+    </form>
+  </div>
+</div>
+<div class="card">
+  <p class="muted">پشتیبان با Node خالص ساخته می‌شود (بدون mysqldump): دامپ JSON کامل DB + کپی فایل‌های ضروری. بازیابی پس از چک نسخه اسکیما انجام می‌شود.</p>
+</div>
+<table class="table">
+  <thead><tr><th>شناسه</th><th>تاریخ</th><th>اسکیما</th><th>سطرها</th><th>فایل‌ها</th><th>حجم</th><th>عملیات</th></tr></thead>
+  <tbody>
+    {% for b in rows %}
+    <tr>
+      <td><code>{{ b.id }}</code></td>
+      <td>{{ b.meta.createdAt | faDateTime }}</td>
+      <td><code>{{ b.meta.schemaVersion }}</code></td>
+      <td>{{ b.meta.rows | faNum }}</td>
+      <td>{{ b.meta.files | faNum }}</td>
+      <td>{{ b.meta.bytes | faNum }} بایت</td>
+      <td>
+        <form method="post" action="/admin/backup/restore" class="inline-form" onsubmit="return confirm('بازیابی، داده‌های فعلی را جایگزین می‌کند. ادامه می‌دهید؟');">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="hidden" name="id" value="{{ b.id }}">
+          <button type="submit" class="btn btn-sm btn-ghost">بازیابی</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="empty">هنوز پشتیبانی ساخته نشده است.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

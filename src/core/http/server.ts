@@ -5,7 +5,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import nunjucks from 'nunjucks';
-import type { AppContext } from './context';
+import { hasPermission, type AppContext } from './context';
 import { loadSession, SESSION_COOKIE } from './middleware/auth';
 import { csrfProtect } from './middleware/csrf';
 import { createRateLimiter } from './middleware/rateLimit';
@@ -28,6 +28,11 @@ import { filesRoutes } from '../../modules/files/files.routes';
 import { financeRoutes } from '../../modules/finance/finance.routes';
 import { certificatesRoutes, certificateVerifyRoutes } from '../../modules/certificates/certificates.routes';
 import { smsRoutes, internalJobsRoutes } from '../../modules/sms/sms.routes';
+import { dashboardRoutes } from '../../modules/dashboard/dashboard.routes';
+import { sharedRegistry } from '../../modules/registry/registry';
+import { modulesRoutes } from '../../modules/registry/registry.routes';
+import { backupRoutes } from '../../modules/backup/backup.routes';
+import { rbacRoutes } from '../../modules/rbac/rbac.routes';
 import { teacherPanelRoutes } from '../../modules/panels/teacher-panel.routes';
 import { studentPanelRoutes } from '../../modules/panels/student-panel.routes';
 import { isSecureCookies } from '../config/env';
@@ -149,33 +154,49 @@ export function createApp(ctx: AppContext): express.Express {
   });
 
   // روترها
+  // گیت ماژول‌ها — مسیرهای ماژول غیرفعال با 404 پاسخ می‌گیرند (REQ-P7-03)
+  const registry = sharedRegistry(ctx.db);
+  const gate = (slug: string) => registry.gate(slug);
   app.use('/install', installerRoutes(ctx));
   app.use('/auth', authRoutes(ctx));
-  app.get('/', (req, res) => {
-    if (!req.user) {
-      res.redirect('/auth/login');
-      return;
-    }
-    res.render('dashboard', { user: req.user });
+  app.get('/', async (req, res, next) => {
+    try {
+      if (!req.user) {
+        res.redirect('/auth/login');
+        return;
+      }
+      // داشبورد — محتوای per نقش (KPI + نمودارها)
+      if (hasPermission(req.user, 'dashboard', 'dashboard', 'view')) {
+        const { DashboardService } = await import('../../modules/dashboard/dashboard.service');
+        const kpis = await new DashboardService(ctx.db).kpis(req.user);
+        res.render('dashboard/index', { user: req.user, kpis, range: 30, ranges: [7, 30, 90] });
+        return;
+      }
+      res.render('dashboard', { user: req.user });
+    } catch (e) { next(e); }
   });
-  app.use('/users', usersRoutes(ctx));
-  app.use('/settings', settingsRoutes(ctx));
-  app.use('/audit', auditRoutes(ctx));
-  app.use('/teachers', teachersRoutes(ctx));
-  app.use('/students', studentsRoutes(ctx));
-  app.use('/courses', coursesRoutes(ctx));
-  app.use('/classes', classesRoutes(ctx));
-  app.use('/prereg', preregRoutes(ctx));
-  app.use('/enrollments', enrollmentRoutes(ctx));
-  app.use('/attendance', attendanceRoutes(ctx));
-  app.use('/files', filesRoutes(ctx));
-  app.use('/finance', financeRoutes(ctx));
-  app.use('/certificates', certificatesRoutes(ctx));
-  app.use('/sms', smsRoutes(ctx));
+  app.use('/users', gate('users'), usersRoutes(ctx));
+  app.use('/rbac', gate('rbac'), rbacRoutes(ctx));
+  app.use('/settings', gate('settings'), settingsRoutes(ctx));
+  app.use('/audit', gate('audit'), auditRoutes(ctx));
+  app.use('/teachers', gate('teachers'), teachersRoutes(ctx));
+  app.use('/students', gate('students'), studentsRoutes(ctx));
+  app.use('/courses', gate('courses'), coursesRoutes(ctx));
+  app.use('/classes', gate('classes'), classesRoutes(ctx));
+  app.use('/prereg', gate('prereg'), preregRoutes(ctx));
+  app.use('/enrollments', gate('enrollments'), enrollmentRoutes(ctx));
+  app.use('/attendance', gate('attendance'), attendanceRoutes(ctx));
+  app.use('/files', gate('files'), filesRoutes(ctx));
+  app.use('/finance', gate('finance'), financeRoutes(ctx));
+  app.use('/certificates', gate('certificates'), certificatesRoutes(ctx));
+  app.use('/sms', gate('sms'), smsRoutes(ctx));
+  app.use('/dashboard', gate('dashboard'), dashboardRoutes(ctx));
   app.use('/', certificateVerifyRoutes(ctx));
   app.use('/', internalJobsRoutes(ctx));
-  app.use('/panel/teacher', teacherPanelRoutes(ctx));
-  app.use('/panel/student', studentPanelRoutes(ctx));
+  app.use('/admin/modules', modulesRoutes(ctx));
+  app.use('/admin/backup', gate('backup'), backupRoutes(ctx));
+  app.use('/panel/teacher', gate('panels'), teacherPanelRoutes(ctx));
+  app.use('/panel/student', gate('panels'), studentPanelRoutes(ctx));
   app.use('/', healthRoutes(ctx));
 
   // خطاها
