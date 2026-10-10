@@ -37,10 +37,10 @@ Evidence keys: `unit:<file>` = test file in `src/tests/unit` (38 tests, all pass
 | CP-08 | Create main admin account on first run | First super admin created by installer, guarded by INSTALL_TOKEN | IMPLEMENTED_UNVERIFIED | `I` (installer subtest) not executed; token check path `unit:http-gate` (gate) |
 | CP-09 | Persian docs: install, update, backup, restore, troubleshoot | Four Persian guides exist and match behaviour | IMPLEMENTED_UNVERIFIED | `docs/INSTALL_CPANEL_FA.md`, `docs/BACKUP_RESTORE_FA.md`; not reviewed on a real host |
 | CP-10 | Host compatibility check before install | Checks for Node version, storage writability, env, DB connection, token | VERIFIED | `P`: `/install` listed each check with correct result while DB was unreachable |
-| CP-11 | Friendly install errors without sensitive details | Messages do not reveal DB host/driver text | VERIFIED | `P`: DB failure message contained no host; `unit:http-gate`: `/health` hides driver text |
+| CP-11 | Friendly install errors without sensitive details | Messages do not reveal DB host/driver text | VERIFIED | Live (EVIDENCE §3): install and login DB-failure pages show no host, code or stack text |
 | CP-12 | Safe, traceable migrations for new versions | Checksums; refusal on edited applied files; lock; audit record | IMPLEMENTED_UNVERIFIED | `Migrator`; admin action `POST /admin/system/migrate`; `I` (migrations subtest) not executed |
 | CP-13 | Block re-install and access to installer after setup | After install `/install` returns 404; lock file written | VERIFIED | `unit:http-gate` "after installation the installer is not reachable" (stubbed install state). Lock write: `I` (installer subtest, not executed) |
-| CP-14 | Secrets in env or private storage, not public web path | Only `public/assets` is served statically; config from env | VERIFIED | `unit:http-gate` static test (`/assets` only; traversal blocked); `P` |
+| CP-14 | Secrets in env or private storage, not public web path | Only `public/assets` is served statically; config from env | VERIFIED | `unit:http-gate`; live traversal probe returns 404/302, package.json not served (EVIDENCE §3) |
 | CP-15 | Health tool: DB, Node version, modules, important errors | `/health` (public, minimal), `/api/health` and admin page (permissioned) | IMPLEMENTED_UNVERIFIED | `P`: `/health` returned `{"status":"error"}` with DB down; DB-up view not executed |
 
 ## 3. Institute profile (spec §3)
@@ -166,12 +166,12 @@ Evidence keys: `unit:<file>` = test file in `src/tests/unit` (38 tests, all pass
 | SEC-09 | Rate limiting for login and sensitive actions | Failed-login thresholds per account and IP | IMPLEMENTED_UNVERIFIED | `AuthService.login`; sensitive-action limits not yet added |
 | SEC-10 | IDOR protection | Ownership/permission checks per record | IN_PROGRESS | Admin routes checked; object-level rules pending modules |
 | SEC-11 | Secure password recovery | Self-service reset via SMS/email | NOT_STARTED | Admin-issued temporary password only (`USR-03`) |
-| SEC-12 | No information leakage through errors | Generic messages; logs sanitised | VERIFIED (health, log sanitiser) / IMPLEMENTED_UNVERIFIED (500 page) | `unit:http-gate` (`/health` no driver text); `unit:security` log sanitiser; the generic 500 path was not exercised directly |
+| SEC-12 | No information leakage through errors | Generic messages; logs sanitised | VERIFIED | `unit:http-gate`, `unit:security`; live matrix (EVIDENCE §3): DB-down login returns 503 with no driver/stack text; 500 page generic |
 | SEC-13 | No secrets in repository or public files | `.env` ignored; no credentials committed | VERIFIED | `.gitignore` excludes `.env`, `storage/`; `S` grep (see STATE) |
 | SEC-14 | Upload validation (real type, size, no execution, private serving) | Upload pipeline | NOT_STARTED | File module not built |
 | SEC-15 | Audit logging for sensitive events, no secrets | Audit events written; secrets stripped | IMPLEMENTED_UNVERIFIED | `AuditService` + `sanitizeForLog` (VERIFIED `unit:security`); DB writes `I-*` not executed |
 | SEC-16 | MFA (modular, optional) | Pluggable MFA | NOT_STARTED | — |
-| SEC-17 | Protected admin routes | Unauthenticated access redirected/denied | VERIFIED | `unit:http-gate` |
+| SEC-17 | Protected admin routes | Unauthenticated access redirected/denied | VERIFIED | `unit:http-gate`; live: all 11 protected GET routes → 302 `/login`, all POST routes without CSRF → 403 (EVIDENCE §3) |
 | SEC-18 | Account status checked at authentication | Disabled accounts cannot authenticate or use sessions | IMPLEMENTED_UNVERIFIED | `AuthService.login/authenticate` check status; `I` (RBAC subtests) not executed |
 | SEC-19 | Expired-session handling | Expired/revoked sessions rejected | IMPLEMENTED_UNVERIFIED | `AuthService.authenticate`; expiry not exercised by any test |
 
