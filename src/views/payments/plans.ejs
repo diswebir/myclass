@@ -1,9 +1,9 @@
 <div class="flex-between mb-3">
   <h1 class="mt-0">طرح‌های اقساط</h1>
   <div class="flex gap-2">
-    <a href="/panel/payments" class="btn btn-outline"><%= icon('wallet', 16) % پرداخت‌ها</a>
+    <a href="/panel/payments" class="btn btn-outline"><%= icon('wallet', 16) %> پرداخت‌ها</a>
     <% if (can('payments.manage')) { %>
-      <button class="btn btn-primary" data-toggle-modal="newPlan"><%= icon('plus', 18) % طرح جدید</button>
+      <button class="btn btn-primary" data-toggle-modal="newPlan"><%= icon('plus', 18) %> طرح جدید</button>
     <% } %>
   </div>
 </div>

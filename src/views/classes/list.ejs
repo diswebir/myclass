@@ -15,7 +15,7 @@
         <option value="<%= t.id %>" <%= String(teacherId) === String(t.id) ? 'selected' : '' %>><%= t.first_name %> <%= t.last_name %></option>
       <% }); %>
     </select>
-    <button class="btn btn-outline" type="submit"><%= icon('search', 16) % جستجو</button>
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) %> جستجو</button>
   </form>
   <% if (can('classes.manage')) { %>
     <a href="/panel/classes/create" class="btn btn-primary"><%= icon('plus', 18) %> ایجاد کلاس جدید</a>

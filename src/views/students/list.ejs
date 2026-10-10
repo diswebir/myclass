@@ -12,7 +12,7 @@
         <option value="<%= c.id %>" <%= String(classId) === String(c.id) ? 'selected' : '' %>><%= c.title %></option>
       <% }); %>
     </select>
-    <button class="btn btn-outline" type="submit"><%= icon('search', 16) % جستجو</button>
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) %> جستجو</button>
   </form>
   <% if (can('students.manage')) { %>
     <a href="/panel/students/create" class="btn btn-primary"><%= icon('user-plus', 18) %> افزودن دانش‌آموز</a>

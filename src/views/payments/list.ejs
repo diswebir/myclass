@@ -11,7 +11,7 @@
     <div class="stat-info"><h3>عملیات</h3></div>
     <div class="flex gap-2 mt-2" style="flex-wrap:wrap">
       <% if (can('payments.manage')) { %>
-        <a href="/panel/payments/create" class="btn btn-primary btn-sm"><%= icon('plus', 14) % ثبت پرداخت</a>
+        <a href="/panel/payments/create" class="btn btn-primary btn-sm"><%= icon('plus', 14) %> ثبت پرداخت</a>
         <a href="/panel/payments/installments/plans" class="btn btn-outline btn-sm"><%= icon('file-text', 14) %> اقساط</a>
       <% } %>
     </div>
@@ -34,7 +34,7 @@
       <option value="online" <%= filters.method === 'online' ? 'selected' : '' %>>آنلاین</option>
       <option value="other" <%= filters.method === 'other' ? 'selected' : '' %>>سایر</option>
     </select>
-    <button class="btn btn-outline" type="submit"><%= icon('search', 16) % جستجو</button>
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) %> جستجو</button>
   </form>
 </div>
 

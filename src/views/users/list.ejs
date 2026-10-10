@@ -14,7 +14,7 @@
         <option value="<%= r.id %>" <%= String(filters.role_id) === String(r.id) ? 'selected' : '' %>><%= r.title %></option>
       <% }); %>
     </select>
-    <button class="btn btn-outline" type="submit"><%= icon('search', 16) % جستجو</button>
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) %> جستجو</button>
   </form>
   <% if (can('users.manage')) { %>
     <a href="/panel/users/create" class="btn btn-primary"><%= icon('user-plus', 18) %> افزودن کاربر</a>

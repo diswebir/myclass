@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
+  <% if (typeof panelTitle === 'undefined') { panelTitle = 'سامانه مدیریت کلاس‌ها'; } %>
+  <% if (typeof instituteName === 'undefined') { instituteName = 'موسسه آموزشی'; } %>
+  <% if (typeof themeAccent === 'undefined') { themeAccent = '#4f46e5'; } %>
+  <% if (typeof S === 'undefined') { S = {}; } %>
+  <% if (typeof icon !== 'function') { icon = function(){ return ''; }; } %>
+  <% if (typeof j === 'undefined') { j = { jalaliLong: function(){ return ''; }, timeFa: function(){ return ''; } }; } %>
+  <% if (typeof navItems === 'undefined') { navItems = []; } %>
+  <% if (typeof currentPath === 'undefined') { currentPath = ''; } %>
+  <% if (typeof currentUser === 'undefined') { currentUser = null; } %>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">

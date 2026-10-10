@@ -1,7 +1,7 @@
 <div class="flex-between mb-3">
   <form class="filters-bar" method="get" action="/panel/teachers">
     <input class="form-control" name="q" value="<%= q %>" placeholder="نام، موبایل، تخصص...">
-    <button class="btn btn-outline" type="submit"><%= icon('search', 16) % جستجو</button>
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) %> جستجو</button>
   </form>
   <% if (can('teachers.manage')) { %>
     <a href="/panel/teachers/create" class="btn btn-primary"><%= icon('user-plus', 18) %> افزودن استاد</a>

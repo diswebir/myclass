@@ -36,7 +36,7 @@ const config = {
     collation: process.env.DB_COLLATION || 'utf8mb4_unicode_ci',
   },
   upload: {
-    dir: process.env.UPLOAD_DIR || './public/uploads',
+    dir: process.env.UPLOAD_DIR || './src/public/uploads',
     maxMb: parseFloat(process.env.MAX_UPLOAD_MB || '8'),
   },
   installedFlag: path.join(ROOT, 'data', 'installed.lock'),

@@ -67,8 +67,8 @@ function createApp() {
   );
 
   app.use(loadUser);
-  app.use(csrfProtection);
   app.use(viewLocals);
+  app.use(csrfProtection);
 
   // مسیر ریشه BASE_PATH (نصب در زیرپوشه)
   const bp = config.basePath;

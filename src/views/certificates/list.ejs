@@ -7,7 +7,7 @@
         <option value="<%= c.id %>" <%= String(classId) === String(c.id) ? 'selected' : '' %>><%= c.title %></option>
       <% }); %>
     </select>
-    <button class="btn btn-outline" type="submit"><%= icon('search', 16) % جستجو</button>
+    <button class="btn btn-outline" type="submit"><%= icon('search', 16) %> جستجو</button>
   </form>
   <% if (can('certificates.manage')) { %>
     <a href="/panel/certificates/create" class="btn btn-primary"><%= icon('award', 18) %> صدور مدرک</a>

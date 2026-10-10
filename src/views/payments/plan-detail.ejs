@@ -14,7 +14,7 @@
         <form method="post" action="/panel/payments/installments/remind">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <input type="hidden" name="days" value="3">
-          <button class="btn btn-warning btn-sm" type="submit"><%= icon('send', 14) % یادآوری سررسیدها</button>
+          <button class="btn btn-warning btn-sm" type="submit"><%= icon('send', 14) %> یادآوری سررسیدها</button>
         </form>
       <% } %>
     </div>
@@ -48,7 +48,7 @@
                       <option value="cash">نقدی</option>
                       <option value="card_to_card">کارت به کارت</option>
                     </select>
-                    <button class="btn btn-success btn-sm" type="submit"><%= icon('check', 14) % ثبت پرداخت</button>
+                    <button class="btn btn-success btn-sm" type="submit"><%= icon('check', 14) %> ثبت پرداخت</button>
                   </form>
                 <% } %>
               </td>
