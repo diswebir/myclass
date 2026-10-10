@@ -100,7 +100,7 @@
 - **راهنمای ۰۶–۱۰** — کامل و commit شد (`0cf4a7c`): کاربران/نقش‌ها/دسترسی‌ها، backup/restore، به‌روزرسانی، عیب‌یابی (incl. خطای Laragon `Cannot find module ... dist/index.js` + syntax پورت در Windows)، راهنمای توسعه‌دهنده.
 - **خطای کاربر (Laragon/Windows)** — در راهنمای ۰۹ + ۰۱ مستند شد (`aa8023b`): `npm start` نیاز به `dist/` دارد؛ ZIP نهایی شامل `dist/` است.
 - **SQL dump مستقل**: `scripts/dump-schema.ts` (Kysely DummyDriver + MysqlDialect — بدون DB زنده) → `db/schema.sql` (۶ migration، ۶۳ statement، ۳۴ جدول، ۲۶ ایندکس). `npm run schema:dump`. commit `6ca77db`.
-- **ZIP نهایی**: `myclass-cpanel-0.1.0.zip` — ۲۶۷ فایل (dist/ ۱۴۲، src/ui/views/ ۷۰، public/ ۲۰، docs/ ۲۰، migrations/ ۸، db/schema.sql، package.json، package-lock.json، .env.example، README.md، ZIP_MANIFEST.md). sha256: `904fa0e1187132a9355f4e27881f0ae62443452e3add1802818653f8d48f27fd`.
+- **ZIP نهایی**: `myclass-cpanel-0.1.0.zip` — ۲۶۸ فایل (dist/ ۱۴۲، src/ui/views/ ۷۰، public/ ۲۰، docs/ ۲۰، migrations/ ۸، db/schema.sql، package.json، package-lock.json، .env.example، README.md، ZIP_MANIFEST.md). sha256: `904fa0e1187132a9355f4e27881f0ae62443452e3add1802818653f8d48f27fd`.
 - **Smoke Test نصب واقعی از ZIP** (پوشه‌ی تمیز، `npm ci --omit=dev`): migrate از `.env` (۶ migration)، `backup:cli` (پشتیبان ساخته شد)، boot — `/install` 200، `/` 302، `/admin/health` 302 (auth). سه باگ/gap واقعی پیدا و رفع شد:
   1. `migrate-cli` فایل `.env` را نمی‌خواند (فراخوانی `loadDotEnv` نداشت) → رفع شد.
   2. `DB_SQLITE_PATH` پیش‌فرض به `.test-data/` اشاره می‌کرد + پوشه‌ی پدر ساخته نمی‌شد → پیش‌فرض `./storage/myclass.sqlite` + mkdir خودکار.
@@ -114,7 +114,7 @@
 
 - فاز: **۷ — داشبورد، backup، ماژول‌ها، مستندات، ZIP نهایی — کامل شد ✅ (۲۵۶ تست) → تحویل نهایی**
 - آخرین نیازمندی VERIFIED: REQ-X-12 (notifications) + REQ-P7-01..07 + REQ-X-01..10 — همه‌ی ۱۹ ردیف P7/X VERIFIED
-- تحویل: `myclass-cpanel-0.1.0.zip` (۲۶۷ فایل، smoke نصب واقعی سبز) + `project-control/ZIP_MANIFEST.md` + ۱۰ راهنمای فارسی + `db/schema.sql`
+- تحویل: `myclass-cpanel-0.1.0.zip` (۲۶۸ فایل، smoke نصب واقعی سبز) + `project-control/ZIP_MANIFEST.md` + ۱۰ راهنمای فارسی + `db/schema.sql`
 - تست‌ها: ۲۵۶ موفق / ۰ ناموفق — `npm test` + `npm run typecheck` + `npm run build` سبز؛ smoke نصب از ZIP سبز (migrate + backup:cli + boot).
 
 ## نتایج تست

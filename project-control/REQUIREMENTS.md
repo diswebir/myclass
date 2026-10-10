@@ -108,7 +108,7 @@
 | REQ-P7-03 | مدیریت ماژول‌ها: manifest، صفحه وضعیت، چک وابستگی هنگام غیرفعال‌سازی، غیرفعال‌سازی مسیرها | تست‌های registry | VERIFIED (manifest + صفحه وضعیت + چک وابستگی هنگام غیرفعال‌سازی + gate مسیر per-request — تست‌های registry) |
 | REQ-P7-04 | مستندات فارسی: نصب cPanel، Node.js App، DB، IPPanel، پترن/نگاشت، کاربران/نقش‌ها، backup/restore، به‌روزرسانی، عیب‌یابی | اسناد موجود و کامل | VERIFIED (۱۰ راهنمای فارسی `docs/guides/01..10` — نصب cPanel، Node.js App، DB، IPPanel، پترن/نگاشت، کاربران/نقش‌ها، backup/restore، به‌روزرسانی، عیب‌یابی، توسعه‌دهنده) |
 | REQ-P7-05 | راهنمای توسعه: افزودن قابلیت/ماژول جدید | سند موجود | VERIFIED (`docs/guides/10-developer-guide.md` — ساختار مخزن، راه‌اندازی، scriptها، الگوی ماژول، چک‌لیست، تست، RTL) |
-| REQ-P7-06 | ZIP نهایی قابل آپلود cPanel + فهرست محتوا + `.env.example` تمیز + SQL dump مستقل | ZIP ساخته و بررسی شود | VERIFIED (`myclass-cpanel-0.1.0.zip` — 267 فایل، smoke نصب واقعی سبز، sha256 + فهرست در `project-control/ZIP_MANIFEST.md`) |
+| REQ-P7-06 | ZIP نهایی قابل آپلود cPanel + فهرست محتوا + `.env.example` تمیز + SQL dump مستقل | ZIP ساخته و بررسی شود | VERIFIED (`myclass-cpanel-0.1.0.zip` — 268 فایل، smoke نصب واقعی سبز، sha256 + فهرست در `project-control/ZIP_MANIFEST.md`) |
 | REQ-P7-07 | سناریوی پذیرش §۸ (۲۳ گام) — اجرا و گزارش | گزارش موفق/ناموفق/اجرا‌نشده | VERIFIED (acceptance.test.ts 23/23 — خودکار؛ گام ۱ (نصب GUI cPanel) و گام ۲۰ (SMS واقعی) «اجرا‌نشده» — نیاز به هاست cPanel + کلید IPPanel) |
 
 ## Cross-cutting (from §۶ و پیوست A)
