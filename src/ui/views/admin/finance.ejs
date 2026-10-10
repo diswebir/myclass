@@ -1,0 +1,117 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h2 style="color: #1e3a8a;">امور مالی، شهریه و اقساط</h2>
+    <p style="color: #64748b;">بررسی فیش‌های واریزی کارت‌به‌کارت، ثبت پرداخت دستی و گزارش بدهکاران</p>
+  </div>
+</div>
+
+<!-- کارتابل فیش‌های در انتظار بررسی -->
+<div class="card" style="margin-bottom: 2rem; border-right: 4px solid #f59e0b;">
+  <h3 style="margin-bottom: 1rem; color: #b45309;">💳 فیش‌های کارت‌به‌کارت در انتظار بررسی و تأیید مالی</h3>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>شناسه فیش</th>
+          <th>مبلغ (تومان)</th>
+          <th>شماره پیگیری / فیش</th>
+          <th>روش پرداخت</th>
+          <th>تاریخ ثبت</th>
+          <th>عملیات تعیین وضعیت</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (pendingPayments.length === 0) { %>
+          <tr><td colspan="6" style="text-align: center; color: #64748b;">هیچ فیش در انتظار بررسی وجود ندارد.</td></tr>
+        <% } %>
+        <% pendingPayments.forEach(p => { %>
+          <tr>
+            <td>#<%= p.id %></td>
+            <td><strong><%= formatCurrency(p.amount) %></strong></td>
+            <td><code><%= p.receipt_number || 'بدون شماره' %></code></td>
+            <td><%= p.payment_method %></td>
+            <td><%= toJalaliDate(p.created_at, true) %></td>
+            <td>
+              <div style="display: flex; gap: 0.5rem;">
+                <form method="POST" action="/admin/finance/payment/<%= p.id %>/review">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="decision" value="approved">
+                  <button type="submit" class="btn btn-success" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">✓ تأیید واریز</button>
+                </form>
+                <form method="POST" action="/admin/finance/payment/<%= p.id %>/review">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="decision" value="rejected">
+                  <input type="hidden" name="reason" value="عدم تطابق مبلغ فیش با صورتحساب">
+                  <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">✗ رد فیش</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; margin-bottom: 2rem;">
+  <!-- فرم ثبت پرداخت دستی -->
+  <div class="card">
+    <h3 style="margin-bottom: 1rem; color: #1e3a8a;">➕ ثبت پرداخت نقدی / دستی</h3>
+    <form method="POST" action="/admin/finance/payment/manual">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-group">
+        <label for="enrollmentId">شناسه پرونده ثبت‌نام</label>
+        <input type="number" id="enrollmentId" name="enrollmentId" required placeholder="مثال: ۱۲">
+      </div>
+      <div class="form-group">
+        <label for="amount">مبلغ واریزی (تومان)</label>
+        <input type="number" id="amount" name="amount" required min="1000" placeholder="مثال: ۲۰۰۰۰۰۰">
+      </div>
+      <div class="form-group">
+        <label for="paymentMethod">روش پرداخت</label>
+        <select id="paymentMethod" name="paymentMethod">
+          <option value="cash">نقدی / حضوری</option>
+          <option value="manual">کارتخوان آموزشگاه (POS)</option>
+          <option value="online_gateway">درگاه آنلاین</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="receiptNumber">شماره پیگیری رسید</label>
+        <input type="text" id="receiptNumber" name="receiptNumber" placeholder="کد ارجاع بانکی">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%;">ثبت و صدور رسید</button>
+    </form>
+  </div>
+
+  <!-- گزارش بدهکاران -->
+  <div class="card">
+    <h3 style="margin-bottom: 1rem; color: #1e3a8a;">⚠️ گزارش بدهکاران شهریه</h3>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>نام فراگیر</th>
+            <th>کلاس</th>
+            <th>شهریه کل</th>
+            <th>کل پرداخت‌شده</th>
+            <th>مانده بدهی</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (debtors.length === 0) { %>
+            <tr><td colspan="5" style="text-align: center; color: #15803d; font-weight: bold;">هیچ بدهی تسویه‌نشده‌ای وجود ندارد!</td></tr>
+          <% } %>
+          <% debtors.forEach(d => { %>
+            <tr>
+              <td><strong><%= d.studentName %></strong> (<%= d.studentMobile %>)</td>
+              <td><%= d.classTitle %></td>
+              <td><%= formatCurrency(d.tuitionAgreed) %></td>
+              <td><span style="color: #15803d;"><%= formatCurrency(d.totalPaid) %></span></td>
+              <td><strong style="color: #b91c1c;"><%= formatCurrency(d.balanceRemaining) %></strong></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

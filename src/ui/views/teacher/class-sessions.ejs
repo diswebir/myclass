@@ -1,0 +1,42 @@
+<div style="margin-bottom: 2rem;">
+  <a href="/teacher" class="btn btn-secondary" style="margin-bottom: 1rem; padding: 0.35rem 0.75rem; font-size: 0.85rem;">← بازگشت به کلاس‌های من</a>
+  <h2 style="color: #1e3a8a;"><%= cls.title %> (<%= cls.code %>)</h2>
+  <p style="color: #64748b;">برنامه زمانی: <%= cls.schedule_days %> (<%= cls.start_time %> تا <%= cls.end_time %>) | محل برگزاری: <%= cls.location %></p>
+</div>
+
+<div class="card">
+  <h3 style="margin-bottom: 1rem; color: #1e3a8a;">فهرست جلسات آموزشی و حضور و غیاب</h3>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>جلسه</th>
+          <th>تاریخ برگزاری</th>
+          <th>ساعت</th>
+          <th>مبحث آموزشی</th>
+          <th>وضعیت جلسه</th>
+          <th>عملیات</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (sessions.length === 0) { %>
+          <tr><td colspan="6" style="text-align: center; color: #64748b;">جلسه‌ای برای این کلاس تعریف نشده است.</td></tr>
+        <% } %>
+        <% sessions.forEach(s => { %>
+          <tr>
+            <td><strong>جلسه <%= s.session_number %></strong></td>
+            <td><%= s.session_date %></td>
+            <td><%= s.start_time %> تا <%= s.end_time %></td>
+            <td><%= s.topic || '-' %></td>
+            <td><span class="badge <%= getStatusBadge(s.status).class %>"><%= getStatusBadge(s.status).label %></span></td>
+            <td>
+              <a href="/teacher/session/<%= s.id %>/attendance" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.85rem;">
+                📋 ثبت / ویرایش حضور و غیاب
+              </a>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>

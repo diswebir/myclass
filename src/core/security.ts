@@ -97,6 +97,9 @@ export function csrfMiddleware(req: Request, res: Response, next: NextFunction) 
 
   const incomingToken = req.body?._csrf || req.headers['x-csrf-token'];
   if (!incomingToken || incomingToken !== csrfToken) {
+    if (req.headers.accept?.includes('application/json')) {
+      return res.status(403).json({ error: 'توکن امنیتی CSRF نامعتبر است یا ارسال نشده است.' });
+    }
     return res.status(403).render('public/error', {
       title: 'خطای امنیت توکن (CSRF)',
       message: 'درخواست شما به دلیل نامعتبر بودن یا منقضی شدن توکن امنیتی تایید نشد. لطفاً صفحه را رفرش کرده و مجدداً تلاش کنید.'

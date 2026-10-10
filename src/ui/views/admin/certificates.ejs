@@ -1,0 +1,76 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h2 style="color: #1e3a8a;">مدارک و گواهینامه‌های رسمی</h2>
+    <p style="color: #64748b;">صدور مدرک پایان‌دوره با کد رهگیری یکتا و اعتبارسنجی QR Code</p>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; margin-bottom: 2rem;">
+  <!-- فرم صدور گواهی جدید -->
+  <div class="card">
+    <h3 style="margin-bottom: 1rem; color: #1e3a8a;">➕ صدور گواهینامه جدید</h3>
+    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
+      سیستم پیش از صدور، تسویه کامل مالی و حدنصاب حضور در کلاس (حداقل ۷۰٪) را به‌صورت خودکار اعتبارسنجی می‌کند.
+    </p>
+    <form method="POST" action="/admin/certificates/issue">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-group">
+        <label for="enrollmentId">شناسه پرونده ثبت‌نام (Enrollment ID)</label>
+        <input type="number" id="enrollmentId" name="enrollmentId" required placeholder="مثال: ۱">
+      </div>
+      <div class="form-group">
+        <label>
+          <input type="checkbox" name="overrideChecks" value="true">
+          نادیده گرفتن محدودیت‌های خودکار (صدور با مجوز مدیریت)
+        </label>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%;">بررسی و صدور مدرک</button>
+    </form>
+  </div>
+
+  <!-- فهرست مدارک صادرشده -->
+  <div class="card">
+    <h3 style="margin-bottom: 1rem; color: #1e3a8a;">فهرست گواهینامه‌های صادرشده</h3>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>کد رهگیری</th>
+            <th>نام فراگیر</th>
+            <th>دوره آموزشی</th>
+            <th>تاریخ صدور</th>
+            <th>وضعیت</th>
+            <th>عملیات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (certificates.length === 0) { %>
+            <tr><td colspan="6" style="text-align: center; color: #64748b;">تاکنون گواهینامه‌ای صادر نشده است.</td></tr>
+          <% } %>
+          <% certificates.forEach(c => { %>
+            <tr>
+              <td><code><%= c.certificate_code %></code></td>
+              <td><strong><%= c.recipient_name %></strong></td>
+              <td><%= c.course_title %></td>
+              <td><%= toJalaliDate(c.issue_date) %></td>
+              <td><span class="badge <%= getStatusBadge(c.status).class %>"><%= getStatusBadge(c.status).label %></span></td>
+              <td>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                  <a href="/verify/<%= c.certificate_code %>" target="_blank" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">مشاهده استعلام</a>
+                  <% if (c.status === 'active') { %>
+                    <form method="POST" action="/admin/certificates/revoke" onsubmit="return confirm('آیا از ابطال این گواهینامه اطمینان دارید؟');">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="certificateCode" value="<%= c.certificate_code %>">
+                      <input type="hidden" name="reason" value="ابطال توسط مدیریت">
+                      <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">ابطال</button>
+                    </form>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

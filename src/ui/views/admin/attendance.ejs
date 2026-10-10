@@ -1,0 +1,119 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h2 style="color: #1e3a8a;">گزارش و ثبت حضور و غیاب</h2>
+    <p style="color: #64748b;">بررسی درصد حضور و غیاب فراگیران و ثبت وضعیت جلسات</p>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+  <form method="GET" action="/admin/attendance" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+    <div class="form-group" style="margin-bottom: 0; min-width: 250px;">
+      <label for="classId">انتخاب کلاس آموزشی</label>
+      <select id="classId" name="classId" onchange="this.form.submit()">
+        <% classes.forEach(c => { %>
+          <option value="<%= c.id %>" <%= typeof selectedClassId !== 'undefined' && selectedClassId === c.id ? 'selected' : '' %>>
+            <%= c.title %> (<%= c.code %>)
+          </option>
+        <% }); %>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-secondary">بارگذاری اطلاعات کلاس</button>
+  </form>
+</div>
+
+<% if (typeof selectedClass !== 'undefined' && selectedClass) { %>
+  <!-- خلاصه وضعیت حضور و غیاب کلاس -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1rem; color: #1e3a8a;">📊 کارنامه حضور و غیاب کلاس «<%= selectedClass.title %>»</h3>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>کد فراگیر</th>
+            <th>نام فراگیر</th>
+            <th>کل جلسات برگزارشده</th>
+            <th>حاضر</th>
+            <th>غایب</th>
+            <th>تأخیر</th>
+            <th>موجه</th>
+            <th>درصد حضور</th>
+            <th>وضعیت حدنصاب</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (attendanceReport.length === 0) { %>
+            <tr><td colspan="9" style="text-align: center; color: #64748b;">هیچ فراگیر فعالی در این کلاس ثبت‌نام نکرده است.</td></tr>
+          <% } %>
+          <% attendanceReport.forEach(r => { %>
+            <tr>
+              <td><code><%= r.studentCode %></code></td>
+              <td><strong><%= r.studentName %></strong></td>
+              <td><%= r.totalHeldSessions %></td>
+              <td><span style="color: #15803d; font-weight: bold;"><%= r.presentCount %></span></td>
+              <td><span style="color: #b91c1c; font-weight: bold;"><%= r.absentCount %></span></td>
+              <td><%= r.lateCount %></td>
+              <td><%= r.excusedCount %></td>
+              <td><strong><%= r.attendancePercent %>%</strong></td>
+              <td>
+                <% if (r.hasExceededAbsenceLimit) { %>
+                  <span class="badge badge-red">غیبت غیرمجاز</span>
+                <% } else { %>
+                  <span class="badge badge-green">مجاز</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- فهرست جلسات این کلاس جهت ثبت حضور و غیاب -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="color: #1e3a8a;">فهرست جلسات کلاس</h3>
+      <!-- فرم ایجاد جلسه جدید -->
+      <form method="POST" action="/admin/classes/<%= selectedClass.id %>/sessions/create" style="display: flex; gap: 0.5rem; align-items: center;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="number" name="sessionNumber" placeholder="شماره جلسه" required style="width: 100px;">
+        <input type="date" name="sessionDate" required style="width: 140px;">
+        <input type="time" name="startTime" value="18:00" required style="width: 100px;">
+        <input type="time" name="endTime" value="20:00" required style="width: 100px;">
+        <input type="text" name="topic" placeholder="مبحث جلسه" style="width: 160px;">
+        <button type="submit" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">➕ افزودن جلسه</button>
+      </form>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>جلسه</th>
+            <th>تاریخ</th>
+            <th>ساعت</th>
+            <th>مبحث</th>
+            <th>وضعیت</th>
+            <th>عملیات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (sessions.length === 0) { %>
+            <tr><td colspan="6" style="text-align: center; color: #64748b;">هنوز جلسه‌ای برای این کلاس تعریف نشده است.</td></tr>
+          <% } %>
+          <% sessions.forEach(s => { %>
+            <tr>
+              <td>جلسه <%= s.session_number %></td>
+              <td><%= s.session_date %></td>
+              <td><%= s.start_time %> تا <%= s.end_time %></td>
+              <td><%= s.topic || '-' %></td>
+              <td><span class="badge <%= getStatusBadge(s.status).class %>"><%= getStatusBadge(s.status).label %></span></td>
+              <td>
+                <a href="/teacher/session/<%= s.id %>/attendance" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">ثبت / ویرایش لیست حضور</a>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>

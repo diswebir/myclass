@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs';
 import express, { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -301,11 +302,44 @@ export function createApp() {
   });
 
   // ==========================================
-  // Protected Routes
+  // Authorization Guards
   // ==========================================
   function requireAuth(req: Request, res: Response, next: NextFunction) {
     if (!req.user) {
       return res.redirect('/auth/login');
+    }
+    next();
+  }
+
+  function requireAdmin(req: Request, res: Response, next: NextFunction) {
+    if (!req.user) return res.redirect('/auth/login');
+    if (req.user.role_name === 'teacher' || req.user.role_name === 'student') {
+      return res.status(403).render('public/error', {
+        title: 'عدم دسترسی',
+        message: 'شما دسترسی لازم برای مشاهده این بخش مدیریتی را ندارید.'
+      });
+    }
+    next();
+  }
+
+  function requireTeacher(req: Request, res: Response, next: NextFunction) {
+    if (!req.user) return res.redirect('/auth/login');
+    if (req.user.role_name !== 'teacher' && req.user.role_name !== 'super_admin') {
+      return res.status(403).render('public/error', {
+        title: 'عدم دسترسی',
+        message: 'این بخش صرفاً برای اساتید آموزشگاه در دسترس است.'
+      });
+    }
+    next();
+  }
+
+  function requireStudent(req: Request, res: Response, next: NextFunction) {
+    if (!req.user) return res.redirect('/auth/login');
+    if (req.user.role_name !== 'student' && req.user.role_name !== 'super_admin') {
+      return res.status(403).render('public/error', {
+        title: 'عدم دسترسی',
+        message: 'این بخش صرفاً برای فراگیران آموزشگاه در دسترس است.'
+      });
     }
     next();
   }
@@ -316,8 +350,10 @@ export function createApp() {
     res.redirect('/admin');
   });
 
-  // Admin Dashboard
-  app.get('/admin', requireAuth, async (req, res, next) => {
+  // ==========================================
+  // Admin Routes
+  // ==========================================
+  app.get('/admin', requireAdmin, async (req, res, next) => {
     try {
       const kpis = await dashboardService.getAdminKpis(req.user!);
       res.render('admin/dashboard', { kpis, activeMenu: 'dashboard', title: 'داشبورد مدیریت' });
@@ -326,8 +362,445 @@ export function createApp() {
     }
   });
 
-  // Teacher Portal
-  app.get('/teacher', requireAuth, async (req, res, next) => {
+  // Courses & Classes Management
+  app.get('/admin/classes', requireAdmin, async (req, res, next) => {
+    try {
+      const courses = await coursesService.listCourses();
+      const { classes } = await coursesService.listClasses({ limit: 100 });
+      res.render('admin/classes', {
+        courses,
+        classes,
+        activeMenu: 'classes',
+        title: 'مدیریت دوره‌ها و کلاس‌ها'
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/courses/create', requireAdmin, async (req, res, next) => {
+    try {
+      const { title, code, category, level, description } = req.body;
+      await coursesService.createCourse({ title, code, category, level, description }, req.user?.id);
+      res.redirect('/admin/classes');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/classes/create', requireAdmin, async (req, res, next) => {
+    try {
+      const {
+        courseId,
+        title,
+        code,
+        capacity,
+        tuitionFee,
+        startDate,
+        endDate,
+        scheduleDays,
+        startTime,
+        endTime,
+        location
+      } = req.body;
+
+      await coursesService.createClass({
+        courseId: Number(courseId),
+        title,
+        code,
+        capacity: Number(capacity),
+        tuitionFee: Number(tuitionFee),
+        startDate,
+        endDate,
+        scheduleDays,
+        startTime,
+        endTime,
+        location,
+        status: 'open_for_prereg',
+        preregEnabled: true
+      }, req.user?.id);
+
+      res.redirect('/admin/classes');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/classes/:id/sessions/create', requireAdmin, async (req, res, next) => {
+    try {
+      const classId = Number(req.params.id);
+      const { sessionNumber, sessionDate, startTime, endTime, topic } = req.body;
+      await sessionsService.createSession({
+        classId,
+        sessionNumber: Number(sessionNumber),
+        sessionDate,
+        startTime,
+        endTime,
+        topic
+      }, req.user?.id);
+
+      res.redirect(`/admin/attendance?classId=${classId}`);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Teachers Management
+  app.get('/admin/teachers', requireAdmin, async (req, res, next) => {
+    try {
+      const { teachers } = await teachersService.listTeachers({ limit: 100 });
+      res.render('admin/teachers', {
+        teachers,
+        activeMenu: 'teachers',
+        title: 'مدیریت اساتید'
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/teachers/create', requireAdmin, async (req, res, next) => {
+    try {
+      const { fullName, mobile, password, internalCode, specialties } = req.body;
+      await teachersService.createTeacher({
+        fullName,
+        mobile,
+        password,
+        internalCode,
+        specialties
+      }, req.user?.id);
+
+      res.redirect('/admin/teachers');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Students Management
+  app.get('/admin/students', requireAdmin, async (req, res, next) => {
+    try {
+      const { students } = await studentsService.listStudents({ limit: 100 });
+      const { items: preregistrations } = await preregService.listPreregistrations({ status: 'pending', limit: 20 });
+      res.render('admin/students', {
+        students,
+        preregistrations,
+        activeMenu: 'students',
+        title: 'مدیریت فراگیران'
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/students/create', requireAdmin, async (req, res, next) => {
+    try {
+      const { fullName, mobile, nationalId, parentPhone } = req.body;
+      await studentsService.createStudent({
+        fullName,
+        mobile,
+        nationalId,
+        parentPhone
+      }, req.user?.id);
+
+      res.redirect('/admin/students');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/students/import-csv', requireAdmin, async (req, res, next) => {
+    try {
+      const { csvData } = req.body;
+      await studentsService.importStudentsFromCsv(csvData, req.user?.id);
+      res.redirect('/admin/students');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/preregistrations/:id/approve', requireAdmin, async (req, res, next) => {
+    try {
+      const preregId = Number(req.params.id);
+      await enrollmentService.convertPreregistrationToEnrollment(preregId, undefined, req.user?.id);
+      res.redirect('/admin/students');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Attendance Management
+  app.get('/admin/attendance', requireAdmin, async (req, res, next) => {
+    try {
+      const { classes } = await coursesService.listClasses({ limit: 100 });
+      const selectedClassId = req.query.classId ? Number(req.query.classId) : (classes[0]?.id || 0);
+
+      let selectedClass = null;
+      let attendanceReport: any[] = [];
+      let sessions: any[] = [];
+
+      if (selectedClassId) {
+        selectedClass = await coursesService.getClassById(selectedClassId);
+        attendanceReport = await attendanceService.getClassAttendanceReport(selectedClassId, req.user!);
+        sessions = await sessionsService.listSessionsByClass(selectedClassId);
+      }
+
+      res.render('admin/attendance', {
+        classes,
+        selectedClassId,
+        selectedClass,
+        attendanceReport,
+        sessions,
+        activeMenu: 'attendance',
+        title: 'حضور و غیاب'
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Finance Management
+  app.get('/admin/finance', requireAdmin, async (req, res, next) => {
+    try {
+      const debtors = await financeService.getDebtorsReport(req.user!);
+      const pendingPayments = await db
+        .selectFrom('payments')
+        .where('status', '=', 'pending')
+        .selectAll()
+        .execute();
+
+      res.render('admin/finance', {
+        debtors,
+        pendingPayments,
+        activeMenu: 'finance',
+        title: 'امور مالی و اقساط'
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/finance/payment/:id/review', requireAdmin, async (req, res, next) => {
+    try {
+      const paymentId = Number(req.params.id);
+      const { decision, reason } = req.body;
+      await financeService.reviewPayment(paymentId, decision, reason, req.user!);
+      res.redirect('/admin/finance');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/finance/payment/manual', requireAdmin, async (req, res, next) => {
+    try {
+      const { enrollmentId, amount, paymentMethod, receiptNumber } = req.body;
+      await financeService.submitPayment({
+        enrollmentId: Number(enrollmentId),
+        amount: Number(amount),
+        paymentMethod,
+        receiptNumber
+      }, req.user!);
+
+      res.redirect('/admin/finance');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Certificates Management
+  app.get('/admin/certificates', requireAdmin, async (req, res, next) => {
+    try {
+      const certificates = await db
+        .selectFrom('certificates')
+        .selectAll()
+        .orderBy('id', 'desc')
+        .execute();
+
+      res.render('admin/certificates', {
+        certificates,
+        activeMenu: 'certificates',
+        title: 'مدارک و گواهینامه‌ها'
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/certificates/issue', requireAdmin, async (req, res, next) => {
+    try {
+      const { enrollmentId, overrideChecks } = req.body;
+      const host = req.get('host') || '127.0.0.1:3000';
+      const protocol = req.protocol;
+      const baseUrl = `${protocol}://${host}`;
+
+      await certificatesService.issueCertificate({
+        enrollmentId: Number(enrollmentId),
+        overrideChecks: overrideChecks === 'true',
+        baseUrl
+      }, req.user!);
+
+      res.redirect('/admin/certificates');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/certificates/revoke', requireAdmin, async (req, res, next) => {
+    try {
+      const { certificateCode, reason } = req.body;
+      await certificatesService.revokeCertificate(certificateCode, reason, req.user!);
+      res.redirect('/admin/certificates');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // SMS Management
+  app.get('/admin/sms', requireAdmin, async (req, res, next) => {
+    try {
+      const templates = await smsService.listTemplates();
+      const { logs } = await smsService.listLogs({ limit: 50 });
+
+      res.render('admin/sms', {
+        templates,
+        logs,
+        activeMenu: 'sms',
+        title: 'سامانه پیامک'
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/sms/test', requireAdmin, async (req, res, next) => {
+    try {
+      const { mobile } = req.body;
+      const result = await smsService.sendTestSms(mobile, req.user!);
+      res.redirect('/admin/sms');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Users & RBAC Management
+  app.get('/admin/users', requireAdmin, async (req, res, next) => {
+    try {
+      const { users } = await usersService.listUsers({ limit: 100 });
+      const roles = await rbacService.getAllRoles();
+
+      res.render('admin/users', {
+        users,
+        roles,
+        activeMenu: 'users',
+        title: 'کاربران و سطوح دسترسی'
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/users/create', requireAdmin, async (req, res, next) => {
+    try {
+      const { fullName, mobile, password, roleId } = req.body;
+      await usersService.createUser({
+        fullName,
+        mobile,
+        password,
+        roleId: Number(roleId)
+      }, req.user?.id);
+
+      res.redirect('/admin/users');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/roles/create', requireAdmin, async (req, res, next) => {
+    try {
+      const { name, titleFa, permissions } = req.body;
+      const permsArray = Array.isArray(permissions) ? permissions : (permissions ? [permissions] : []);
+      await rbacService.createRole({
+        name,
+        titleFa,
+        permissions: permsArray
+      });
+
+      res.redirect('/admin/users');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Settings Management
+  app.get('/admin/settings', requireAdmin, async (req, res, next) => {
+    try {
+      const settings = await settingsService.getAllSettings(false);
+      res.render('admin/settings', {
+        settings,
+        activeMenu: 'settings',
+        title: 'تنظیمات آموزشگاه'
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/settings', requireAdmin, async (req, res, next) => {
+    try {
+      const { institution_name, institution_phone, institution_slogan, institution_address, ippanel_api_key } = req.body;
+      await settingsService.updateBulk({
+        institution_name,
+        institution_phone,
+        institution_slogan,
+        institution_address,
+        ippanel_api_key
+      }, req.user?.id);
+
+      res.redirect('/admin/settings');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Database Backup Management
+  app.get('/admin/backup', requireAdmin, async (req, res, next) => {
+    try {
+      const backups = await backupService.listBackups(req.user!);
+      res.render('admin/backup', {
+        backups,
+        activeMenu: 'backup',
+        title: 'پشتیبان‌گیری پایگاه داده'
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/admin/backup/create', requireAdmin, async (req, res, next) => {
+    try {
+      await backupService.generateDatabaseBackup(req.user!);
+      res.redirect('/admin/backup');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get('/admin/backup/download/:filename', requireAdmin, async (req, res, next) => {
+    try {
+      const filename = path.basename(req.params.filename);
+      const filePath = path.join(config.STORAGE_DIR, 'backups', filename);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).send('فایل پشتیبان مورد نظر یافت نشد.');
+      }
+      res.download(filePath, filename);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ==========================================
+  // Teacher Portal Routes
+  // ==========================================
+  app.get('/teacher', requireTeacher, async (req, res, next) => {
     try {
       const data = await dashboardService.getTeacherDashboard(req.user!.id);
       res.render('teacher/dashboard', {
@@ -340,14 +813,139 @@ export function createApp() {
     }
   });
 
-  // Student Portal
-  app.get('/student', requireAuth, async (req, res, next) => {
+  app.get('/teacher/classes', requireTeacher, (req, res) => {
+    res.redirect('/teacher');
+  });
+
+  app.get('/teacher/attendance', requireTeacher, (req, res) => {
+    res.redirect('/teacher');
+  });
+
+  app.get('/teacher/class/:classId', requireTeacher, async (req, res, next) => {
+    try {
+      const classId = Number(req.params.classId);
+      await policyService.assertCanAccessClass(req.user!, classId);
+
+      const cls = await coursesService.getClassById(classId);
+      const sessions = await sessionsService.listSessionsByClass(classId);
+
+      res.render('teacher/class-sessions', {
+        cls,
+        sessions,
+        activeMenu: 'teacher',
+        title: `جلسات ${cls.title}`
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get('/teacher/session/:sessionId/attendance', requireTeacher, async (req, res, next) => {
+    try {
+      const sessionId = Number(req.params.sessionId);
+      const { session, roster } = await attendanceService.getSessionAttendance(sessionId, req.user!);
+
+      res.render('teacher/session-attendance', {
+        session,
+        roster,
+        activeMenu: 'teacher',
+        title: `ثبت حضور و غیاب جلسه ${session.session_number}`
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/teacher/session/:sessionId/attendance', requireTeacher, async (req, res, next) => {
+    try {
+      const sessionId = Number(req.params.sessionId);
+      const { roster } = await attendanceService.getSessionAttendance(sessionId, req.user!);
+
+      const recordsToSave = roster.map(item => {
+        const statusKey = `status_${item.studentId}`;
+        const noteKey = `note_${item.studentId}`;
+        const status = (req.body[statusKey] || 'unrecorded') as any;
+        const note = req.body[noteKey] || '';
+        return {
+          studentId: item.studentId,
+          status,
+          note
+        };
+      });
+
+      await attendanceService.recordSessionAttendance(sessionId, recordsToSave, req.user!);
+      res.redirect(`/teacher/session/${sessionId}/attendance`);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ==========================================
+  // Student Portal Routes
+  // ==========================================
+  app.get('/student', requireStudent, async (req, res, next) => {
     try {
       const data = await dashboardService.getStudentDashboard(req.user!.id);
       res.render('student/dashboard', {
         ...data,
         activeMenu: 'student',
         title: 'پنل فراگیر'
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get('/student/finance', requireStudent, async (req, res, next) => {
+    try {
+      const data = await dashboardService.getStudentDashboard(req.user!.id);
+      const studentId = data?.student?.id;
+
+      let payments: any[] = [];
+      if (studentId) {
+        payments = await db
+          .selectFrom('payments')
+          .innerJoin('enrollments', 'payments.enrollment_id', 'enrollments.id')
+          .where('enrollments.student_id', '=', studentId)
+          .selectAll('payments')
+          .orderBy('payments.id', 'desc')
+          .execute();
+      }
+
+      res.render('student/finance', {
+        enrollments: data?.enrollments || [],
+        payments,
+        activeMenu: 'finance',
+        title: 'شهریه و اقساط'
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/student/payments/submit', requireStudent, async (req, res, next) => {
+    try {
+      const { enrollmentId, amount, receiptNumber } = req.body;
+      await financeService.submitPayment({
+        enrollmentId: Number(enrollmentId),
+        amount: Number(amount),
+        paymentMethod: 'card_to_card',
+        receiptNumber
+      }, req.user!);
+
+      res.redirect('/student/finance');
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get('/student/certificates', requireStudent, async (req, res, next) => {
+    try {
+      const data = await dashboardService.getStudentDashboard(req.user!.id);
+      res.render('student/certificates', {
+        certificates: data?.certificates || [],
+        activeMenu: 'certificates',
+        title: 'مدارک و گواهینامه‌های من'
       });
     } catch (err) {
       next(err);
@@ -382,10 +980,28 @@ export function createApp() {
 
     res.status(statusCode).render('public/error', {
       title: `خطا (${statusCode})`,
-      message,
-      layout: false
+      message
     });
   });
 
-  return { app, services: { authService, usersService, coursesService, studentsService, financeService, certificatesService, smsService } };
+  return {
+    app,
+    services: {
+      authService,
+      usersService,
+      coursesService,
+      studentsService,
+      financeService,
+      certificatesService,
+      smsService,
+      attendanceService,
+      sessionsService,
+      preregService,
+      enrollmentService,
+      rbacService,
+      settingsService,
+      dashboardService,
+      backupService
+    }
+  };
 }
