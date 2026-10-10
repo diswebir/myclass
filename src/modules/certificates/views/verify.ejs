@@ -1,0 +1,40 @@
+<div class="container-sm" style="padding:40px 16px">
+  <div class="card verify-card">
+    <% if (cert === undefined) { %>
+      <div class="card-body text-center" style="padding:36px 28px">
+        <div class="verify-icon"><%- icon('shield-check', 'icon-xl') %></div>
+        <h1 style="font-size:20px">استعلام اصالت مدرک</h1>
+        <p class="text-muted">کد استعلام یا شماره سریال درج‌شده روی مدرک را وارد کنید.</p>
+        <form method="get" action="<%= url('/verify') %>" class="flex gap-2 mt-4">
+          <input class="input ltr text-center mono" name="code" placeholder="مثلاً AB12CD34EF" required data-en-digits autofocus>
+          <button class="btn btn-primary" type="submit">استعلام</button>
+        </form>
+      </div>
+    <% } else if (cert === null) { %>
+      <div class="card-body text-center" style="padding:36px 28px">
+        <div class="verify-icon" style="background:var(--danger-bg);color:var(--danger-fg)"><%- icon('x-circle', 'icon-xl') %></div>
+        <h1 style="font-size:20px">مدرکی با این مشخصات یافت نشد</h1>
+        <p class="text-muted">کد <b class="ltr d-inline mono"><%= code %></b> در سامانه ثبت نشده است. لطفاً کد را بررسی کنید.</p>
+        <a class="btn btn-soft mt-3" href="<%= url('/verify') %>">استعلام مجدد</a>
+      </div>
+    <% } else { const ok = cert.status === 'valid'; %>
+      <div class="card-body text-center" style="padding:32px 28px 10px">
+        <div class="verify-icon<%= ok ? ' ok' : '' %>" style="<%= ok ? '' : 'background:var(--danger-bg);color:var(--danger-fg)' %>"><%- icon(ok ? 'badge-check' : 'ban', 'icon-xl') %></div>
+        <h1 style="font-size:20px"><%= ok ? 'این مدرک معتبر است' : 'این مدرک ابطال شده است' %></h1>
+        <p class="text-muted">صادر شده توسط <%= data.institute_name || s('general.institute_name', '') %></p>
+      </div>
+      <div class="card-body"><dl class="kv">
+        <dt>نام دارنده</dt><dd><%= data.student_name %></dd>
+        <% if (data.national_code) { %><dt>کد ملی</dt><dd class="ltr text-right"><%= fa(String(data.national_code).replace(/^(\d{3})\d{4}(\d{3})$/, '$1****$2')) %></dd><% } %>
+        <dt>دوره</dt><dd><%= data.class_title %></dd>
+        <% if (data.hours) { %><dt>مدت دوره</dt><dd><%= fa(data.hours) %> ساعت</dd><% } %>
+        <% if (data.teacher_name) { %><dt>مدرس</dt><dd><%= data.teacher_name %></dd><% } %>
+        <% if (data.grade !== null && data.grade !== undefined && data.grade !== '') { %><dt>نمره</dt><dd><%= fa(data.grade) %></dd><% } %>
+        <dt>تاریخ صدور</dt><dd><%= jdate(cert.issued_date) %></dd>
+        <dt>شماره سریال</dt><dd class="ltr text-right mono"><%= cert.serial %></dd>
+        <% if (!ok && cert.revoked_reason) { %><dt>دلیل ابطال</dt><dd class="text-danger"><%= cert.revoked_reason %></dd><% } %>
+      </dl></div>
+      <div class="card-foot text-center"><a class="btn btn-ghost btn-sm" href="<%= url('/verify') %>">استعلام مدرک دیگر</a></div>
+    <% } %>
+  </div>
+</div>

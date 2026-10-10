@@ -1,0 +1,6 @@
+<% if (!list.length) { %><%- include('partials/empty', { emptyIcon: 'award', emptyTitle: 'مدرکی صادر نشده است' }) %><% } else { %>
+<ul class="list">
+  <% list.forEach(function (c) { %>
+  <li><a class="list-item" href="<%= url('/panel/certificates/' + c.id) %>"><span class="list-icon" style="background:var(--warning-bg);color:var(--warning-fg)"><%- icon('award', 'icon-sm') %></span><span class="grow"><span class="list-title"><%= c.class_title || 'مدرک' %></span><span class="list-sub ltr text-right mono"><%= c.serial %></span></span><span class="list-end"><%- badge('certificate', c.status) %><span class="list-sub"><%= jdate(c.issued_date) %></span></span></a></li>
+  <% }) %>
+</ul><% } %>

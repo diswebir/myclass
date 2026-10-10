@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<% var title = 'در حال به‌روزرسانی'; %>
+<%- include('../partials/head', { title }) %>
+</head>
+<body>
+<div class="container container-sm" style="min-height:100vh;display:grid;place-items:center">
+  <div class="card verify-card" style="width:100%">
+    <div class="verify-icon" style="background:var(--warning-bg);color:var(--warning-fg)"><%- icon('settings', 'spin') %></div>
+    <h2>سامانه در حال به‌روزرسانی است</h2>
+    <p class="text-muted"><%= message || 'لطفاً دقایقی دیگر مراجعه کنید.' %></p>
+    <a class="btn btn-sm" href="<%= url('/login') %>">ورود مدیر</a>
+  </div>
+</div>
+</body>
+</html>

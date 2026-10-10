@@ -1,0 +1,218 @@
+<% const c = cls; const color = c.color || c.category_color || '#4f46e5'; const today = jalali.today();
+   const attRate = function (a) { a = a || {}; const t = (a.present || 0) + (a.absent || 0) + (a.late || 0) + (a.excused || 0); return t ? Math.round(((a.present || 0) + (a.late || 0) + (a.excused || 0)) / t * 100) : null; };
+   const canStudents = can('classes.students'); const canSessions = can('classes.sessions'); %>
+<div class="hero mb-4" style="background:linear-gradient(135deg, <%= color %>, color-mix(in srgb, <%= color %> 60%, #0f172a))">
+  <div class="flex justify-between gap-3 wrap" style="position:relative;z-index:1">
+    <div>
+      <div class="flex gap-2 items-center mb-2 wrap"><span class="chip ltr" style="background:rgba(255,255,255,.18);color:#fff;border:0"><%= c.code %></span><% if (c.category_name) { %><span class="chip" style="background:rgba(255,255,255,.18);color:#fff;border:0"><%= c.category_name %></span><% } %><%- badge('class', c.status) %></div>
+      <h1><%= c.title %></h1>
+      <p class="flex gap-3 wrap text-sm">
+        <% if (c.week_days) { %><span class="flex items-center gap-1"><%- icon('calendar-days', 'icon-sm') %><%= weekDaysLabel(c.week_days) %></span><% } %>
+        <% if (c.start_time) { %><span class="flex items-center gap-1"><%- icon('clock', 'icon-sm') %><%= fa(c.start_time) %> تا <%= fa(c.end_time || '') %></span><% } %>
+        <% if (c.start_date) { %><span class="flex items-center gap-1"><%- icon('calendar-range', 'icon-sm') %><%= jdate(c.start_date) %> تا <%= c.end_date ? jdate(c.end_date) : '—' %></span><% } %>
+        <% if (c.location) { %><span class="flex items-center gap-1"><%- icon('map-pin', 'icon-sm') %><%= c.location %></span><% } %>
+      </p>
+    </div>
+    <div class="hero-actions" style="margin-top:0;align-self:flex-start">
+      <% if (moduleOn('attendance') && can('attendance.manage')) { %><a class="btn btn-white" href="<%= url('/panel/attendance?class=' + c.id) %>"><%- icon('clipboard-check', 'icon-sm') %>حضور و غیاب</a><% } %>
+      <% if (c.online_link) { %><a class="btn" href="<%= c.online_link %>" target="_blank" rel="noopener"><%- icon('video', 'icon-sm') %>کلاس آنلاین</a><% } %>
+      <% if (can('classes.edit')) { %><a class="btn" href="<%= url('/panel/classes/' + c.id + '/edit') %>"><%- icon('pencil', 'icon-sm') %>ویرایش</a>
+      <div class="dropdown">
+        <button class="btn btn-icon" type="button" data-dropdown aria-label="بیشتر"><%- icon('more-vertical', 'icon-sm') %></button>
+        <div class="dropdown-menu">
+          <div class="dropdown-head text-xs text-muted">تغییر وضعیت</div>
+          <% Object.keys(STATUS.class).filter(function (k) { return k !== c.status; }).forEach(function (k) { %>
+            <form method="post" action="<%= url('/panel/classes/' + c.id + '/status') %>"><%- include('partials/csrf') %><input type="hidden" name="status" value="<%= k %>"><button class="dropdown-item" type="submit"><%- icon('circle-dot') %><%= STATUS.class[k][0] %></button></form>
+          <% }) %>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="<%= url('/panel/classes/' + c.id + '/students.csv') %>" data-no-loading><%- icon('download') %>خروجی لیست دانشجویان</a>
+          <% if (can('classes.create')) { %><form method="post" action="<%= url('/panel/classes/' + c.id + '/duplicate') %>"><%- include('partials/csrf') %><button class="dropdown-item" type="submit"><%- icon('copy') %>کپی از کلاس</button></form><% } %>
+          <% if (can('classes.delete')) { %><form method="post" action="<%= url('/panel/classes/' + c.id + '/delete') %>" data-confirm="کلاس «<%= c.title %>» به همراه جلسات و حضور و غیاب حذف شود؟"><%- include('partials/csrf') %><button class="dropdown-item danger" type="submit"><%- icon('trash-2') %>حذف کلاس</button></form><% } %>
+        </div>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="overflow:visible">
+  <nav class="tabs">
+    <% tabs.forEach(function (t) { %><a class="tab<%= tab === t.key ? ' active' : '' %>" href="?tab=<%= t.key %>"><%- icon(t.icon || 'circle-dot', 'icon-sm') %><%= t.label %><% if (t.count !== undefined) { %><span class="count"><%= fa(t.count) %></span><% } %></a><% }) %>
+  </nav>
+  <div class="card-body">
+
+<% if (tab === 'overview') {
+     const upcoming = sessions.filter(function (s) { return String(s.date).slice(0, 10) >= today && s.status !== 'canceled'; }).slice(0, 5);
+     const allAtt = { present: 0, absent: 0, late: 0, excused: 0 }; Object.values(sessionAtt).forEach(function (a) { Object.keys(allAtt).forEach(function (k) { allAtt[k] += a[k] || 0; }); });
+     const rate = attRate(allAtt); const bTotal = Object.values(balances).reduce(function (a, b) { return a + b.total; }, 0); const bPaid = Object.values(balances).reduce(function (a, b) { return a + b.paid; }, 0); %>
+    <div class="grid grid-4 mb-4">
+      <div class="kv-item"><span>دانشجویان فعال</span><b><%= fa(stats.students) %><% if (c.capacity) { %> <small class="text-muted">از <%= fa(c.capacity) %> نفر</small><% } %></b><% if (c.capacity) { %><div class="progress progress-sm mt-2"><span style="width:<%= Math.min(100, pct(stats.students, c.capacity)) %>%"></span></div><% } %></div>
+      <div class="kv-item"><span>جلسات برگزارشده</span><b><%= fa(stats.held) %> <small class="text-muted">از <%= fa(stats.sessions) %></small></b><div class="progress progress-sm success mt-2"><span style="width:<%= pct(stats.held, stats.sessions) %>%"></span></div></div>
+      <div class="kv-item"><span>میانگین حضور</span><b><%= rate === null ? '—' : fa(rate) + '٪' %></b><div class="progress progress-sm <%= rate !== null && rate < 70 ? 'warning' : 'success' %> mt-2"><span style="width:<%= rate || 0 %>%"></span></div></div>
+      <div class="kv-item"><span><%= Object.keys(balances).length ? 'وصول شهریه' : 'شهریه' %></span><b><%= Object.keys(balances).length ? fa(pct(bPaid, bTotal)) + '٪' : (c.price ? money(c.price) : 'رایگان') %></b><% if (Object.keys(balances).length) { %><div class="text-xs text-muted mt-1"><%= money(bPaid) %> از <%= money(bTotal) %></div><% } %></div>
+    </div>
+    <div class="grid grid-2">
+      <div>
+        <h3 class="card-title mb-3"><%- icon('info') %>مشخصات کلاس</h3>
+        <dl class="kv">
+          <dt>اساتید</dt><dd><%= stats.teachers.map(function (t) { return t.first_name + ' ' + t.last_name; }).join('، ') || '—' %></dd>
+          <% if (c.level) { %><dt>سطح</dt><dd><%= c.level %></dd><% } %>
+          <% if (c.total_hours) { %><dt>مدت دوره</dt><dd><%= fa(c.total_hours) %> ساعت</dd><% } %>
+          <dt>شهریه</dt><dd><%= c.price ? money(c.price) : 'رایگان' %></dd>
+          <dt>نمایش عمومی</dt><dd><%= c.is_public ? 'بله' : 'خیر' %><% if (moduleOn('preregistration')) { %> · پیش‌ثبت‌نام: <%= c.prereg_enabled ? 'فعال' : 'غیرفعال' %><% } %></dd>
+          <% if (c.min_attendance !== null && c.min_attendance !== undefined) { %><dt>حداقل حضور برای مدرک</dt><dd><%= fa(c.min_attendance) %>٪</dd><% } %>
+        </dl>
+        <% if (c.description) { %><div class="divider"></div><div class="text-2 text-sm" style="white-space:pre-line"><%= c.description %></div><% } %>
+      </div>
+      <div>
+        <h3 class="card-title mb-3"><%- icon('calendar-clock') %>جلسات پیش‌رو</h3>
+        <% if (!upcoming.length) { %><p class="text-muted text-sm">جلسه آینده‌ای برنامه‌ریزی نشده است.</p><% } else { %>
+        <ul class="timeline">
+          <% upcoming.forEach(function (s) { %><li><div class="t-title">جلسه <%= fa(s.session_no || '') %> — <%= weekday(jalali.weekday(s.date)) %> <%= jdate(s.date) %></div><div class="t-time"><%= fa(s.start_time || '') %> تا <%= fa(s.end_time || '') %><%= s.topic ? ' · ' + s.topic : '' %></div></li><% }) %>
+        </ul><% } %>
+      </div>
+    </div>
+<% } %>
+
+<% if (tab === 'students') { %>
+    <% if (canStudents) { %>
+    <form method="post" action="<%= url('/panel/classes/' + c.id + '/enroll') %>" class="card mb-4" style="background:var(--surface-2);box-shadow:none" data-installment-calc>
+      <%- include('partials/csrf') %>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="field col-12" data-user-picker="<%= url('/panel/api/users/search?kind=student&exclude_class=' + c.id) %>" data-name="user_ids">
+            <label class="label">افزودن دانشجو به کلاس</label>
+            <div class="input-icon"><%- icon('search', 'icon-sm') %><input class="input" type="search" placeholder="جستجو با نام، موبایل یا کد ملی (حداقل ۲ حرف)..." autocomplete="off"></div>
+            <div data-picked></div>
+          </div>
+          <% if (moduleOn('finance') && can('finance.invoices') && c.price > 0) { %>
+          <div class="col-12"><label class="switch"><input type="checkbox" name="create_invoice" value="1" checked><span class="track"></span>صدور فاکتور شهریه (<%= money(c.price) %>)</label></div>
+          <input type="hidden" name="amount" value="<%= c.price %>">
+          <div class="field col-3" data-show-when="create_invoice=1"><label class="label">نوع پرداخت</label><select class="input" name="payment_type"><option value="cash">نقدی (یکجا)</option><option value="installment">اقساطی</option></select></div>
+          <div class="field col-3" data-show-when="payment_type=installment"><label class="label">تعداد اقساط</label><input class="input ltr" name="installments_count" value="<%= s('finance.default_installments', 3) %>" inputmode="numeric" data-en-digits></div>
+          <div class="field col-3" data-show-when="create_invoice=1"><label class="label">تخفیف</label><div class="input-group"><input class="input ltr" name="discount" data-money value="0"><span class="addon"><%= s('finance.currency', 'تومان') %></span></div></div>
+          <div class="field col-3" data-show-when="create_invoice=1"><label class="label">مبلغ نهایی</label><div class="input fw-8" data-total style="background:var(--surface-3)">—</div></div>
+          <div class="col-12" data-schedule-preview></div>
+          <% } %>
+          <div class="col-12 flex gap-3 wrap items-center">
+            <% if (moduleOn('sms')) { %><label class="switch"><input type="checkbox" name="notify" value="1" checked><span class="track"></span>ارسال پیامک ثبت‌نام</label><% } %>
+            <% if (user.data_scope === 'all') { %><label class="switch"><input type="checkbox" name="force" value="1"><span class="track"></span>نادیده گرفتن ظرفیت</label><% } %>
+            <button class="btn btn-primary" type="submit" style="margin-right:auto"><%- icon('user-plus', 'icon-sm') %>ثبت‌نام در کلاس</button>
+          </div>
+        </div>
+      </div>
+    </form>
+    <% } %>
+
+    <% if (!students.length) { %>
+      <%- include('partials/empty', { emptyIcon: 'graduation-cap', emptyTitle: 'هنوز دانشجویی ثبت‌نام نشده است', emptyText: canStudents ? 'از فرم بالا دانشجویان را به کلاس اضافه کنید.' : '' }) %>
+    <% } else { %>
+    <form method="post" action="<%= url('/panel/classes/' + c.id + '/grades') %>" id="grades-form"><%- include('partials/csrf') %></form>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>#</th><th>دانشجو</th><% if (showContacts) { %><th>موبایل</th><% } %><th>تاریخ ثبت‌نام</th><% if (moduleOn('attendance')) { %><th>حضور</th><% } %><% if (Object.keys(balances).length) { %><th>مانده بدهی</th><% } %><th>نمره</th><th>وضعیت</th><% if (canStudents) { %><th></th><% } %></tr></thead>
+      <tbody>
+      <% students.forEach(function (e, i) { const n = e.first_name + ' ' + e.last_name; const r = attRate(att[e.id]); const b = balances[e.user_id]; %>
+        <tr>
+          <td class="text-muted"><%= fa(i + 1) %></td>
+          <td><a class="person" href="<%= url('/panel/users/' + e.user_id) %>"><span class="avatar avatar-sm"><% if (e.avatar) { %><img src="<%= media(e.avatar) %>" alt=""><% } else { %><%= initials(n) %><% } %></span><span><span class="person-name"><%= n %></span><span class="person-sub"><%= e.national_code ? fa(e.national_code) : '' %></span></span></a></td>
+          <% if (showContacts) { %><td class="ltr text-right"><%= fa(e.mobile || '—') %></td><% } %>
+          <td class="text-sm"><%= jdate(e.enrolled_at) %></td>
+          <% if (moduleOn('attendance')) { %><td><% if (r === null) { %><span class="text-muted">—</span><% } else { %><span class="badge no-dot badge-<%= r >= 80 ? 'success' : r >= 60 ? 'warning' : 'danger' %>"><%= fa(r) %>٪</span> <span class="text-xs text-muted">غیبت: <%= fa((att[e.id] || {}).absent || 0) %></span><% } %></td><% } %>
+          <% if (Object.keys(balances).length) { %><td class="text-sm"><% if (!b) { %><span class="text-muted">بدون فاکتور</span><% } else if (b.total - b.paid <= 0) { %><span class="text-success fw-6">تسویه</span><% } else { %><span class="text-danger fw-6"><%= money(b.total - b.paid) %></span><% } %></td><% } %>
+          <td><input class="input input-sm ltr text-center" style="width:70px" name="grades[<%= e.id %>]" value="<%= e.grade === null || e.grade === undefined ? '' : e.grade %>" form="grades-form" inputmode="decimal" data-en-digits<%= can('classes.students') || can('attendance.manage') ? '' : ' disabled' %>></td>
+          <td><%- badge('enrollment', e.status) %></td>
+          <% if (canStudents) { %><td class="actions">
+            <div class="dropdown">
+              <button class="btn btn-ghost btn-icon btn-sm" type="button" data-dropdown><%- icon('more-vertical', 'icon-sm') %></button>
+              <div class="dropdown-menu">
+                <% ['active', 'completed', 'suspended', 'withdrawn'].filter(function (k) { return k !== e.status; }).forEach(function (k) { %>
+                <form method="post" action="<%= url('/panel/enrollments/' + e.id + '/status') %>"><%- include('partials/csrf') %><input type="hidden" name="status" value="<%= k %>"><button class="dropdown-item" type="submit"><%- icon('circle-dot') %>تغییر به «<%= STATUS.enrollment[k][0] %>»</button></form>
+                <% }) %>
+                <div class="dropdown-divider"></div>
+                <form method="post" action="<%= url('/panel/enrollments/' + e.id + '/delete') %>" data-confirm="«<%= n %>» از کلاس حذف شود؟ سوابق حضور و غیاب او نیز حذف می‌شود."><%- include('partials/csrf') %><button class="dropdown-item danger" type="submit"><%- icon('user-minus') %>حذف از کلاس</button></form>
+              </div>
+            </div>
+          </td><% } %>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table></div>
+    <div class="flex justify-between mt-3 gap-2 wrap">
+      <a class="btn btn-ghost btn-sm" href="<%= url('/panel/classes/' + c.id + '/students.csv') %>" data-no-loading><%- icon('download', 'icon-sm') %>خروجی اکسل</a>
+      <button class="btn btn-soft btn-sm" type="submit" form="grades-form"><%- icon('save', 'icon-sm') %>ذخیره نمرات</button>
+    </div>
+    <% } %>
+<% } %>
+
+<% if (tab === 'sessions') { %>
+    <% if (canSessions) { %>
+    <div class="flex gap-2 wrap mb-4">
+      <button class="btn btn-primary btn-sm" type="button" data-modal-open="#session-add"><%- icon('plus', 'icon-sm') %>افزودن جلسه</button>
+      <form method="post" action="<%= url('/panel/classes/' + c.id + '/sessions/generate') %>" data-confirm="جلسات بر اساس بازه تاریخ و روزهای هفته کلاس ساخته شوند؟ جلسات موجود حفظ می‌شوند." data-confirm-danger="false"><%- include('partials/csrf') %><button class="btn btn-soft btn-sm" type="submit"><%- icon('wand-sparkles', 'icon-sm') %>ساخت خودکار جلسات</button></form>
+    </div>
+    <% } %>
+    <% if (!sessions.length) { %>
+      <%- include('partials/empty', { emptyIcon: 'calendar-days', emptyTitle: 'جلسه‌ای ثبت نشده است', emptyText: 'برای ساخت خودکار، تاریخ شروع/پایان و روزهای هفته کلاس را تکمیل کنید.' }) %>
+    <% } else { %>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>جلسه</th><th>تاریخ</th><th>ساعت</th><th>موضوع</th><% if (moduleOn('attendance')) { %><th>حضور و غیاب</th><% } %><th>وضعیت</th><th></th></tr></thead>
+      <tbody>
+      <% sessions.forEach(function (s) { const a = sessionAtt[s.id] || {}; const d = String(s.date).slice(0, 10); const has = Object.keys(a).length; %>
+        <tr<%= d === today ? ' style="background:var(--primary-50)"' : '' %>>
+          <td class="fw-6"><%= s.session_no ? fa(s.session_no) : '—' %></td>
+          <td class="text-sm"><%= weekday(jalali.weekday(s.date)) %> <%= jdate(s.date) %><% if (d === today) { %> <span class="badge badge-info no-dot">امروز</span><% } %></td>
+          <td class="text-sm"><%= fa((s.start_time || '') + ' - ' + (s.end_time || '')) %></td>
+          <td class="text-sm"><%= s.topic || '—' %></td>
+          <% if (moduleOn('attendance')) { %><td><% if (has) { %><span class="flex gap-1"><span class="mark present" title="حاضر"><%= fa(a.present || 0) %></span><span class="mark absent" title="غایب"><%= fa(a.absent || 0) %></span><span class="mark late" title="تأخیر"><%= fa(a.late || 0) %></span><span class="mark excused" title="موجه"><%= fa(a.excused || 0) %></span></span><% } else if (s.status !== 'canceled' && d <= today) { %><span class="text-warning text-xs fw-6">ثبت نشده</span><% } else { %><span class="text-muted">—</span><% } %></td><% } %>
+          <td><%- badge('session', s.status) %></td>
+          <td class="actions">
+            <% if (moduleOn('attendance') && s.status !== 'canceled') { %><a class="btn btn-soft btn-sm" href="<%= url('/panel/attendance/session/' + s.id) %>"><%- icon('clipboard-check', 'icon-sm') %><%= has ? 'مشاهده' : 'ثبت حضور' %></a><% } %>
+            <% if (canSessions) { %>
+            <button class="btn btn-ghost btn-icon btn-sm" type="button" title="ویرایش" data-modal-open="#session-edit" data-fill="<%= JSON.stringify({ _action: url('/panel/sessions/' + s.id), date: jinput(s.date), start_time: s.start_time || '', end_time: s.end_time || '', topic: s.topic || '', notes: s.notes || '', status: s.status }) %>"><%- icon('pencil', 'icon-sm') %></button>
+            <form method="post" action="<%= url('/panel/sessions/' + s.id + '/delete') %>" class="d-inline" data-confirm="جلسه <%= fa(s.session_no || '') %> حذف شود؟"><%- include('partials/csrf') %><button class="btn btn-ghost btn-icon btn-sm text-danger" type="submit" title="حذف"><%- icon('trash-2', 'icon-sm') %></button></form>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table></div>
+    <% } %>
+
+    <% if (canSessions) { %>
+    <div class="modal-backdrop hidden" id="session-add" data-page-modal>
+      <form class="modal" method="post" action="<%= url('/panel/classes/' + c.id + '/sessions') %>">
+        <%- include('partials/csrf') %>
+        <div class="modal-head"><div class="m-icon primary"><%- icon('calendar-plus') %></div><h3>افزودن جلسه</h3></div>
+        <div class="modal-body"><div class="form-grid">
+          <div class="field col-12"><label class="label">تاریخ <span class="req">*</span></label><input class="input ltr text-center" name="date" data-jdp required autocomplete="off"></div>
+          <div class="field col-6"><label class="label">ساعت شروع</label><input class="input ltr" type="time" name="start_time" value="<%= c.start_time || '' %>"></div>
+          <div class="field col-6"><label class="label">ساعت پایان</label><input class="input ltr" type="time" name="end_time" value="<%= c.end_time || '' %>"></div>
+          <div class="field col-12"><label class="label">موضوع جلسه</label><input class="input" name="topic"></div>
+        </div></div>
+        <div class="modal-foot"><button class="btn btn-primary" type="submit">افزودن</button><button class="btn btn-ghost" type="button" data-modal-close>انصراف</button></div>
+      </form>
+    </div>
+    <div class="modal-backdrop hidden" id="session-edit" data-page-modal>
+      <form class="modal" method="post" action="#">
+        <%- include('partials/csrf') %>
+        <div class="modal-head"><div class="m-icon primary"><%- icon('pencil') %></div><h3>ویرایش جلسه</h3></div>
+        <div class="modal-body"><div class="form-grid">
+          <div class="field col-6"><label class="label">تاریخ</label><input class="input ltr text-center" name="date" data-jdp autocomplete="off"></div>
+          <div class="field col-6"><label class="label">وضعیت</label><select class="input" name="status"><option value="scheduled">برنامه‌ریزی شده</option><option value="held">برگزار شده</option><option value="canceled">لغو شده</option></select></div>
+          <div class="field col-6"><label class="label">ساعت شروع</label><input class="input ltr" type="time" name="start_time"></div>
+          <div class="field col-6"><label class="label">ساعت پایان</label><input class="input ltr" type="time" name="end_time"></div>
+          <div class="field col-12"><label class="label">موضوع جلسه</label><input class="input" name="topic"></div>
+          <div class="field col-12"><label class="label">یادداشت</label><textarea class="input" name="notes" rows="2"></textarea></div>
+          <% if (moduleOn('sms')) { %><label class="switch col-12" data-show-when="status=canceled"><input type="checkbox" name="notify" value="1"><span class="track"></span>اطلاع‌رسانی لغو جلسه با پیامک</label><% } %>
+        </div></div>
+        <div class="modal-foot"><button class="btn btn-primary" type="submit">ذخیره</button><button class="btn btn-ghost" type="button" data-modal-close>انصراف</button></div>
+      </form>
+    </div>
+    <% } %>
+<% } %>
+
+<% if (typeof moduleTab !== 'undefined' && moduleTab) { %>
+    <%- include(moduleTab.view, Object.assign({ entity: c }, moduleTab.data || {})) %>
+<% } %>
+  </div>
+</div>

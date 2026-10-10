@@ -1,0 +1,89 @@
+<% const done = p.status === 'approved'; %>
+<div class="page-head">
+  <div class="flex items-center gap-3"><span class="avatar avatar-lg"><%= initials(p.first_name + ' ' + p.last_name) %></span><div><h1 class="page-title"><%= p.first_name %> <%= p.last_name %> <%- badge('prereg', p.status) %></h1><p class="page-sub">کد رهگیری <span class="mono"><%= p.tracking_code %></span> · ثبت <%= jdt(p.created_at) %></p></div></div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="<%= url('/panel/preregistrations') %>"><%- icon('arrow-right', 'icon-sm') %>بازگشت</a>
+    <% if (can('prereg.manage')) { %><form method="post" action="<%= url('/panel/preregistrations/' + p.id + '/delete') %>" data-confirm="این درخواست حذف شود؟"><%- include('partials/csrf') %><button class="btn btn-soft-danger" type="submit"><%- icon('trash-2', 'icon-sm') %>حذف</button></form><% } %>
+  </div>
+</div>
+<div class="grid grid-side">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 class="card-title"><%- icon('user') %>اطلاعات متقاضی</h2></div>
+      <div class="card-body"><div class="kv-grid">
+        <div class="kv-item"><span>موبایل</span><b class="ltr d-block text-right"><a href="tel:<%= p.mobile %>"><%= fa(p.mobile) %></a></b></div>
+        <div class="kv-item"><span>کد ملی</span><b class="ltr d-block text-right"><%= p.national_code ? fa(p.national_code) : '—' %></b></div>
+        <div class="kv-item"><span>دوره درخواستی</span><b><%= p.class_title || 'عمومی' %></b></div>
+        <div class="kv-item"><span>روش پرداخت</span><b><%= p.payment_preference === 'cash' ? 'نقدی' : p.payment_preference === 'installment' ? 'اقساطی' : '—' %></b></div>
+        <% if (p.birth_date) { %><div class="kv-item"><span>تاریخ تولد</span><b><%= jdate(p.birth_date) %></b></div><% } %>
+        <% if (p.gender) { %><div class="kv-item"><span>جنسیت</span><b><%= p.gender === 'male' ? 'آقا' : 'خانم' %></b></div><% } %>
+        <% if (p.education) { %><div class="kv-item"><span>تحصیلات</span><b><%= p.education %></b></div><% } %>
+        <% if (p.city) { %><div class="kv-item"><span>شهر</span><b><%= p.city %></b></div><% } %>
+        <% if (p.email) { %><div class="kv-item"><span>ایمیل</span><b class="ltr d-block text-right"><%= p.email %></b></div><% } %>
+        <% if (p.how_found) { %><div class="kv-item"><span>نحوه آشنایی</span><b><%= p.how_found %></b></div><% } %>
+      </div>
+      <% if (p.message) { %><div class="alert alert-info mt-3 mb-0"><%- icon('message-square') %><div style="white-space:pre-line"><%= p.message %></div></div><% } %>
+      </div>
+    </div>
+    <% if (existingUser) { %><div class="alert alert-warning"><%- icon('user-check') %><div>کاربری با این موبایل/کد ملی در سامانه وجود دارد: <a href="<%= url('/panel/users/' + existingUser.id) %>"><b><%= existingUser.first_name %> <%= existingUser.last_name %></b></a>. هنگام تأیید، ثبت‌نام برای همین کاربر انجام می‌شود.</div></div><% } %>
+    <% if (!done && can('prereg.manage')) { %>
+    <form class="card" method="post" action="<%= url('/panel/preregistrations/' + p.id + '/approve') %>" data-installment-calc>
+      <%- include('partials/csrf') %>
+      <div class="card-head"><div><h2 class="card-title"><%- icon('check-circle-2') %>تأیید و ثبت‌نام قطعی</h2><p class="card-sub">متقاضی در کلاس ثبت‌نام می‌شود<%= existingUser ? '' : ' و حساب کاربری او ساخته می‌شود' %>.</p></div></div>
+      <div class="card-body"><div class="form-grid">
+        <div class="field col-12"><label class="label">کلاس</label>
+          <select class="input" name="class_id" required data-fill-amount="#approve-amount"><option value="">انتخاب کلاس</option><% classes.forEach(function (c) { %><option value="<%= c.id %>" data-amount="<%= c.price || 0 %>"<%= p.class_id === c.id ? ' selected' : '' %>><%= c.title %><%= c.price ? ' - ' + money(c.price, true) : '' %></option><% }) %></select>
+        </div>
+        <% if (!existingUser && !s('prereg.auto_create_account', true)) { %><label class="check col-12"><input type="checkbox" name="create_account" value="1" checked> ساخت حساب کاربری برای متقاضی</label><% } %>
+        <label class="check col-6"><input type="checkbox" name="force" value="1"> ثبت‌نام حتی در صورت تکمیل ظرفیت</label>
+        <label class="check col-6"><input type="checkbox" name="notify" value="1" checked> ارسال پیامک تأیید (و اطلاعات ورود)</label>
+        <% if (financeOn) { %>
+        <label class="check col-12"><input type="checkbox" name="create_invoice" value="1" checked> صدور فاکتور شهریه</label>
+        <div class="col-12" data-show-when="create_invoice=1"><div class="form-grid">
+          <%- include('partials/field', { name: 'amount', label: 'مبلغ شهریه', type: 'money', col: 6, value: p.class_price || '', attrs: 'id="approve-amount"' }) %>
+          <%- include('partials/field', { name: 'discount', label: 'تخفیف', type: 'money', col: 6, value: '' }) %>
+          <div class="field col-12"><label class="label">نوع پرداخت</label><div class="options-grid">
+            <label class="check-card"><input type="radio" name="payment_type" value="cash"<%= p.payment_preference !== 'installment' ? ' checked' : '' %>><span><b>نقدی</b><small>یک قسط کامل</small></span></label>
+            <label class="check-card"><input type="radio" name="payment_type" value="installment"<%= p.payment_preference === 'installment' ? ' checked' : '' %>><span><b>اقساطی</b><small>تقسیط شهریه</small></span></label>
+          </div></div>
+          <div class="col-12" data-show-when="payment_type=installment"><div class="form-grid">
+            <%- include('partials/field', { name: 'installments_count', label: 'تعداد اقساط', type: 'number', col: 6, value: s('finance.default_installments', 3), attrs: 'min="2" max="24"' }) %>
+            <%- include('partials/field', { name: 'down_payment', label: 'پیش‌پرداخت', type: 'money', col: 6, value: '' }) %>
+          </div></div>
+          <div class="col-12 alert alert-info mb-0"><%- icon('calculator') %><div><div>مبلغ نهایی: <b data-total>—</b></div><div data-schedule-preview class="text-sm mt-2"></div></div></div>
+        </div></div>
+        <% } %>
+        <%- include('partials/field', { name: 'admin_note', label: 'یادداشت', type: 'textarea', col: 12, rows: 2, value: p.admin_note || '' }) %>
+      </div></div>
+      <div class="card-foot"><button class="btn btn-success" type="submit"><%- icon('check', 'icon-sm') %>تأیید و ثبت‌نام</button></div>
+    </form>
+    <% } %>
+    <% if (history.length) { %>
+    <div class="card">
+      <div class="card-head"><h2 class="card-title"><%- icon('history') %>سایر درخواست‌های این شماره</h2></div>
+      <ul class="list"><% history.forEach(function (h) { %><li><a class="list-item" href="<%= url('/panel/preregistrations/' + h.id) %>"><span class="grow"><span class="list-title"><%= h.class_title || 'عمومی' %></span><span class="list-sub"><%= jdt(h.created_at) %></span></span><span class="list-end"><%- badge('prereg', h.status) %></span></a></li><% }) %></ul>
+    </div>
+    <% } %>
+  </div>
+  <div class="stack">
+    <% if (done && p.user_id) { %><div class="alert alert-success"><%- icon('check-circle-2') %><div>این درخواست تأیید شده است. <a href="<%= url('/panel/users/' + p.user_id) %>">مشاهده پرونده کاربر</a></div></div><% } %>
+    <% if (can('prereg.manage') && !done) { %>
+    <form class="card" method="post" action="<%= url('/panel/preregistrations/' + p.id + '/status') %>">
+      <%- include('partials/csrf') %>
+      <div class="card-head"><h2 class="card-title"><%- icon('refresh-cw') %>تغییر وضعیت</h2></div>
+      <div class="card-body stack" style="gap:12px">
+        <select class="input" name="status"><option value="pending"<%= p.status === 'pending' ? ' selected' : '' %>>در انتظار بررسی</option><option value="contacted"<%= p.status === 'contacted' ? ' selected' : '' %>>تماس گرفته شد</option><option value="rejected"<%= p.status === 'rejected' ? ' selected' : '' %>>رد درخواست</option></select>
+        <textarea class="input" name="admin_note" rows="3" placeholder="یادداشت / دلیل رد"><%= p.admin_note || '' %></textarea>
+        <label class="check"><input type="checkbox" name="notify" value="1"> اطلاع‌رسانی پیامکی در صورت رد</label>
+      </div>
+      <div class="card-foot"><button class="btn btn-primary btn-block" type="submit">ذخیره</button></div>
+    </form>
+    <% } %>
+    <div class="card"><div class="card-body"><dl class="kv">
+      <dt>آی‌پی</dt><dd class="ltr text-right"><%= p.ip || '—' %></dd>
+      <% if (p.reviewed_at) { %><dt>بررسی‌کننده</dt><dd><%= p.reviewer_first ? p.reviewer_first + ' ' + p.reviewer_last : '—' %></dd><dt>زمان بررسی</dt><dd><%= jdt(p.reviewed_at) %></dd><% } %>
+      <% if (p.admin_note && done) { %><dt>یادداشت</dt><dd><%= p.admin_note %></dd><% } %>
+    </dl></div></div>
+    <% if (moduleOn('sms') && can('sms.send')) { %><a class="btn btn-soft btn-block" href="<%= url('/panel/sms/send?numbers=' + p.mobile) %>"><%- icon('message-square', 'icon-sm') %>ارسال پیامک</a><% } %>
+  </div>
+</div>

@@ -1,0 +1,47 @@
+<% const cur = s('finance.currency', 'تومان'); const remain = totals.total - totals.paid; const mk = Object.keys(methods); %>
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('wallet') %>داشبورد مالی</h1><p class="page-sub">گزارش درآمد، مطالبات و وضعیت اقساط</p></div>
+  <div class="page-actions">
+    <a class="btn" href="<%= url('/panel/payments') %>"><%- icon('receipt', 'icon-sm') %>پرداخت‌ها</a>
+    <% if (can('finance.invoices')) { %><a class="btn btn-primary" href="<%= url('/panel/invoices/new') %>"><%- icon('plus', 'icon-sm') %>فاکتور جدید</a><% } %>
+  </div>
+</div>
+<% if (pendingCount) { %><a class="alert alert-warning" href="<%= url('/panel/payments?status=pending') %>"><%- icon('alert-triangle') %><div><b><%= fa(pendingCount) %> پرداخت کارت به کارت</b> در انتظار بررسی و تأیید است. <span class="text-primary">بررسی ←</span></div></a><% } %>
+<div class="grid grid-4 mb-4">
+  <div class="card stat"><div class="stat-icon success"><%- icon('trending-up') %></div><div><div class="stat-label">درآمد <%= monthLabel %></div><div class="stat-value"><%= num(monthIncome) %><small><%= cur %></small></div></div></div>
+  <div class="card stat"><div class="stat-icon"><%- icon('banknote') %></div><div><div class="stat-label">کل دریافتی</div><div class="stat-value"><%= num(totals.paid) %><small><%= cur %></small></div><div class="stat-foot"><%= fa(pct(totals.paid, totals.total)) %>٪ از کل فاکتورها</div></div></div>
+  <div class="card stat"><div class="stat-icon warning"><%- icon('hourglass') %></div><div><div class="stat-label">مانده مطالبات</div><div class="stat-value"><%= num(remain) %><small><%= cur %></small></div><div class="stat-foot">تخفیف‌ها: <%= num(totals.discount) %></div></div></div>
+  <a class="card stat" href="<%= url('/panel/installments?filter=overdue') %>"><div class="stat-icon danger"><%- icon('alarm-clock') %></div><div><div class="stat-label">اقساط معوق</div><div class="stat-value"><%= num(overdue.amount) %><small><%= cur %></small></div><div class="stat-foot"><%= fa(overdue.count) %> قسط سررسید گذشته</div></div></a>
+</div>
+<div class="grid grid-side mb-4">
+  <div class="card">
+    <div class="card-head"><div><h2 class="card-title"><%- icon('bar-chart-3') %>روند درآمد ۱۲ ماه اخیر</h2><p class="card-sub">مقایسه مبالغ فاکتور شده و دریافت شده</p></div></div>
+    <div class="card-body"><div class="chart" data-chart="ch-revenue"></div></div>
+    <script type="application/json" id="ch-revenue"><%- json({ type: 'area', money: true, unit: cur, height: 320, labels: months.map(function (m) { return m.label; }), series: [{ name: 'دریافتی', data: revenue }, { name: 'فاکتور شده', data: billed }], colors: ['#10b981', '#6366f1'] }) %></script>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%- icon('pie-chart') %>روش‌های پرداخت</h2></div>
+    <div class="card-body"><% if (!mk.length) { %><p class="text-muted text-center">پرداختی ثبت نشده است.</p><% } else { %><div class="chart" data-chart="ch-methods"></div><% } %></div>
+    <script type="application/json" id="ch-methods"><%- json({ type: 'donut', money: true, unit: cur, height: 300, labels: mk.map(function (k) { return PAYMENT_METHODS[k] || k; }), series: mk.map(function (k) { return methods[k]; }), totalLabel: 'مجموع دریافتی' }) %></script>
+  </div>
+</div>
+<div class="grid grid-2">
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%- icon('school') %>وضعیت وصول به تفکیک کلاس</h2></div>
+    <div class="card-body"><% if (!byClass.length) { %><p class="text-muted text-center">داده‌ای وجود ندارد.</p><% } else { %><div class="chart" data-chart="ch-classes"></div><% } %></div>
+    <script type="application/json" id="ch-classes"><%- json({ type: 'bar', horizontal: true, stacked: true, money: true, unit: cur, height: Math.max(220, byClass.length * 46), labels: byClass.map(function (c) { return c.title; }), series: [{ name: 'دریافت شده', data: byClass.map(function (c) { return Number(c.paid); }) }, { name: 'مانده', data: byClass.map(function (c) { return Number(c.total) - Number(c.paid); }) }], colors: ['#10b981', '#f59e0b'] }) %></script>
+  </div>
+  <div class="card">
+    <div class="card-head"><div><h2 class="card-title"><%- icon('calendar-clock') %>اقساط ۱۴ روز آینده</h2></div><a class="btn btn-ghost btn-sm" href="<%= url('/panel/installments?filter=upcoming') %>">همه</a></div>
+    <% if (!upcoming.length) { %><div class="card-body text-muted text-center">قسطی در ۱۴ روز آینده سررسید نمی‌شود.</div><% } else { %>
+    <ul class="list">
+      <% upcoming.forEach(function (it) { %>
+      <li><a class="list-item" href="<%= url('/panel/invoices/' + it.invoice_id) %>">
+        <span class="list-icon"><%- icon('calendar', 'icon-sm') %></span>
+        <span class="grow"><span class="list-title"><%= it.first_name %> <%= it.last_name %></span><span class="list-sub"><%= it.class_title || '—' %> · قسط <%= fa(it.seq) %></span></span>
+        <span class="list-end"><b><%= money(Number(it.amount) - Number(it.paid_amount)) %></b><span class="list-sub"><%= jdate(it.due_date) %> (<%= rel(it.due_date) %>)</span></span>
+      </a></li>
+      <% }) %>
+    </ul><% } %>
+  </div>
+</div>

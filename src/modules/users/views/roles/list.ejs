@@ -1,0 +1,36 @@
+<% const SC = { all: 'همه اطلاعات', assigned: 'فقط کلاس‌های تخصیص‌یافته', own: 'فقط اطلاعات شخصی' }; %>
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('shield-check') %>نقش‌ها و سطوح دسترسی</h1><p class="page-sub">برای هر گروه کاربری یک نقش با مجوزهای دقیق تعریف کنید و به افراد اختصاص دهید.</p></div>
+  <div class="page-actions"><a class="btn btn-primary" href="<%= url('/panel/roles/new') %>"><%- icon('plus', 'icon-sm') %>نقش جدید</a></div>
+</div>
+<div class="alert alert-info"><%- icon('info') %><div>دسترسی‌ها در دو لایه کنترل می‌شوند: <b>مجوزها</b> (چه کاری مجاز است) و <b>محدوده داده</b> (روی کدام اطلاعات). مثلاً نقش «استاد» فقط به کلاس‌هایی که به او تخصیص داده شده و دانشجویان همان کلاس‌ها دسترسی دارد.</div></div>
+<div class="grid grid-3">
+  <% roles.forEach(function (r) { const c = r.color || '#64748b'; %>
+  <div class="card class-card" style="--c:<%= c %>">
+    <div class="cover"></div>
+    <div class="body">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="stat-icon" style="width:40px;height:40px;background:<%= c %>1a;color:<%= c %>"><%- icon(r.is_super ? 'shield-check' : r.kind === 'teacher' ? 'presentation' : r.kind === 'student' ? 'graduation-cap' : 'user') %></span>
+        <div class="grow"><span class="title mb-0"><%= r.name %></span><span class="text-xs text-muted ltr"><%= r.slug %></span></div>
+        <% if (r.is_system) { %><span class="badge badge-gray no-dot">سیستمی</span><% } %>
+      </div>
+      <p class="text-sm text-2" style="min-height:44px"><%= r.description || '—' %></p>
+      <div class="meta">
+        <span><%- icon('users') %><%= fa(userCounts[r.id] || 0) %> کاربر · <%= KINDS[r.kind] %></span>
+        <span><%- icon('database') %>محدوده داده: <%= SC[r.data_scope] %></span>
+        <span><%- icon('key-round') %><%= r.is_super ? 'همه مجوزها (نامحدود)' : fa(permCounts[r.id] || 0) + ' از ' + fa(totalPerms) + ' مجوز' %></span>
+      </div>
+      <% if (!r.is_super) { %><div class="progress progress-sm mt-3"><span style="width:<%= pct(permCounts[r.id] || 0, totalPerms) %>%;background:<%= c %>"></span></div><% } %>
+    </div>
+    <div class="foot">
+      <div class="flex gap-1">
+        <% if (!r.is_super || user.isSuper) { %><a class="btn btn-sm btn-soft" href="<%= url('/panel/roles/' + r.id + '/edit') %>"><%- icon('pencil', 'icon-sm') %>ویرایش</a><% } %>
+        <a class="btn btn-sm btn-ghost" href="<%= url('/panel/roles/new?copy=' + r.id) %>" title="کپی"><%- icon('copy', 'icon-sm') %></a>
+      </div>
+      <% if (!r.is_system && !r.is_super) { %>
+      <form method="post" action="<%= url('/panel/roles/' + r.id + '/delete') %>" data-confirm="نقش «<%= r.name %>» حذف شود؟"><%- include('partials/csrf') %><button class="btn btn-sm btn-ghost text-danger" type="submit"><%- icon('trash-2', 'icon-sm') %></button></form>
+      <% } %>
+    </div>
+  </div>
+  <% }) %>
+</div>

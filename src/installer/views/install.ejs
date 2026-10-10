@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fa" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>نصب سامانه مدیریت آموزشگاه</title>
+<link rel="stylesheet" href="<%= asset('css/app.css') %>">
+<script type="application/json" id="app-config"><%- json({ icons: url('/public/img/icons.svg'), faDigits: true }) %></script>
+</head>
+<body>
+<%
+  const e = (k) => errors[k];
+  const o = (k, d) => (old[k] !== undefined ? old[k] : (d === undefined ? '' : d));
+  const fieldCls = (k) => 'field' + (errors[k] ? ' has-error' : '');
+%>
+<div class="landing-hero" style="padding:40px 0 10px">
+  <div class="brand-logo" style="width:64px;height:64px;margin:0 auto 14px;font-size:22px"><%- icon('graduation-cap', 'icon-xl') %></div>
+  <h1 style="font-size:26px">نصب سامانه مدیریت آموزشگاه</h1>
+  <p>فقط چند قدم تا راه‌اندازی پنل آموزشی شما باقی مانده است.</p>
+</div>
+<div class="container container-sm" style="padding-top:10px">
+  <div class="steps">
+    <div class="step active">پیش‌نیازها</div>
+    <div class="step">پایگاه داده</div>
+    <div class="step">اطلاعات موسسه</div>
+    <div class="step">حساب مدیر</div>
+  </div>
+
+  <% if (errors._form) { %><div class="alert alert-danger"><%- icon('x-circle') %><div><%= errors._form %></div></div><% } %>
+
+  <form method="post" action="<%= url('/install') %>" data-wizard autocomplete="off" novalidate>
+    <input type="hidden" name="_token" value="<%= token %>">
+
+    <!-- مرحله ۱ -->
+    <div class="card" data-step>
+      <div class="card-head"><h2 class="card-title"><%- icon('check-circle-2') %>بررسی پیش‌نیازهای سرور</h2></div>
+      <ul class="list">
+        <% reqs.forEach(function (r) { %>
+        <li class="list-item">
+          <span class="list-icon" style="<%= r.ok ? 'background:var(--success-bg);color:var(--success-fg)' : (r.required ? 'background:var(--danger-bg);color:var(--danger-fg)' : 'background:var(--warning-bg);color:var(--warning-fg)') %>"><%- icon(r.ok ? 'check' : (r.required ? 'x' : 'alert-triangle')) %></span>
+          <div class="grow"><span class="list-title"><%= r.label %></span><% if (!r.ok) { %><span class="list-sub"><%= r.help %></span><% } %></div>
+          <span class="list-end"><%- r.ok ? '<span class="badge badge-success">آماده</span>' : (r.required ? '<span class="badge badge-danger">الزامی</span>' : '<span class="badge badge-warning">اختیاری</span>') %></span>
+        </li>
+        <% }) %>
+      </ul>
+      <div class="card-foot">
+        <% if (canInstall) { %><button class="btn btn-primary" data-next type="button">ادامه<%- icon('arrow-left', 'icon-sm') %></button>
+        <% } else { %><div class="alert alert-danger mb-0 grow"><%- icon('alert-triangle') %><div>پیش‌نیازهای الزامی برقرار نیست. پس از رفع مشکل صفحه را بازخوانی کنید.</div></div><% } %>
+      </div>
+    </div>
+
+    <!-- مرحله ۲ -->
+    <div class="card hidden" data-step>
+      <div class="card-head"><div><h2 class="card-title"><%- icon('database') %>اتصال به پایگاه داده</h2><p class="card-sub">در cPanel از بخش «MySQL Databases» یک پایگاه داده و کاربر بسازید و کاربر را با دسترسی کامل به پایگاه داده اضافه کنید.</p></div></div>
+      <div class="card-body">
+        <div class="options-grid mb-4">
+          <label class="check-card"><input type="radio" name="db_client" value="mysql"<%= o('db_client', 'mysql') === 'mysql' ? ' checked' : '' %>><span><b>MySQL / MariaDB</b><small>پیشنهادی برای هاست‌های سی‌پنل</small></span></label>
+          <label class="check-card"><input type="radio" name="db_client" value="sqlite"<%= o('db_client') === 'sqlite' ? ' checked' : '' %><%= sqliteAvailable ? '' : ' disabled' %>><span><b>SQLite</b><small><%= sqliteAvailable ? 'فایلی، بدون نیاز به ساخت دیتابیس' : 'روی این سرور در دسترس نیست' %></small></span></label>
+        </div>
+        <div class="form-grid" data-show-when="db_client=mysql">
+          <div class="<%= fieldCls('db_host') %> col-8"><label class="label">آدرس سرور</label><input class="input ltr" name="db_host" value="<%= o('db_host', 'localhost') %>"></div>
+          <div class="field col-4"><label class="label">پورت</label><input class="input ltr" name="db_port" value="<%= o('db_port', '3306') %>"></div>
+          <div class="<%= fieldCls('db_name') %> col-12"><label class="label">نام پایگاه داده <span class="req">*</span></label><input class="input ltr" name="db_name" value="<%= o('db_name') %>" placeholder="cpaneluser_myclass" data-req-when-shown><% if (e('db_name')) { %><span class="error-text"><%= e('db_name') %></span><% } else { %><span class="help">نام کامل همراه با پیشوند نام کاربری سی‌پنل</span><% } %></div>
+          <div class="<%= fieldCls('db_user') %> col-6"><label class="label">نام کاربری <span class="req">*</span></label><input class="input ltr" name="db_user" value="<%= o('db_user') %>" data-req-when-shown><% if (e('db_user')) { %><span class="error-text"><%= e('db_user') %></span><% } %></div>
+          <div class="field col-6"><label class="label">رمز عبور</label><input class="input ltr" type="password" name="db_pass" value=""></div>
+        </div>
+        <div class="form-grid hidden" data-show-when="db_client=sqlite">
+          <div class="field col-12"><label class="label">نام فایل پایگاه داده</label><input class="input ltr" name="sqlite_file" value="<%= o('sqlite_file', 'database.sqlite') %>"><span class="help">فایل در پوشه storage ذخیره می‌شود (دسترسی وب به این پوشه مسدود است).</span></div>
+        </div>
+        <div id="db-test-result" class="mt-3"></div>
+      </div>
+      <div class="card-foot">
+        <button class="btn btn-primary" data-next type="button">ادامه<%- icon('arrow-left', 'icon-sm') %></button>
+        <button class="btn btn-soft" type="button" data-test-db="<%= url('/install/test-db') %>"><%- icon('refresh-cw', 'icon-sm') %>تست اتصال</button>
+        <button class="btn btn-ghost" data-prev type="button">مرحله قبل</button>
+      </div>
+    </div>
+
+    <!-- مرحله ۳ -->
+    <div class="card hidden" data-step>
+      <div class="card-head"><h2 class="card-title"><%- icon('school') %>اطلاعات موسسه</h2></div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="<%= fieldCls('institute_name') %> col-12"><label class="label">نام موسسه / آموزشگاه <span class="req">*</span></label><input class="input" name="institute_name" value="<%= o('institute_name') %>" required placeholder="مثلاً: آموزشگاه فنی و حرفه‌ای آینده"><% if (e('institute_name')) { %><span class="error-text"><%= e('institute_name') %></span><% } %></div>
+          <div class="field col-6"><label class="label">تلفن تماس</label><input class="input ltr" name="institute_phone" value="<%= o('institute_phone') %>" data-en-digits></div>
+          <div class="field col-6"><label class="label">منطقه زمانی</label><select class="input" name="timezone"><% timezones.forEach(function (t) { %><option value="<%= t %>"<%= o('timezone', 'Asia/Tehran') === t ? ' selected' : '' %>><%= t %></option><% }) %></select></div>
+          <div class="field col-12"><label class="label">آدرس کامل سایت (اختیاری)</label><input class="input ltr" name="base_url" value="<%= o('base_url') %>" placeholder="https://edu.example.com"><span class="help">برای لینک‌های پیامک و QR مدارک استفاده می‌شود؛ در صورت خالی بودن به صورت خودکار تشخیص داده می‌شود.</span></div>
+          <label class="check-card col-12"><input type="checkbox" name="sample_data" value="1"<%= o('sample_data') === '1' ? ' checked' : '' %>><span><b>ایجاد داده‌های نمونه</b><small>چند کلاس، استاد و دانشجو، حضور و غیاب، اقساط و مدرک نمونه برای آشنایی با سامانه (رمز کاربران نمونه: 12345678)</small></span></label>
+        </div>
+      </div>
+      <div class="card-foot">
+        <button class="btn btn-primary" data-next type="button">ادامه<%- icon('arrow-left', 'icon-sm') %></button>
+        <button class="btn btn-ghost" data-prev type="button">مرحله قبل</button>
+      </div>
+    </div>
+
+    <!-- مرحله ۴ -->
+    <div class="card hidden" data-step>
+      <div class="card-head"><div><h2 class="card-title"><%- icon('shield-check') %>حساب مدیر کل</h2><p class="card-sub">این حساب دسترسی کامل به همه بخش‌های سامانه دارد.</p></div></div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="<%= fieldCls('admin_first_name') %> col-6"><label class="label">نام <span class="req">*</span></label><input class="input" name="admin_first_name" value="<%= o('admin_first_name') %>" required><% if (e('admin_first_name')) { %><span class="error-text"><%= e('admin_first_name') %></span><% } %></div>
+          <div class="<%= fieldCls('admin_last_name') %> col-6"><label class="label">نام خانوادگی <span class="req">*</span></label><input class="input" name="admin_last_name" value="<%= o('admin_last_name') %>" required><% if (e('admin_last_name')) { %><span class="error-text"><%= e('admin_last_name') %></span><% } %></div>
+          <div class="<%= fieldCls('admin_username') %> col-6"><label class="label">نام کاربری <span class="req">*</span></label><input class="input ltr" name="admin_username" value="<%= o('admin_username', 'admin') %>" required minlength="3"><% if (e('admin_username')) { %><span class="error-text"><%= e('admin_username') %></span><% } %></div>
+          <div class="<%= fieldCls('admin_mobile') %> col-6"><label class="label">موبایل</label><input class="input ltr" name="admin_mobile" value="<%= o('admin_mobile') %>" placeholder="09121234567" data-en-digits><% if (e('admin_mobile')) { %><span class="error-text"><%= e('admin_mobile') %></span><% } %></div>
+          <div class="<%= fieldCls('admin_password') %> col-6"><label class="label">رمز عبور <span class="req">*</span></label><input class="input ltr" type="password" name="admin_password" required minlength="8" autocomplete="new-password"><% if (e('admin_password')) { %><span class="error-text"><%= e('admin_password') %></span><% } else { %><span class="help">حداقل ۸ کاراکتر، شامل حرف و عدد</span><% } %></div>
+          <div class="<%= fieldCls('admin_password2') %> col-6"><label class="label">تکرار رمز عبور <span class="req">*</span></label><input class="input ltr" type="password" name="admin_password2" required autocomplete="new-password"><% if (e('admin_password2')) { %><span class="error-text"><%= e('admin_password2') %></span><% } %></div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <button class="btn btn-primary btn-lg" type="submit"><%- icon('zap', 'icon-sm') %>نصب سامانه</button>
+        <button class="btn btn-ghost" data-prev type="button">مرحله قبل</button>
+      </div>
+    </div>
+  </form>
+  <p class="text-center text-xs text-muted mt-4">سامانه مدیریت آموزشگاه «مای‌کلس» · نسخه <span class="ltr"><%= appVersion %></span></p>
+</div>
+<script src="<%= asset('js/app.js') %>" defer></script>
+</body>
+</html>

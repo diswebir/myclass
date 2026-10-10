@@ -1,0 +1,43 @@
+<% const evLabel = {}; events.forEach(function (e) { evLabel[e.key] = e.label; }); Object.assign(evLabel, { 'bulk.pattern': 'ارسال گروهی (پترن)', 'bulk.text': 'ارسال گروهی (متنی)' });
+   const bk = Object.keys(byEvent).sort(function (a, b) { return byEvent[b] - byEvent[a]; }).slice(0, 8); %>
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('message-square') %>پنل پیامک</h1><p class="page-sub">اتصال به IPPanel Edge · پترن جداگانه برای هر رویداد</p></div>
+  <div class="page-actions">
+    <% if (can('sms.patterns')) { %><a class="btn" href="<%= url('/panel/sms/patterns') %>"><%- icon('settings-2', 'icon-sm') %>پترن‌ها</a><% } %>
+    <a class="btn" href="<%= url('/panel/sms/logs') %>"><%- icon('list', 'icon-sm') %>گزارش ارسال</a>
+    <% if (can('sms.send')) { %><a class="btn btn-primary" href="<%= url('/panel/sms/send') %>"><%- icon('send', 'icon-sm') %>ارسال گروهی</a><% } %>
+  </div>
+</div>
+<% if (!configured) { %>
+  <div class="alert alert-warning"><%- icon('alert-triangle') %><div>اتصال به سامانه پیامک تنظیم نشده است. کلید API و شماره فرستنده IPPanel را در <% if (can('settings.manage')) { %><a href="<%= url('/panel/settings?tab=sms') %>">تنظیمات پیامک</a><% } else { %>تنظیمات پیامک<% } %> وارد کنید.</div></div>
+<% } else if (!enabled) { %>
+  <div class="alert alert-info"><%- icon('info') %><div>ارسال پیامک در تنظیمات غیرفعال است؛ پیامک‌ها ثبت می‌شوند ولی ارسال نمی‌شوند.</div></div>
+<% } %>
+<div class="grid grid-4 mb-4">
+  <div class="card stat"><div class="stat-icon success"><%- icon('wallet') %></div><div><div class="stat-label">اعتبار پنل</div><div class="stat-value" <%- configured ? 'data-sms-credit="' + url('/panel/sms/api/credit') + '" data-unit="ریال"' : '' %>><%= configured ? '…' : '—' %></div></div></div>
+  <div class="card stat"><div class="stat-icon"><%- icon('send') %></div><div><div class="stat-label">ارسال امروز</div><div class="stat-value"><%= fa(todayCount) %></div></div></div>
+  <div class="card stat"><div class="stat-icon info"><%- icon('message-square') %></div><div><div class="stat-label">۳۰ روز اخیر</div><div class="stat-value"><%= fa(total30) %></div><div class="stat-foot"><span class="<%= failed30 ? 'text-danger' : '' %>"><%= fa(failed30) %> ناموفق</span></div></div></div>
+  <a class="card stat" href="<%= url('/panel/sms/patterns') %>"><div class="stat-icon purple"><%- icon('settings-2') %></div><div><div class="stat-label">پترن‌های فعال</div><div class="stat-value"><%= fa(activeCount) %><small>از <%= fa(totalEvents) %> رویداد</small></div><div class="progress progress-sm mt-2" style="width:120px"><span style="width:<%= pct(activeCount, totalEvents) %>%"></span></div></div></a>
+</div>
+<div class="grid grid-side mb-4">
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%- icon('bar-chart-3') %>آمار ارسال ۳۰ روز اخیر</h2></div>
+    <div class="card-body"><div class="chart" data-chart="ch-sms"></div></div>
+    <script type="application/json" id="ch-sms"><%- json({ type: 'bar', stacked: true, height: 290, labels: labels, series: [{ name: 'موفق', data: sent }, { name: 'ناموفق', data: failed }], colors: ['#10b981', '#ef4444'], columnWidth: '60%' }) %></script>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%- icon('pie-chart') %>به تفکیک رویداد</h2></div>
+    <div class="card-body"><% if (!bk.length) { %><p class="text-muted text-center">پیامکی ارسال نشده است.</p><% } else { %><div class="chart" data-chart="ch-events"></div><% } %></div>
+    <script type="application/json" id="ch-events"><%- json({ type: 'donut', height: 290, labels: bk.map(function (k) { return evLabel[k] || k; }), series: bk.map(function (k) { return byEvent[k]; }), legend: false }) %></script>
+  </div>
+</div>
+<div class="card">
+  <div class="card-head"><h2 class="card-title"><%- icon('clock') %>آخرین پیامک‌ها</h2><a class="btn btn-ghost btn-sm" href="<%= url('/panel/sms/logs') %>">همه</a></div>
+  <% if (!recent.length) { %><%- include('partials/empty', { emptyIcon: 'message-square', emptyTitle: 'هنوز پیامکی ارسال نشده است' }) %><% } else { %>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>گیرنده</th><th>رویداد</th><th>نوع</th><th>زمان</th><th>وضعیت</th></tr></thead>
+    <tbody>
+    <% recent.forEach(function (l) { %><tr><td><%= l.first_name ? l.first_name + ' ' + l.last_name : '' %> <span class="ltr d-inline text-muted text-sm"><%= fa(l.mobile || '') %></span></td><td class="text-sm"><%= evLabel[l.event_key] || l.event_key || '—' %></td><td class="text-sm"><%= l.type === 'pattern' ? 'پترن' : 'متنی' %></td><td class="text-sm text-muted"><%= rel(l.created_at) %></td><td><%- badge('sms', l.status) %></td></tr><% }) %>
+    </tbody>
+  </table></div><% } %>
+</div>

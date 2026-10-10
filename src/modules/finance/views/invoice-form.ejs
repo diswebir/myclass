@@ -1,0 +1,61 @@
+<% const maxI = Number(s('finance.max_installments', 6)); const instOn = s('finance.installments_enabled', true); %>
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('file-plus') %>صدور فاکتور جدید</h1><p class="page-sub">صدور صورتحساب نقدی یا اقساطی برای دانشجو</p></div>
+  <div class="page-actions"><a class="btn btn-ghost" href="<%= url('/panel/invoices') %>"><%- icon('arrow-right', 'icon-sm') %>بازگشت</a></div>
+</div>
+<form method="post" action="<%= url('/panel/invoices') %>" data-installment-calc>
+  <%- include('partials/csrf') %>
+  <div class="grid grid-side">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('user') %>دانشجو و کلاس</h2></div>
+        <div class="card-body"><div class="form-grid">
+          <div class="field col-12<%= err('user_id') ? ' has-error' : '' %>" data-user-picker="<%= url('/panel/api/users/search?kind=student') %>" data-name="user_id" data-single>
+            <label class="label">دانشجو <span class="req">*</span></label>
+            <div class="input-icon"><%- icon('search', 'icon-sm') %><input class="input" type="search" placeholder="جستجو با نام، موبایل یا کد ملی..." autocomplete="off"></div>
+            <div data-picked><% if (student) { %><span class="chip chip-removable"><%= student.first_name %> <%= student.last_name %><input type="hidden" name="user_id" value="<%= student.id %>"><button type="button">×</button></span><% } %></div>
+            <% if (err('user_id')) { %><span class="error-text"><%= err('user_id') %></span><% } %>
+          </div>
+          <div class="field col-6"><label class="label">کلاس</label>
+            <select class="input" name="class_id" id="inv-class" data-fill-amount="#inv-amount">
+              <option value="" data-price="">بدون کلاس (فاکتور متفرقه)</option>
+              <% classes.forEach(function (c) { %><option value="<%= c.id %>" data-price="<%= c.price || 0 %>"<%= String(old('class_id', preClass || (enrollments[0] && enrollments[0].class_id) || '')) === String(c.id) ? ' selected' : '' %>><%= c.title %><%= c.price ? ' — ' + num(c.price) : '' %></option><% }) %>
+            </select>
+            <% if (enrollments.length) { %><span class="help">کلاس‌های این دانشجو: <%= enrollments.map(function (e) { return e.title; }).join('، ') %></span><% } %>
+          </div>
+          <%- include('partials/field', { name: 'title', label: 'عنوان فاکتور', col: 6, placeholder: 'خالی = شهریه کلاس' }) %>
+          <div class="col-12"><label class="switch"><input type="checkbox" name="enroll" value="1" checked><span class="track"></span>در صورت عدم ثبت‌نام، دانشجو در کلاس ثبت‌نام شود</label></div>
+        </div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2 class="card-title"><%- icon('banknote') %>مبلغ و نحوه پرداخت</h2></div>
+        <div class="card-body"><div class="form-grid">
+          <%- include('partials/field', { name: 'amount', label: 'مبلغ کل', type: 'money', col: 4, required: true, attrs: 'id="inv-amount" data-money-words' }) %>
+          <%- include('partials/field', { name: 'discount', label: 'تخفیف', type: 'money', col: 4, value: 0 }) %>
+          <div class="field col-4"><label class="label">مبلغ قابل پرداخت</label><div class="input fw-8" data-total style="background:var(--surface-3)">—</div></div>
+          <div class="field col-12"><label class="label">نوع پرداخت</label>
+            <div class="options-grid">
+              <label class="check-card"><input type="radio" name="payment_type" value="cash"<%= old('payment_type', 'cash') === 'cash' ? ' checked' : '' %>><span><b>نقدی (یکجا)</b><small>پرداخت کامل در یک مرحله</small></span></label>
+              <% if (instOn) { %><label class="check-card"><input type="radio" name="payment_type" value="installment"<%= old('payment_type') === 'installment' ? ' checked' : '' %>><span><b>اقساطی</b><small>تقسیم مبلغ به چند قسط ماهانه</small></span></label><% } %>
+            </div>
+          </div>
+          <div class="field col-4" data-show-when="payment_type=installment"><label class="label">تعداد اقساط</label><select class="input" name="installments_count"><% for (let n = 2; n <= maxI; n++) { %><option value="<%= n %>"<%= n === 3 ? ' selected' : '' %>><%= fa(n) %> قسط</option><% } %></select></div>
+          <div class="field col-4" data-show-when="payment_type=installment"><label class="label">پیش‌پرداخت</label><div class="input-group"><input class="input ltr" name="down_payment" data-money value="0"><span class="addon"><%= s('finance.currency', 'تومان') %></span></div><span class="help">حداقل <%= fa(s('finance.min_down_percent', 30)) %>٪ پیشنهاد می‌شود</span></div>
+          <%- include('partials/field', { name: 'due_date', label: 'تاریخ سررسید (اولین قسط)', type: 'date', col: 4, value: jinput(jalali.today()) }) %>
+          <div class="col-12" data-schedule-preview></div>
+          <%- include('partials/field', { name: 'notes', label: 'توضیحات', type: 'textarea', col: 12, rows: 2 }) %>
+        </div></div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card" style="position:sticky;top:80px">
+        <div class="card-head"><h2 class="card-title"><%- icon('check-circle-2') %>ثبت فاکتور</h2></div>
+        <div class="card-body text-sm text-2">
+          <p>پس از صدور، اقساط به صورت خودکار ساخته شده و یادآوری‌ها طبق تنظیمات مالی ارسال می‌شوند.</p>
+          <% if (moduleOn('sms')) { %><label class="switch"><input type="checkbox" name="notify" value="1" checked><span class="track"></span>اطلاع‌رسانی پیامکی به دانشجو</label><% } %>
+        </div>
+        <div class="card-foot"><button class="btn btn-primary btn-block" type="submit"><%- icon('save', 'icon-sm') %>صدور فاکتور</button></div>
+      </div>
+    </div>
+  </div>
+</form>

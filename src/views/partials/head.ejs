@@ -1,0 +1,19 @@
+<%
+  const _primary = s('appearance.primary_color', '#4f46e5') || '#4f46e5';
+  const _hex = _primary.replace('#', '');
+  const _rgb = [0, 2, 4].map((i) => parseInt(_hex.substr(i, 2), 16) || 0).join(', ');
+  const _theme = s('appearance.default_theme', 'light');
+  const _inst = s('general.institute_name', 'آموزشگاه');
+%>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="csrf-token" content="<%= locals.csrfToken || '' %>">
+<meta name="theme-color" content="<%= _primary %>">
+<meta name="robots" content="<%= typeof robots !== 'undefined' ? robots : 'noindex, nofollow' %>">
+<title><%= locals.title ? locals.title + ' | ' : '' %><%= _inst %></title>
+<link rel="icon" href="<%= url('/favicon.ico') %>">
+<link rel="stylesheet" href="<%= asset('css/app.css') %>">
+<link rel="stylesheet" href="<%= asset('vendor/jalalidatepicker/jalalidatepicker.min.css') %>">
+<style>:root{--primary:<%= _primary %>;--primary-rgb:<%= _rgb %>;}<%- (s('appearance.custom_css', '') || '').replace(/<\/?style/gi, '') %></style>
+<script type="application/json" id="app-config"><%- json({ base, icons: url('/public/img/icons.svg') + '?v=' + appVersion, faDigits: s('general.persian_digits', true) !== false, currency: s('finance.currency', 'تومان'), roundTo: s('finance.round_to', 1000) }) %></script>
+<script type="application/json" id="flash-data"><%- json(locals.flashes || []) %></script>

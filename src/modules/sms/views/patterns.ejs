@@ -1,0 +1,26 @@
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('settings-2') %>پترن‌های پیامک</h1><p class="page-sub">برای هر رویداد یک پترن اختصاصی در IPPanel تعریف و کد آن را اینجا ثبت کنید.</p></div>
+  <div class="page-actions"><a class="btn btn-ghost" href="<%= url('/panel/sms') %>"><%- icon('arrow-right', 'icon-sm') %>پنل پیامک</a></div>
+</div>
+<div class="alert alert-info"><%- icon('info') %><div>
+  <b>راهنما:</b> ابتدا در پنل IPPanel پترن را با متغیرهای دلخواه (مثلاً <span class="ltr d-inline mono">%name%</span>) بسازید و پس از تأیید، کد پترن را در اینجا وارد کنید. سپس برای هر متغیر پترن، مقدار ارسالی را با ترکیب متن و توکن‌های سامانه (مثل <span class="mono">{name}</span>) مشخص کنید.
+</div></div>
+<div class="stack">
+<% Object.keys(groups).forEach(function (g) { %>
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%= g %></h2></div>
+    <ul class="list">
+      <% groups[g].forEach(function (e) { const p = e.pattern || {}; const on = p.is_active && p.pattern_code; %>
+      <li><a class="list-item" href="<%= url('/panel/sms/patterns/' + e.key) %>"<%= e.moduleEnabled === false ? ' style="opacity:.5"' : '' %>>
+        <span class="list-icon" style="<%= on ? 'background:var(--success-bg);color:var(--success-fg)' : '' %>"><%- icon(on ? 'check-circle-2' : 'circle-dot', 'icon-sm') %></span>
+        <span class="grow">
+          <span class="list-title"><%= e.label %></span>
+          <span class="list-sub">گیرنده: <%= e.recipient || 'کاربر' %><% if (p.pattern_code) { %> · کد: <span class="ltr d-inline mono"><%= p.pattern_code %></span><% } %><% if (p.vars && p.vars.length) { %> · <%= fa(p.vars.length) %> متغیر<% } %></span>
+        </span>
+        <span class="list-end"><% if (on) { %><span class="badge badge-success">فعال</span><% } else if (p.pattern_code) { %><span class="badge badge-gray">غیرفعال</span><% } else { %><span class="badge badge-warning">تنظیم نشده</span><% } %></span>
+      </a></li>
+      <% }) %>
+    </ul>
+  </div>
+<% }) %>
+</div>

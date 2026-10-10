@@ -1,0 +1,84 @@
+<!doctype html>
+<%
+  const _theme = s('appearance.default_theme', 'light');
+  const _u = user;
+  const _name = _u.first_name + ' ' + _u.last_name;
+  const _logo = s('general.logo');
+  const _inst = s('general.institute_name', 'آموزشگاه');
+%>
+<html lang="fa" dir="rtl" data-theme="<%= _theme === 'dark' ? 'dark' : 'light' %>" data-sidebar="<%= s('appearance.sidebar_style', 'light') %>" data-radius="<%= s('appearance.radius', 'md') %>" data-density="<%= s('appearance.density', 'comfortable') %>">
+<head>
+<%- include('../partials/head') %>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar" aria-label="منوی اصلی">
+    <a class="sidebar-brand" href="<%= url('/panel') %>">
+      <span class="brand-logo"><% if (_logo) { %><img src="<%= media(_logo) %>" alt=""><% } else { %><%= initials(_inst) %><% } %></span>
+      <span><span class="brand-name"><%= s('general.institute_short_name') || _inst %></span><span class="brand-sub d-block"><%= s('general.slogan', 'سامانه مدیریت آموزش') %></span></span>
+    </a>
+    <nav class="sidebar-nav">
+      <% (menu || []).forEach(function (sec) { %>
+      <div class="nav-section">
+        <div class="nav-title"><%= sec.label %></div>
+        <% sec.items.forEach(function (it) { const b = it.badgeKey ? (menuBadges || {})[it.badgeKey] : 0; %>
+        <a class="nav-link<%= it.active ? ' active' : '' %>" href="<%= url(it.href) %>"<%- it.active ? ' aria-current="page"' : '' %>>
+          <%- icon(it.icon || 'circle-dot') %><span><%= it.label %></span>
+          <% if (b) { %><span class="nav-badge"><%= fa(b > 99 ? '99+' : b) %></span><% } %>
+        </a>
+        <% }) %>
+      </div>
+      <% }) %>
+    </nav>
+    <div class="sidebar-foot"><span>مای‌کلس</span><span class="ltr">v<%= appVersion %></span></div>
+  </aside>
+  <div class="backdrop"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-ghost btn-icon burger" type="button" data-sidebar-toggle aria-label="منو"><%- icon('menu') %></button>
+      <nav class="breadcrumbs" aria-label="مسیر">
+        <a href="<%= url('/panel') %>"><%- icon('home', 'icon-sm') %></a>
+        <% (breadcrumbs || []).forEach(function (b, i) { %>
+          <span class="sep"><%- icon('chevron-left', 'icon-sm') %></span>
+          <% if (b.href && i < breadcrumbs.length - 1) { %><a href="<%= url(b.href) %>"><%= b.label %></a><% } else { %><span class="current"><%= b.label %></span><% } %>
+        <% }) %>
+      </nav>
+      <div class="topbar-actions">
+        <% if (can('users.view')) { %>
+        <form class="topbar-search" action="<%= url('/panel/students') %>" method="get" role="search">
+          <%- icon('search', 'icon-sm') %>
+          <input type="search" name="q" placeholder="جستجوی دانشجو (نام، موبایل، کد ملی)..." aria-label="جستجو">
+        </form>
+        <% } %>
+        <button class="btn btn-ghost btn-icon" type="button" data-theme-toggle title="تغییر حالت روشن/تیره" aria-label="حالت تیره"><%- icon('moon') %></button>
+        <div class="dropdown">
+          <button class="user-chip" type="button" data-dropdown aria-haspopup="true">
+            <span class="meta"><b><%= _name %></b><small><%= _u.role_name %></small></span>
+            <span class="avatar avatar-sm"><% if (_u.avatar) { %><img src="<%= media(_u.avatar) %>" alt=""><% } else { %><%= initials(_name) %><% } %></span>
+          </button>
+          <div class="dropdown-menu">
+            <div class="dropdown-head"><b><%= _name %></b><div class="text-xs text-muted ltr text-left"><%= _u.username %></div></div>
+            <a class="dropdown-item" href="<%= url('/panel/profile') %>"><%- icon('user') %>پروفایل من</a>
+            <a class="dropdown-item" href="<%= url('/panel/profile#password') %>"><%- icon('key-round') %>تغییر رمز عبور</a>
+            <% if (can('settings.manage')) { %><a class="dropdown-item" href="<%= url('/panel/settings') %>"><%- icon('settings') %>تنظیمات</a><% } %>
+            <% if (s('appearance.home_enabled', true)) { %><a class="dropdown-item" href="<%= url('/') %>" target="_blank" rel="noopener"><%- icon('external-link') %>مشاهده سایت</a><% } %>
+            <div class="dropdown-divider"></div>
+            <form action="<%= url('/logout') %>" method="post" data-no-loading>
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="dropdown-item danger" type="submit"><%- icon('log-out') %>خروج از حساب</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content" id="content">
+      <%- body %>
+    </main>
+    <footer class="footer"><%= s('appearance.footer_text') || ('© ' + fa(jalali.toJalaliParts(jalali.today()).jy) + ' ' + _inst + ' - همه حقوق محفوظ است.') %></footer>
+  </div>
+</div>
+<%- include('../partials/scripts') %>
+</body>
+</html>

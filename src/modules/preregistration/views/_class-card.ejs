@@ -1,0 +1,20 @@
+<div class="card class-card" style="--c:<%= c.color || c.category_color || 'var(--primary)' %>">
+  <div class="cover"></div>
+  <div class="body">
+    <div class="flex justify-between items-center gap-2 mb-2">
+      <% if (c.category_name) { %><span class="badge badge-gray no-dot"><%= c.category_name %></span><% } else { %><span></span><% } %>
+      <% if (c.full) { %><span class="badge badge-danger">تکمیل ظرفیت</span><% } else if (c.status === 'open') { %><span class="badge badge-success">در حال ثبت‌نام</span><% } else { %><span class="badge badge-info">در حال برگزاری</span><% } %>
+    </div>
+    <a class="title" href="<%= url('/courses/' + c.id) %>"><%= c.title %></a>
+    <div class="meta">
+      <% if (c.start_date) { %><span><%- icon('calendar') %>شروع: <%= jdate(c.start_date) %></span><% } %>
+      <% if (c.week_days) { %><span><%- icon('repeat') %><%= weekDaysLabel(c.week_days) %><% if (c.start_time) { %> · <%= fa(c.start_time) %> تا <%= fa(c.end_time || '') %><% } %></span><% } %>
+      <% if (c.sessions) { %><span><%- icon('layers') %><%= fa(c.sessions) %> جلسه<% if (c.total_hours) { %> · <%= fa(c.total_hours) %> ساعت<% } %></span><% } %>
+      <% if (c.level) { %><span><%- icon('signal') %>سطح: <%= c.level %></span><% } %>
+    </div>
+  </div>
+  <div class="foot">
+    <% if (s('prereg.show_price', true)) { %><span class="price"><%= c.price ? money(c.price) : 'رایگان' %><% if (c.price) { %> <small><%= s('finance.currency', 'تومان') %></small><% } %></span><% } else { %><span></span><% } %>
+    <% if (c.canRegister && !c.full) { %><a class="btn btn-primary btn-sm" href="<%= url('/register?class=' + c.id) %>">پیش‌ثبت‌نام</a><% } else { %><a class="btn btn-sm" href="<%= url('/courses/' + c.id) %>">جزئیات</a><% } %>
+  </div>
+</div>

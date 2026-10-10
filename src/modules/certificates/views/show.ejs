@@ -1,0 +1,39 @@
+<% const valid = cert.status === 'valid'; %>
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('award') %>مدرک <span class="ltr d-inline mono"><%= cert.serial %></span> <%- badge('certificate', cert.status) %></h1><p class="page-sub"><%= cert.first_name %> <%= cert.last_name %> · <%= cert.class_title || '' %></p></div>
+  <div class="page-actions">
+    <a class="btn btn-primary" href="<%= url('/panel/certificates/' + cert.id + '/print') %>" target="_blank"><%- icon('printer', 'icon-sm') %>چاپ / PDF</a>
+    <% if (can('certificates.revoke')) { %>
+      <% if (valid) { %><form method="post" action="<%= url('/panel/certificates/' + cert.id + '/revoke') %>" data-confirm="این مدرک ابطال شود؟ در استعلام عمومی «ابطال شده» نمایش داده می‌شود." data-confirm-input="دلیل ابطال" data-confirm-name="reason"><%- include('partials/csrf') %><button class="btn btn-soft-danger" type="submit"><%- icon('ban', 'icon-sm') %>ابطال</button></form>
+      <% } else { %><form method="post" action="<%= url('/panel/certificates/' + cert.id + '/revoke') %>"><%- include('partials/csrf') %><button class="btn btn-soft" type="submit"><%- icon('rotate-ccw', 'icon-sm') %>بازگردانی اعتبار</button></form><% } %>
+    <% } %>
+  </div>
+</div>
+<div class="grid grid-side">
+  <div class="card" style="overflow:auto">
+    <div class="card-body" style="display:flex;justify-content:center;background:var(--surface-3)">
+      <div style="zoom:<%= render.design.orientation === 'portrait' ? .55 : .6 %>;box-shadow:0 10px 40px rgba(0,0,0,.15)"><%- include('_cert', Object.assign({ cert: cert }, render)) %></div>
+    </div>
+  </div>
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 class="card-title"><%- icon('info') %>اطلاعات مدرک</h2></div>
+      <div class="card-body"><dl class="kv">
+        <dt>دارنده</dt><dd><a href="<%= url('/panel/users/' + cert.user_id) %>"><%= cert.first_name %> <%= cert.last_name %></a></dd>
+        <% if (cert.class_title) { %><dt>کلاس</dt><dd><a href="<%= url('/panel/classes/' + cert.class_id) %>"><%= cert.class_title %></a></dd><% } %>
+        <dt>شماره سریال</dt><dd class="ltr text-right mono"><%= cert.serial %></dd>
+        <dt>کد استعلام</dt><dd class="ltr text-right mono"><%= cert.verify_code %></dd>
+        <dt>تاریخ صدور</dt><dd><%= jdate(cert.issued_date) %></dd>
+        <% if (cert.grade) { %><dt>نمره</dt><dd><%= fa(cert.grade) %></dd><% } %>
+        <% if (cert.revoked_reason) { %><dt>دلیل ابطال</dt><dd class="text-danger"><%= cert.revoked_reason %></dd><% } %>
+      </dl></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2 class="card-title"><%- icon('qr-code') %>لینک استعلام</h2></div>
+      <div class="card-body">
+        <div class="input-group"><input class="input ltr text-sm" value="<%= render.verifyUrl %>" readonly><button class="btn addon" type="button" data-copy="<%= render.verifyUrl %>"><%- icon('copy', 'icon-sm') %></button></div>
+        <a class="btn btn-ghost btn-sm mt-2" href="<%= render.verifyUrl %>" target="_blank"><%- icon('external-link', 'icon-sm') %>مشاهده صفحه استعلام</a>
+      </div>
+    </div>
+  </div>
+</div>

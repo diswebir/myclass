@@ -1,0 +1,58 @@
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon(page.icon) %><%= page.title %></h1><p class="page-sub">مدیریت <%= page.title %>، جستجو، فیلتر و خروجی اکسل</p></div>
+  <div class="page-actions">
+    <% if (can('users.export')) { %><a class="btn" href="<%= url('/panel/users/export') %><%= qs({ page: pageKey }) %>"><%- icon('download', 'icon-sm') %>خروجی اکسل</a><% } %>
+    <% if (can('users.import') && pageKey !== 'teachers') { %><a class="btn" href="<%= url('/panel/users/import') %>"><%- icon('upload', 'icon-sm') %>ورود گروهی</a><% } %>
+    <% if (can('users.create')) { %><a class="btn btn-primary" href="<%= url('/panel/' + pageKey + '/new') %>"><%- icon('user-plus', 'icon-sm') %>افزودن <%= page.single %></a><% } %>
+  </div>
+</div>
+
+<div class="grid grid-3 mb-4">
+  <div class="card stat"><div class="stat-icon"><%- icon(page.icon) %></div><div><div class="stat-label">کل <%= page.title %></div><div class="stat-value"><%= fa(stats.total) %></div></div></div>
+  <div class="card stat"><div class="stat-icon success"><%- icon('check-circle-2') %></div><div><div class="stat-label">حساب‌های فعال</div><div class="stat-value"><%= fa(stats.active) %></div><div class="stat-foot"><%= fa(pct(stats.active, stats.total)) %>٪ از کل</div></div></div>
+  <div class="card stat"><div class="stat-icon info"><%- icon('user-plus') %></div><div><div class="stat-label">عضو جدید در این ماه</div><div class="stat-value"><%= fa(stats.month) %></div></div></div>
+</div>
+
+<div class="card">
+  <form class="filters" method="get">
+    <div class="field grow"><label class="label">جستجو</label><div class="input-icon"><%- icon('search', 'icon-sm') %><input class="input" name="q" value="<%= query.q || '' %>" placeholder="نام، موبایل، کد ملی یا نام کاربری"></div></div>
+    <% if (roles.length > 1) { %>
+    <div class="field"><label class="label">نقش</label><select class="input" name="role" data-autosubmit><option value="">همه نقش‌ها</option><% roles.forEach(function (r) { %><option value="<%= r.id %>"<%= String(query.role) === String(r.id) ? ' selected' : '' %>><%= r.name %></option><% }) %></select></div>
+    <% } %>
+    <% if (classes.length && pageKey !== 'teachers') { %>
+    <div class="field"><label class="label">کلاس</label><select class="input" name="class" data-autosubmit><option value="">همه کلاس‌ها</option><% classes.forEach(function (c) { %><option value="<%= c.id %>"<%= String(query.class) === String(c.id) ? ' selected' : '' %>><%= c.title %></option><% }) %></select></div>
+    <% } %>
+    <div class="field"><label class="label">وضعیت</label><select class="input" name="status" data-autosubmit><option value="">همه</option><option value="active"<%= query.status === 'active' ? ' selected' : '' %>>فعال</option><option value="inactive"<%= query.status === 'inactive' ? ' selected' : '' %>>غیرفعال</option></select></div>
+    <div class="field"><label class="label">مرتب‌سازی</label><select class="input" name="sort" data-autosubmit><option value="">جدیدترین</option><option value="name"<%= query.sort === 'name' ? ' selected' : '' %>>نام خانوادگی</option><option value="login"<%= query.sort === 'login' ? ' selected' : '' %>>آخرین ورود</option></select></div>
+    <button class="btn btn-primary" type="submit"><%- icon('filter', 'icon-sm') %>اعمال</button>
+    <% if (query.q || query.role || query.status || query.class) { %><a class="btn btn-ghost" href="<%= url(page.href) %>">حذف فیلترها</a><% } %>
+  </form>
+
+  <% if (!data.rows.length) { %>
+    <%- include('partials/empty', { emptyIcon: page.icon, emptyTitle: 'کاربری یافت نشد', emptyText: query.q ? 'عبارت جستجو را تغییر دهید.' : 'هنوز ' + page.single + 'ی ثبت نشده است.', emptyAction: can('users.create') ? { href: '/panel/' + pageKey + '/new', label: 'افزودن ' + page.single, icon: 'user-plus' } : null }) %>
+  <% } else { %>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>نام</th><th>موبایل</th><th>کد ملی</th><% if (!page.kind) { %><th>نقش</th><% } %><th><%= page.kind === 'teacher' ? 'کلاس‌های تدریس' : 'کلاس‌ها' %></th><th>وضعیت</th><th>آخرین ورود</th><th class="actions"></th></tr></thead>
+      <tbody>
+      <% data.rows.forEach(function (u) { const n = u.first_name + ' ' + u.last_name; %>
+        <tr>
+          <td><a class="person" href="<%= url('/panel/users/' + u.id) %>"><span class="avatar avatar-sm"><% if (u.avatar) { %><img src="<%= media(u.avatar) %>" alt=""><% } else { %><%= initials(n) %><% } %></span><span><span class="person-name"><%= n %></span><span class="person-sub ltr text-right"><%= u.username %></span></span></a></td>
+          <td class="ltr text-right num"><%= u.mobile ? fa(u.mobile) : '—' %></td>
+          <td class="num"><%= u.national_code ? fa(u.national_code) : '—' %></td>
+          <% if (!page.kind) { %><td><span class="badge no-dot" style="background:<%= u.role_color || '#64748b' %>1a;color:<%= u.role_color || '#64748b' %>"><%= u.role_name %></span></td><% } %>
+          <td><%= fa((u.role_kind === 'teacher' ? teachCounts[u.id] : enrollCounts[u.id]) || 0) %></td>
+          <td><%- u.is_active ? badge('active', 1) : badge('active', 0) %></td>
+          <td class="text-sm text-muted"><%= u.last_login_at ? rel(u.last_login_at) : 'هرگز' %></td>
+          <td class="actions">
+            <a class="btn btn-ghost btn-icon btn-sm" href="<%= url('/panel/users/' + u.id) %>" title="مشاهده"><%- icon('eye', 'icon-sm') %></a>
+            <% if (can('users.edit')) { %><a class="btn btn-ghost btn-icon btn-sm" href="<%= url('/panel/users/' + u.id + '/edit') %>" title="ویرایش"><%- icon('pencil', 'icon-sm') %></a><% } %>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <%- include('partials/pagination', { data }) %>
+  <% } %>
+</div>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fa" dir="rtl" data-theme="light">
+<head><%- include('partials/head') %></head>
+<body class="doc-body"<%= query.autoprint ? ' data-autoprint' : '' %>>
+<% const remain = Number(inv.total) - Number(inv.paid); const logo = s('general.logo'); %>
+<div class="doc-toolbar"><button class="btn btn-primary" type="button" data-print><%- icon('printer', 'icon-sm') %>چاپ / ذخیره PDF</button><a class="btn btn-ghost" href="<%= url('/panel/invoices/' + inv.id) %>">بازگشت</a></div>
+<div class="doc">
+  <div class="doc-head">
+    <div class="doc-brand">
+      <% if (logo) { %><img src="<%= media(logo) %>" alt=""><% } %>
+      <div><h1><%= s('general.institute_name', 'آموزشگاه') %></h1><p><%= s('general.address', '') %></p><p class="ltr text-right"><%= fa(s('general.phone', '') || '') %></p></div>
+    </div>
+    <div class="doc-meta">
+      <div class="doc-title">صورتحساب شهریه</div>
+      شماره: <b class="ltr d-inline"><%= inv.invoice_no %></b><br>
+      تاریخ صدور: <b><%= jdate(inv.issue_date) %></b><br>
+      وضعیت: <b><%= statusLabel('invoice', inv.status) %></b>
+    </div>
+  </div>
+  <div class="party">
+    <div><b>مشخصات دانشجو</b><br>نام: <%= inv.first_name %> <%= inv.last_name %><% if (inv.father_name) { %> (فرزند <%= inv.father_name %>)<% } %><br>کد ملی: <%= fa(inv.national_code || '—') %><br>موبایل: <span class="ltr d-inline"><%= fa(inv.mobile || '—') %></span></div>
+    <div><b>شرح</b><br><%= inv.title %><% if (inv.class_title) { %><br>کلاس: <%= inv.class_title %> (<span class="ltr d-inline"><%= inv.class_code %></span>)<% } %><br>نوع پرداخت: <%= inv.payment_type === 'installment' ? 'اقساطی' : 'نقدی' %></div>
+  </div>
+  <table class="totals">
+    <tr><td>مبلغ کل</td><td><%= money(inv.amount) %></td></tr>
+    <tr><td>تخفیف</td><td><%= money(inv.discount) %></td></tr>
+    <tr class="grand"><td>مبلغ قابل پرداخت</td><td><%= money(inv.total) %></td></tr>
+    <tr><td>پرداخت شده</td><td><%= money(inv.paid) %></td></tr>
+    <tr><td>مانده</td><td><b><%= money(remain) %></b></td></tr>
+  </table>
+  <% if (installments.length > 1) { %>
+  <h3 style="font-size:14px">جدول اقساط</h3>
+  <table><thead><tr><th>قسط</th><th>سررسید</th><th>مبلغ</th><th>پرداخت شده</th><th>وضعیت</th></tr></thead><tbody>
+    <% installments.forEach(function (it) { %><tr><td><%= fa(it.seq) %></td><td><%= jdate(it.due_date) %></td><td><%= money(it.amount) %></td><td><%= num(it.paid_amount) %></td><td><%= statusLabel('installment', it.status) %></td></tr><% }) %>
+  </tbody></table>
+  <% } %>
+  <% if (payments.length) { %>
+  <h3 style="font-size:14px">پرداخت‌های تأیید شده</h3>
+  <table><thead><tr><th>تاریخ</th><th>مبلغ</th><th>روش</th><th>کد پیگیری</th></tr></thead><tbody>
+    <% payments.forEach(function (p) { %><tr><td><%= jdate(p.paid_date) %></td><td><%= money(p.amount) %></td><td><%= PAYMENT_METHODS[p.method] || p.method %></td><td class="ltr text-right"><%= fa(p.tracking_code || '—') %></td></tr><% }) %>
+  </tbody></table>
+  <% } %>
+  <% if (remain > 0 && cards.length) { %>
+  <p style="font-size:12.5px"><b>حساب‌های واریز:</b> <%= cards.map(function (c) { return c.bank + ' ' + fa(c.card_number) + ' به نام ' + c.holder; }).join(' | ') %></p>
+  <% } %>
+  <div class="doc-foot">
+    <div><%= s('finance.invoice_footer', '') %><br>تاریخ چاپ: <%= jdt(jalali.now()) %></div>
+    <% if (inv.status === 'paid') { %><span class="doc-stamp" style="color:#059669">تسویه شد</span><% } else if (inv.status === 'canceled') { %><span class="doc-stamp" style="color:#dc2626">باطل شد</span><% } %>
+    <div class="sign">مهر و امضای <%= s('general.institute_short_name', '') || 'آموزشگاه' %></div>
+  </div>
+</div>
+<%- include('partials/scripts') %>
+</body>
+</html>

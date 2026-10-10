@@ -1,0 +1,31 @@
+<section class="landing-hero">
+  <div class="container" style="padding-top:0;padding-bottom:0">
+    <h1><%= s('appearance.home_title') || s('general.institute_name', 'آموزشگاه') %></h1>
+    <p><%= s('appearance.home_text') || s('general.slogan') || 'دوره‌های آموزشی تخصصی با اساتید مجرب؛ همین حالا ثبت‌نام کنید.' %></p>
+    <div class="flex gap-2 wrap" style="justify-content:center">
+      <% if (moduleOn('preregistration') && s('prereg.enabled', true)) { %><a class="btn btn-primary btn-lg" href="<%= url('/register') %>"><%- icon('clipboard-list', 'icon-sm') %>پیش‌ثبت‌نام آنلاین</a><% } %>
+      <a class="btn btn-lg" href="<%= url('/login') %>"><%- icon('user', 'icon-sm') %>ورود به پنل کاربری</a>
+    </div>
+    <div class="landing-stats">
+      <div><b><%= fa(classes.length) %></b><span>دوره فعال</span></div>
+      <div><b><%= fa(totalStudents) %></b><span>ثبت‌نام موفق</span></div>
+      <div><b><%= fa(categories.length || 1) %></b><span>حوزه آموزشی</span></div>
+    </div>
+  </div>
+</section>
+<div class="container">
+  <div class="flex justify-between items-center wrap gap-3 mb-4">
+    <h2 class="fw-8" style="font-size:20px;margin:0">دوره‌های آموزشی</h2>
+    <div class="flex gap-2 wrap items-center">
+      <% if (categories.length > 1) { %><div class="pills" id="cat-pills"><button class="pill active" type="button" data-cat="">همه</button><% categories.forEach(function (c) { %><button class="pill" type="button" data-cat="<%= c.id %>"><span class="dot" style="background:<%= c.color || 'var(--primary)' %>"></span><%= c.name %></button><% }) %></div><% } %>
+      <input class="input" style="width:220px" placeholder="جستجوی دوره..." data-filter-list="#courses > [data-course]">
+    </div>
+  </div>
+  <% if (!classes.length) { %>
+    <div class="card"><%- include('partials/empty', { emptyIcon: 'book-open', emptyTitle: 'در حال حاضر دوره‌ای برای ثبت‌نام وجود ندارد', emptyText: 'به‌زودی دوره‌های جدید اعلام می‌شوند.' }) %></div>
+  <% } else { %>
+  <div class="grid grid-3" id="courses">
+    <% classes.forEach(function (c) { %><div data-course data-cat="<%= c.category_id || '' %>"><%- include('_class-card', { c }) %></div><% }) %>
+  </div>
+  <% } %>
+</div>

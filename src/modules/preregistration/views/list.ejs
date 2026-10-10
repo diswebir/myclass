@@ -1,0 +1,39 @@
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('clipboard-list') %>پیش‌ثبت‌نام‌ها</h1><p class="page-sub">درخواست‌های ثبت‌شده از فرم عمومی سایت</p></div>
+  <div class="page-actions">
+    <a class="btn" href="<%= url('/register') %>" target="_blank"><%- icon('external-link', 'icon-sm') %>مشاهده فرم</a>
+    <a class="btn" href="<%= url('/panel/preregistrations/export') + qs({ page: null }) %>"><%- icon('download', 'icon-sm') %>خروجی اکسل</a>
+  </div>
+</div>
+<div class="grid grid-4 mb-4">
+  <% [['pending', 'در انتظار بررسی', 'clock', 'warning'], ['contacted', 'تماس گرفته شده', 'phone', 'info'], ['approved', 'تأیید / ثبت‌نام شده', 'check-circle-2', 'success'], ['rejected', 'رد شده', 'x-circle', 'danger']].forEach(function (x) { %>
+  <a class="card stat" href="<%= url('/panel/preregistrations') + qs({ status: query.status === x[0] ? null : x[0], page: null }) %>"<%= query.status === x[0] ? ' style="outline:2px solid var(--primary)"' : '' %>><div class="stat-icon <%= x[3] %>"><%- icon(x[2]) %></div><div><div class="stat-label"><%= x[1] %></div><div class="stat-value"><%= fa(counts[x[0]] || 0) %></div></div></a>
+  <% }) %>
+</div>
+<div class="card">
+  <form class="filters" method="get">
+    <div class="field grow"><div class="input-icon"><%- icon('search', 'icon-sm') %><input class="input" name="q" value="<%= query.q || '' %>" placeholder="نام، موبایل، کد ملی یا کد رهگیری"></div></div>
+    <select class="input" name="class" data-autosubmit style="width:auto"><option value="">همه دوره‌ها</option><% classes.forEach(function (c) { %><option value="<%= c.id %>"<%= String(query.class) === String(c.id) ? ' selected' : '' %>><%= c.title %></option><% }) %></select>
+    <select class="input" name="status" data-autosubmit style="width:auto"><option value="">همه وضعیت‌ها</option><% Object.keys(STATUS.prereg).forEach(function (k) { %><option value="<%= k %>"<%= query.status === k ? ' selected' : '' %>><%= STATUS.prereg[k][0] %></option><% }) %></select>
+    <button class="btn btn-primary" type="submit"><%- icon('filter', 'icon-sm') %>فیلتر</button>
+  </form>
+  <% if (!data.rows.length) { %><%- include('partials/empty', { emptyIcon: 'clipboard-list', emptyTitle: 'درخواستی یافت نشد' }) %><% } else { %>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>متقاضی</th><th>دوره</th><th>پرداخت</th><th>کد رهگیری</th><th>تاریخ</th><th>وضعیت</th><th></th></tr></thead>
+    <tbody>
+    <% data.rows.forEach(function (p) { %>
+      <tr>
+        <td><a class="person" href="<%= url('/panel/preregistrations/' + p.id) %>"><span class="avatar avatar-sm"><%= initials(p.first_name + ' ' + p.last_name) %></span><span><span class="person-name"><%= p.first_name %> <%= p.last_name %></span><span class="person-sub ltr"><%= fa(p.mobile) %></span></span></a></td>
+        <td class="text-sm"><%= p.class_title || 'عمومی' %></td>
+        <td class="text-sm"><%= p.payment_preference === 'cash' ? 'نقدی' : p.payment_preference === 'installment' ? 'اقساطی' : '—' %></td>
+        <td class="mono ltr text-right"><%= p.tracking_code %></td>
+        <td class="text-sm text-muted" title="<%= jdt(p.created_at) %>"><%= rel(p.created_at) %></td>
+        <td><%- badge('prereg', p.status) %></td>
+        <td class="actions"><a class="btn btn-ghost btn-sm" href="<%= url('/panel/preregistrations/' + p.id) %>">بررسی</a></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+  <%- include('partials/pagination', { data }) %>
+  <% } %>
+</div>

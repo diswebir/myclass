@@ -1,0 +1,49 @@
+<% const cur = s('finance.currency', 'تومان'); const activeCls = classes.filter(function (c) { return c.enroll_status === 'active'; }); %>
+<div class="hero mb-4">
+  <div style="position:relative;z-index:1">
+    <h1>سلام <%= locals.user.first_name %> عزیز 👋</h1>
+    <p><%= s('portal.welcome', 'به پنل کاربری خود خوش آمدید.') %></p>
+    <div class="hero-actions">
+      <a class="btn btn-white" href="<%= url('/panel/my/classes') %>"><%- icon('book-open', 'icon-sm') %>کلاس‌های من</a>
+      <% if (finance && finance.total > finance.paid) { %><a class="btn" href="<%= url('/panel/my/finance') %>"><%- icon('credit-card', 'icon-sm') %>پرداخت قسط</a><% } %>
+      <a class="btn" href="<%= url('/panel/profile') %>"><%- icon('user', 'icon-sm') %>پروفایل</a>
+    </div>
+  </div>
+</div>
+<div class="grid grid-4 mb-4">
+  <a class="card stat" href="<%= url('/panel/my/classes') %>"><div class="stat-icon"><%- icon('book-open') %></div><div><div class="stat-label">کلاس‌های فعال</div><div class="stat-value"><%= fa(activeCls.length) %></div><div class="stat-foot">از <%= fa(classes.length) %> کلاس</div></div></a>
+  <% if (moduleOn('attendance')) { %><div class="card stat"><div class="stat-icon success"><%- icon('check-square') %></div><div><div class="stat-label">میانگین حضور</div><div class="stat-value"><%= overallRate === null ? '—' : fa(overallRate) + '٪' %></div><% if (overallRate !== null) { %><div class="progress progress-sm mt-2<%= overallRate < 70 ? ' danger' : overallRate < 85 ? ' warning' : ' success' %>" style="width:120px"><span style="width:<%= overallRate %>%"></span></div><% } %></div></div><% } %>
+  <% if (finance) { const rem = finance.total - finance.paid; %><a class="card stat" href="<%= url('/panel/my/finance') %>"><div class="stat-icon <%= rem > 0 ? 'warning' : 'success' %>"><%- icon('wallet') %></div><div><div class="stat-label">مانده بدهی</div><div class="stat-value"><%= money(rem) %><small><%= cur %></small></div><div class="stat-foot"><%= finance.pending ? fa(finance.pending) + ' رسید در انتظار تأیید' : 'پرداخت‌شده: ' + money(finance.paid, true) %></div></div></a><% } %>
+  <% if (moduleOn('certificates')) { %><a class="card stat" href="<%= url('/panel/my/certificates') %>"><div class="stat-icon purple"><%- icon('award') %></div><div><div class="stat-label">مدارک دریافتی</div><div class="stat-value"><%= fa(certCount) %></div></div></a><% } %>
+</div>
+<% if (finance && finance.next) { const nx = finance.next; const late = nx.due_date < jalali.today(); %>
+<div class="alert alert-<%= late ? 'danger' : 'info' %>"><%- icon(late ? 'alert-triangle' : 'calendar-clock') %><div class="grow flex justify-between items-center wrap gap-2">
+  <span><%= late ? 'قسط معوق' : 'قسط بعدی' %>: <b><%= money(nx.amount - nx.paid_amount, true) %></b> · سررسید <b><%= jdate(nx.due_date) %></b> (<%= nx.invoice_title || nx.invoice_no %>)</span>
+  <a class="btn btn-sm <%= late ? 'btn-danger' : 'btn-primary' %>" href="<%= url('/panel/my/finance?invoice=' + nx.invoice_id + '&installment=' + nx.id) %>">پرداخت</a>
+</div></div>
+<% } %>
+<div class="grid grid-main">
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%- icon('calendar-days') %>جلسات پیش رو</h2></div>
+    <% if (!upcoming.length) { %><%- include('partials/empty', { emptyIcon: 'calendar', emptyTitle: 'جلسه‌ای در پیش ندارید' }) %><% } else { %>
+    <ul class="list"><% upcoming.forEach(function (u) { const isToday = u.date === jalali.today(); %><li><div class="list-item">
+      <span class="list-icon" style="background:<%= u.color || 'var(--primary)' %>22;color:<%= u.color || 'var(--primary)' %>"><%- icon('clock', 'icon-sm') %></span>
+      <span class="grow"><span class="list-title"><%= u.class_title %> <span class="text-muted text-sm">· جلسه <%= fa(u.session_no) %></span></span><span class="list-sub"><%= jdate(u.date, 'long') %> · <%= fa(u.start_time || '') %> تا <%= fa(u.end_time || '') %><%= u.location ? ' · ' + u.location : '' %></span></span>
+      <span class="list-end"><% if (isToday) { %><span class="badge badge-success">امروز</span><% } %><% if (u.online_link) { %> <a class="btn btn-soft btn-sm" href="<%= u.online_link %>" target="_blank" rel="noopener"><%- icon('video', 'icon-sm') %>ورود</a><% } %></span>
+    </div></li><% }) %></ul>
+    <% } %>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%- icon('book-open') %>کلاس‌های من</h2></div>
+    <% if (!classes.length) { %><%- include('partials/empty', { emptyIcon: 'book-open', emptyTitle: 'هنوز در کلاسی ثبت‌نام نشده‌اید' }) %><% } else { %>
+    <div class="card-body stack" style="gap:14px">
+      <% classes.slice(0, 6).forEach(function (c) { const a = att[c.id] || {}; %>
+      <a href="<%= url('/panel/my/classes/' + c.id) %>" class="d-block">
+        <div class="flex justify-between items-center text-sm mb-2"><span class="fw-6"><span class="dot" style="background:<%= c.color || 'var(--primary)' %>"></span> <%= c.title %></span><%- badge('enrollment', c.enroll_status) %></div>
+        <% if (a.rate !== undefined && a.rate !== null) { %><div class="flex items-center gap-2"><div class="progress progress-sm grow<%= a.rate < 70 ? ' danger' : a.rate < 85 ? ' warning' : ' success' %>"><span style="width:<%= a.rate %>%"></span></div><span class="text-xs text-muted">حضور <%= fa(a.rate) %>٪</span></div><% } %>
+      </a>
+      <% }) %>
+    </div>
+    <% } %>
+  </div>
+</div>

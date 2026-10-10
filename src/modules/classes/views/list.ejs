@@ -1,0 +1,87 @@
+<% const ST = STATUS.class; const allCount = Object.keys(counts).reduce(function (a, k) { return k === 'canceled' ? a : a + counts[k]; }, 0); %>
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('school') %>کلاس‌ها</h1><p class="page-sub">برنامه زمانی، دانشجویان، جلسات و وضعیت مالی همه کلاس‌ها</p></div>
+  <div class="page-actions">
+    <a class="btn" href="<%= url('/panel/calendar') %>"><%- icon('calendar-days', 'icon-sm') %>تقویم</a>
+    <% if (can('classes.categories')) { %><a class="btn" href="<%= url('/panel/categories') %>"><%- icon('tags', 'icon-sm') %>دسته‌بندی‌ها</a><% } %>
+    <% if (can('classes.create')) { %><a class="btn btn-primary" href="<%= url('/panel/classes/new') %>"><%- icon('plus', 'icon-sm') %>کلاس جدید</a><% } %>
+  </div>
+</div>
+
+<div class="tabs card mb-4" style="padding:0 12px">
+  <a class="tab<%= !query.status ? ' active' : '' %>" href="<%= qs({ status: '', page: '' }) || '?' %>">همه <span class="count"><%= fa(allCount) %></span></a>
+  <% ['running', 'open', 'draft', 'finished', 'canceled'].forEach(function (k) { %>
+    <a class="tab<%= query.status === k ? ' active' : '' %>" href="<%= qs({ status: k, page: '' }) %>"><%= ST[k][0] %> <span class="count"><%= fa(counts[k] || 0) %></span></a>
+  <% }) %>
+</div>
+
+<form class="filters card mb-4" method="get" style="padding:14px 18px">
+  <input type="hidden" name="status" value="<%= query.status || '' %>">
+  <input type="hidden" name="view" value="<%= viewMode === 'table' ? 'table' : '' %>">
+  <div class="field grow"><div class="input-icon"><%- icon('search', 'icon-sm') %><input class="input" name="q" value="<%= query.q || '' %>" placeholder="جستجوی عنوان یا کد کلاس"></div></div>
+  <% if (categories.length) { %><div class="field"><select class="input" name="category" data-autosubmit><option value="">همه دسته‌ها</option><% categories.forEach(function (c) { %><option value="<%= c.id %>"<%= String(query.category) === String(c.id) ? ' selected' : '' %>><%= c.name %></option><% }) %></select></div><% } %>
+  <% if (teachers.length && user.data_scope === 'all') { %><div class="field"><select class="input" name="teacher" data-autosubmit><option value="">همه اساتید</option><% teachers.forEach(function (t) { %><option value="<%= t.id %>"<%= String(query.teacher) === String(t.id) ? ' selected' : '' %>><%= t.first_name %> <%= t.last_name %></option><% }) %></select></div><% } %>
+  <button class="btn btn-soft" type="submit"><%- icon('search', 'icon-sm') %>جستجو</button>
+  <div class="btn-group">
+    <a class="btn btn-icon<%= viewMode === 'grid' ? ' btn-soft' : ' btn-ghost' %>" href="<%= qs({ view: '', page: '' }) || '?' %>" title="نمای کارتی"><%- icon('layout-grid', 'icon-sm') %></a>
+    <a class="btn btn-icon<%= viewMode === 'table' ? ' btn-soft' : ' btn-ghost' %>" href="<%= qs({ view: 'table', page: '' }) %>" title="نمای جدولی"><%- icon('list', 'icon-sm') %></a>
+  </div>
+</form>
+
+<% if (!data.rows.length) { %>
+  <div class="card"><%- include('partials/empty', { emptyIcon: 'school', emptyTitle: 'کلاسی یافت نشد', emptyText: can('classes.create') ? 'اولین کلاس خود را ایجاد کنید.' : 'هنوز کلاسی به شما تخصیص داده نشده است.', emptyAction: can('classes.create') ? { href: '/panel/classes/new', label: 'کلاس جدید' } : null }) %></div>
+<% } else if (viewMode === 'grid') { %>
+  <div class="grid grid-3">
+  <% data.rows.forEach(function (c) { const st = stats[c.id]; const color = c.color || c.category_color || '#4f46e5'; %>
+    <div class="card class-card" style="--c:<%= color %>">
+      <div class="cover"></div>
+      <div class="body">
+        <div class="flex justify-between items-center gap-2 mb-2">
+          <span class="text-xs text-muted ltr"><%= c.code %></span><%- badge('class', c.status) %>
+        </div>
+        <a class="title" href="<%= url('/panel/classes/' + c.id) %>"><%= c.title %></a>
+        <% if (c.category_name) { %><span class="chip mb-3" style="color:<%= c.category_color %>"><%= c.category_name %></span><% } %>
+        <div class="meta mt-2">
+          <% if (c.week_days) { %><span><%- icon('calendar-days') %><%= weekDaysLabel(c.week_days) %></span><% } %>
+          <% if (c.start_time) { %><span><%- icon('clock') %>ساعت <%= fa(c.start_time) %> تا <%= fa(c.end_time || '') %></span><% } %>
+          <% if (c.start_date) { %><span><%- icon('calendar-range') %><%= jdate(c.start_date) %> تا <%= c.end_date ? jdate(c.end_date) : '—' %></span><% } %>
+          <% if (c.location) { %><span><%- icon('map-pin') %><%= c.location %></span><% } %>
+        </div>
+        <div class="mt-3">
+          <div class="flex justify-between text-xs text-muted mb-1"><span>پیشرفت جلسات</span><span><%= fa(st.held) %> از <%= fa(st.sessions) %></span></div>
+          <div class="progress progress-sm"><span style="width:<%= pct(st.held, st.sessions) %>%;background:<%= color %>"></span></div>
+        </div>
+      </div>
+      <div class="foot">
+        <div class="flex items-center gap-1">
+          <% st.teachers.slice(0, 3).forEach(function (t) { %><span class="avatar avatar-sm" title="<%= t.first_name %> <%= t.last_name %>"><% if (t.avatar) { %><img src="<%= media(t.avatar) %>" alt=""><% } else { %><%= initials(t.first_name + ' ' + t.last_name) %><% } %></span><% }) %>
+          <span class="text-muted"><%= st.teachers.length ? (st.teachers.length === 1 ? st.teachers[0].first_name + ' ' + st.teachers[0].last_name : '') : 'بدون استاد' %></span>
+        </div>
+        <span class="flex items-center gap-1 fw-6"><%- icon('users', 'icon-sm') %><%= fa(st.students) %><% if (c.capacity) { %><span class="text-muted">/<%= fa(c.capacity) %></span><% } %></span>
+      </div>
+    </div>
+  <% }) %>
+  </div>
+  <div class="card mt-4"><%- include('partials/pagination', { data }) %></div>
+<% } else { %>
+  <div class="card">
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>کلاس</th><th>استاد</th><th>زمان‌بندی</th><th>تاریخ</th><th>دانشجو</th><th>جلسات</th><th>شهریه</th><th>وضعیت</th></tr></thead>
+      <tbody>
+      <% data.rows.forEach(function (c) { const st = stats[c.id]; %>
+        <tr>
+          <td><div class="flex items-center gap-2"><span class="color-bar" style="--c:<%= c.color || c.category_color || '#4f46e5' %>;height:34px"></span><div><a class="fw-6" href="<%= url('/panel/classes/' + c.id) %>"><%= c.title %></a><div class="text-xs text-muted ltr text-right"><%= c.code %></div></div></div></td>
+          <td class="text-sm"><%= st.teachers.map(function (t) { return t.first_name + ' ' + t.last_name; }).join('، ') || '—' %></td>
+          <td class="text-sm"><%= weekDaysLabel(c.week_days) || '—' %><div class="text-xs text-muted"><%= c.start_time ? fa(c.start_time + ' - ' + (c.end_time || '')) : '' %></div></td>
+          <td class="text-sm"><%= c.start_date ? jdate(c.start_date) : '—' %></td>
+          <td><%= fa(st.students) %><% if (c.capacity) { %><span class="text-muted">/<%= fa(c.capacity) %></span><% } %></td>
+          <td><%= fa(st.held) %>/<%= fa(st.sessions) %></td>
+          <td class="text-sm"><%= c.price ? money(c.price) : 'رایگان' %></td>
+          <td><%- badge('class', c.status) %></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table></div>
+    <%- include('partials/pagination', { data }) %>
+  </div>
+<% } %>

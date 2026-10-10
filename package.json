@@ -1,0 +1,39 @@
+{
+  "name": "myclass",
+  "version": "1.0.0",
+  "description": "سامانه جامع مدیریت آموزشگاه و کلاس‌ها - قابل نصب روی هاست سی‌پنل",
+  "main": "app.js",
+  "private": true,
+  "scripts": {
+    "start": "node app.js",
+    "dev": "ALLOW_IFRAME=1 node --watch app.js",
+    "vendor": "node scripts/build-vendor.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.8.0",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "helmet": "^8.1.0",
+    "jalaali-js": "^1.2.7",
+    "knex": "^3.1.0",
+    "multer": "^2.0.2",
+    "mysql2": "^3.14.0",
+    "qrcode": "^1.5.4"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^12.2.0"
+  },
+  "devDependencies": {
+    "@majidh1/jalalidatepicker": "^1.0.0",
+    "apexcharts": "^4.7.0",
+    "lucide-static": "^1.55.0",
+    "vazirmatn": "^33.0.3"
+  }
+}

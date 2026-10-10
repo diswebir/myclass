@@ -1,0 +1,22 @@
+<% const live = invoices.filter(function (i) { return i.status !== 'canceled'; }); const T = live.reduce(function (a, i) { return a + Number(i.total); }, 0); const P = live.reduce(function (a, i) { return a + Number(i.paid); }, 0); %>
+<div class="grid grid-3" style="padding:16px 20px">
+  <div class="kv-item"><span>جمع بدهی</span><b><%= money(T) %></b></div>
+  <div class="kv-item"><span>پرداخت شده</span><b class="text-success"><%= money(P) %></b></div>
+  <div class="kv-item"><span>مانده</span><b class="<%= T - P > 0 ? 'text-danger' : 'text-success' %>"><%= money(T - P) %></b></div>
+</div>
+<% if (can('finance.invoices')) { %><div style="padding:0 20px 12px"><a class="btn btn-soft btn-sm" href="<%= url('/panel/invoices/new?user=' + entity.id) %>"><%- icon('plus', 'icon-sm') %>صدور فاکتور</a></div><% } %>
+<% if (!invoices.length) { %><%- include('partials/empty', { emptyIcon: 'wallet', emptyTitle: 'فاکتوری ثبت نشده است' }) %><% } else { %>
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>شماره</th><th>بابت</th><th>قابل پرداخت</th><th>پرداخت شده</th><th>وضعیت</th><th>تاریخ</th></tr></thead>
+  <tbody>
+  <% invoices.forEach(function (i) { %>
+    <tr><td><a class="ltr d-inline" href="<%= url('/panel/invoices/' + i.id) %>"><%= i.invoice_no %></a></td><td class="text-sm"><%= i.class_title || i.title %></td><td><%= money(i.total) %></td><td class="text-success"><%= num(i.paid) %></td><td><%- badge('invoice', i.status) %></td><td class="text-sm text-muted"><%= jdate(i.issue_date) %></td></tr>
+  <% }) %>
+  </tbody>
+</table></div><% } %>
+<% if (payments.length) { %>
+<h3 class="card-title" style="padding:16px 20px 6px"><%- icon('receipt') %>آخرین پرداخت‌ها</h3>
+<ul class="list">
+  <% payments.slice(0, 10).forEach(function (p) { %><li class="list-item"><span class="list-icon"><%- icon('banknote', 'icon-sm') %></span><span class="grow"><span class="list-title"><%= money(p.amount) %></span><span class="list-sub"><%= PAYMENT_METHODS[p.method] || p.method %> · <%= jdate(p.paid_date) %></span></span><span class="list-end"><%- badge('payment', p.status) %></span></li><% }) %>
+</ul>
+<% } %>

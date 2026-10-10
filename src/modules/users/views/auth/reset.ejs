@@ -1,0 +1,13 @@
+<h2>تعیین رمز عبور جدید</h2>
+<p class="sub">کد ۶ رقمی پیامک‌شده و رمز عبور جدید را وارد کنید. کد تا ۵ دقیقه معتبر است.</p>
+<form method="post" action="<%= url('/reset') %>" class="stack" autocomplete="off">
+  <%- include('../../../../views/partials/csrf') %>
+  <div class="field">
+    <label class="label" for="code">کد تأیید</label>
+    <input class="input ltr text-center fw-8" style="letter-spacing:8px;font-size:20px" id="code" name="code" required maxlength="6" inputmode="numeric" autocomplete="one-time-code" data-en-digits autofocus>
+  </div>
+  <div class="field"><label class="label" for="password">رمز عبور جدید</label><input class="input ltr" id="password" type="password" name="password" required autocomplete="new-password"><span class="help">حداقل <%= fa(s('security.password_min', 8)) %> کاراکتر<%= s('security.password_strong', true) ? '، شامل حرف و عدد' : '' %></span></div>
+  <div class="field"><label class="label" for="password_confirm">تکرار رمز عبور</label><input class="input ltr" id="password_confirm" type="password" name="password_confirm" required autocomplete="new-password"></div>
+  <button class="btn btn-primary btn-lg btn-block" type="submit"><%- icon('check', 'icon-sm') %>ثبت رمز جدید</button>
+  <a class="btn btn-ghost btn-block" href="<%= url('/forgot') %>">ارسال مجدد کد</a>
+</form>

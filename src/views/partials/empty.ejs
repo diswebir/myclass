@@ -1,0 +1,6 @@
+<div class="empty">
+  <div class="empty-icon"><%- icon(typeof emptyIcon !== 'undefined' ? emptyIcon : 'circle-dot') %></div>
+  <h3><%= typeof emptyTitle !== 'undefined' ? emptyTitle : 'موردی یافت نشد' %></h3>
+  <% if (typeof emptyText !== 'undefined' && emptyText) { %><p><%= emptyText %></p><% } %>
+  <% if (typeof emptyAction !== 'undefined' && emptyAction) { %><a class="btn btn-primary btn-sm" href="<%= url(emptyAction.href) %>"><%- icon(emptyAction.icon || 'plus', 'icon-sm') %><%= emptyAction.label %></a><% } %>
+</div>

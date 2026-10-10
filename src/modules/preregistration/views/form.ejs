@@ -1,0 +1,62 @@
+<% const hf = s('prereg.how_found_options', []); const howOpts = (Array.isArray(hf) ? hf : String(hf).split(/[,،\n]/)).map(function (x) { return String(x).trim(); }).filter(Boolean); %>
+<div class="container container-sm">
+  <div class="steps"><div class="step active">تکمیل فرم</div><div class="step">بررسی کارشناس</div><div class="step">ثبت‌نام قطعی</div></div>
+  <form class="card" method="post" action="<%= url('/register') %>" novalidate>
+    <%- include('partials/csrf') %>
+    <div class="card-head"><div><h1 class="card-title" style="font-size:18px"><%- icon('clipboard-list') %><%= s('prereg.title', 'فرم پیش‌ثبت‌نام') %></h1><% if (s('prereg.intro')) { %><p class="card-sub"><%= s('prereg.intro') %></p><% } %></div></div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="form-section col-12"><%- icon('book-open', 'icon-sm') %>انتخاب دوره</div>
+        <% if (!classes.length && !s('prereg.allow_general', true)) { %>
+          <div class="col-12 alert alert-warning mb-0"><%- icon('alert-triangle') %><div>در حال حاضر دوره‌ای برای پیش‌ثبت‌نام فعال نیست.</div></div>
+        <% } else { %>
+        <div class="field col-12<%= err('class_id') ? ' has-error' : '' %>">
+          <div class="options-grid">
+            <% if (s('prereg.allow_general', true)) { %><label class="check-card"><input type="radio" name="class_id" value=""<%= !selected ? ' checked' : '' %>><span><b>مشاوره و پیش‌ثبت‌نام عمومی</b><small>هنوز دوره را انتخاب نکرده‌ام</small></span></label><% } %>
+            <% classes.forEach(function (c) { %><label class="check-card"><input type="radio" name="class_id" value="<%= c.id %>"<%= selected === c.id ? ' checked' : '' %><%= c.full ? ' disabled' : '' %>><span><b><%= c.title %></b><small><%= c.start_date ? 'شروع ' + jdate(c.start_date) : '' %><% if (s('prereg.show_price', true) && c.price) { %> · <%= money(c.price, true) %><% } %><%= c.full ? ' · تکمیل ظرفیت' : '' %></small></span></label><% }) %>
+          </div>
+          <% if (err('class_id')) { %><span class="error-text"><%= err('class_id') %></span><% } %>
+        </div>
+        <% } %>
+        <div class="form-section col-12"><%- icon('user', 'icon-sm') %>مشخصات فردی</div>
+        <%- include('partials/field', { name: 'first_name', label: 'نام', col: 6, required: true }) %>
+        <%- include('partials/field', { name: 'last_name', label: 'نام خانوادگی', col: 6, required: true }) %>
+        <%- include('partials/field', { name: 'mobile', label: 'شماره موبایل', col: 6, required: true, ltr: true, placeholder: '09xxxxxxxxx', attrs: 'inputmode="tel" data-en-digits maxlength="14"' }) %>
+        <%- include('partials/field', { name: 'national_code', label: 'کد ملی', col: 6, required: s('prereg.require_national_code', true), ltr: true, attrs: 'inputmode="numeric" data-en-digits maxlength="10"' }) %>
+        <% if (s('prereg.field_email')) { %><%- include('partials/field', { name: 'email', label: 'ایمیل', col: 6, ltr: true, type: 'email' }) %><% } %>
+        <% if (s('prereg.field_birth_date', true)) { %><%- include('partials/field', { name: 'birth_date', label: 'تاریخ تولد', col: 6, type: 'date' }) %><% } %>
+        <% if (s('prereg.field_gender', true)) { %><%- include('partials/field', { name: 'gender', label: 'جنسیت', col: 6, type: 'select', empty: 'انتخاب کنید', options: { male: 'آقا', female: 'خانم' } }) %><% } %>
+        <% if (s('prereg.field_education', true)) { %><%- include('partials/field', { name: 'education', label: 'تحصیلات / پایه', col: 6, type: 'text' }) %><% } %>
+        <% if (s('prereg.field_city')) { %><%- include('partials/field', { name: 'city', label: 'شهر', col: 6, type: 'text' }) %><% } %>
+        <% if (s('prereg.field_how_found', true) && howOpts.length) { %><%- include('partials/field', { name: 'how_found', label: 'نحوه آشنایی با ما', col: 6, type: 'select', empty: 'انتخاب کنید', options: howOpts.map(function (x) { return { value: x, label: x }; }) }) %><% } %>
+        <% if (s('prereg.field_payment', true)) { %>
+        <div class="field col-12"><label class="label">روش پرداخت مورد نظر</label>
+          <div class="options-grid">
+            <label class="check-card"><input type="radio" name="payment_preference" value="cash"<%= old('payment_preference') === 'cash' ? ' checked' : '' %>><span><b><%- icon('banknote', 'icon-sm') %> نقدی</b><small>پرداخت کامل شهریه</small></span></label>
+            <label class="check-card"><input type="radio" name="payment_preference" value="installment"<%= old('payment_preference') === 'installment' ? ' checked' : '' %>><span><b><%- icon('calendar-clock', 'icon-sm') %> اقساطی</b><small>پرداخت در چند قسط</small></span></label>
+          </div>
+        </div>
+        <% } %>
+        <%- include('partials/field', { name: 'message', label: 'توضیحات (اختیاری)', col: 12, type: 'textarea', rows: 3, placeholder: 'سؤال یا توضیح خود را بنویسید...' }) %>
+        <div style="position:absolute;left:-9999px" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div>
+        <% if (s('prereg.terms')) { %>
+        <div class="field col-12<%= err('accept_terms') ? ' has-error' : '' %>">
+          <div class="alert alert-info mb-2" style="max-height:160px;overflow:auto;white-space:pre-line"><%= s('prereg.terms') %></div>
+          <label class="check"><input type="checkbox" name="accept_terms" value="1"> قوانین و شرایط را مطالعه کرده و می‌پذیرم.</label>
+          <% if (err('accept_terms')) { %><span class="error-text"><%= err('accept_terms') %></span><% } %>
+        </div>
+        <% } %>
+        <% if (captcha) { %>
+        <div class="field col-6<%= err('captcha') ? ' has-error' : '' %>"><label class="label">سؤال امنیتی<span class="req">*</span></label>
+          <div class="captcha"><span class="q"><%= fa(captcha) %> = ?</span><input class="input ltr text-center" name="captcha" inputmode="numeric" data-en-digits autocomplete="off" required></div>
+          <% if (err('captcha')) { %><span class="error-text"><%= err('captcha') %></span><% } %>
+        </div>
+        <% } %>
+      </div>
+    </div>
+    <div class="card-foot flex justify-between items-center wrap gap-2">
+      <a class="text-sm" href="<%= url('/track') %>">قبلاً ثبت کرده‌اید؟ پیگیری درخواست</a>
+      <button class="btn btn-primary btn-lg" type="submit"><%- icon('send', 'icon-sm') %>ثبت درخواست</button>
+    </div>
+  </form>
+</div>

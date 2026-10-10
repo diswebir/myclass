@@ -1,0 +1,52 @@
+<% const done = sessions.filter(function (x) { return x.status === 'held' || x.date < today; }).length; const showTopics = s('portal.show_session_topics', true); %>
+<div class="page-head">
+  <div><h1 class="page-title"><span class="dot" style="background:<%= cls.color || 'var(--primary)' %>;width:12px;height:12px"></span><%= cls.title %> <%- badge('enrollment', cls.enroll_status) %></h1><p class="page-sub"><%= cls.code || '' %><%= cls.category_name ? ' · ' + cls.category_name : '' %></p></div>
+  <div class="page-actions"><% if (cls.online_link) { %><a class="btn btn-primary" href="<%= cls.online_link %>" target="_blank" rel="noopener"><%- icon('video', 'icon-sm') %>ورود به کلاس آنلاین</a><% } %><a class="btn btn-ghost" href="<%= url('/panel/my/classes') %>"><%- icon('arrow-right', 'icon-sm') %>بازگشت</a></div>
+</div>
+<div class="grid grid-4 mb-4">
+  <div class="card stat"><div class="stat-icon"><%- icon('layers') %></div><div><div class="stat-label">پیشرفت دوره</div><div class="stat-value"><%= fa(done) %><small>از <%= fa(sessions.length) %> جلسه</small></div><div class="progress progress-sm mt-2" style="width:120px"><span style="width:<%= pct(done, sessions.length) %>%"></span></div></div></div>
+  <% if (moduleOn('attendance')) { %>
+  <div class="card stat"><div class="stat-icon success"><%- icon('check-square') %></div><div><div class="stat-label">درصد حضور</div><div class="stat-value"><%= att.rate === null || att.rate === undefined ? '—' : fa(att.rate) + '٪' %></div><div class="stat-foot"><%= fa(att.present || 0) %> حاضر · <%= fa(att.late || 0) %> تأخیر</div></div></div>
+  <div class="card stat"><div class="stat-icon danger"><%- icon('x-circle') %></div><div><div class="stat-label">غیبت</div><div class="stat-value"><%= fa(att.absent || 0) %></div><div class="stat-foot"><%= fa(att.excused || 0) %> غیبت موجه</div></div></div>
+  <% } %>
+  <div class="card stat"><div class="stat-icon purple"><%- icon('star') %></div><div><div class="stat-label">نمره</div><div class="stat-value"><%= cls.grade ? fa(cls.grade) : '—' %></div><% if (cls.min_attendance) { %><div class="stat-foot">حداقل حضور لازم: <%= fa(cls.min_attendance) %>٪</div><% } %></div></div>
+</div>
+<div class="grid grid-side">
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%- icon('calendar-days') %>برنامه جلسات و وضعیت حضور</h2></div>
+    <% if (!sessions.length) { %><%- include('partials/empty', { emptyIcon: 'calendar', emptyTitle: 'جلسه‌ای تعریف نشده است' }) %><% } else { %>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>جلسه</th><th>تاریخ</th><th>ساعت</th><% if (showTopics) { %><th>موضوع</th><% } %><th>وضعیت</th></tr></thead>
+      <tbody>
+      <% sessions.forEach(function (x) { const rec = records[x.id]; %>
+        <tr<%= x.date === today ? ' style="background:var(--primary-bg)"' : '' %>>
+          <td><%= fa(x.session_no) %></td>
+          <td><%= jdate(x.date) %> <span class="text-muted text-xs"><%= weekday(new Date(x.date + 'T00:00:00Z').getUTCDay()) %></span></td>
+          <td class="text-sm"><%= fa(x.start_time || '') %>-<%= fa(x.end_time || '') %></td>
+          <% if (showTopics) { %><td class="text-sm"><%= x.topic || '—' %></td><% } %>
+          <td><% if (x.status === 'canceled') { %><span class="badge badge-gray">لغو شده</span><% } else if (rec) { %><%- badge('attendance', rec.status) %><% if (rec.note) { %><div class="text-xs text-muted"><%= rec.note %></div><% } %><% } else if (x.date > today) { %><span class="text-muted text-sm">آینده</span><% } else if (x.date === today) { %><span class="badge badge-info">امروز</span><% } else { %><span class="text-muted text-sm">—</span><% } %></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table></div>
+    <% } %>
+  </div>
+  <div class="stack">
+    <div class="card"><div class="card-body"><dl class="kv">
+      <% if (cls.start_date) { %><dt>شروع</dt><dd><%= jdate(cls.start_date) %></dd><% } %>
+      <% if (cls.end_date) { %><dt>پایان</dt><dd><%= jdate(cls.end_date) %></dd><% } %>
+      <% if (cls.week_days) { %><dt>روزها</dt><dd><%= weekDaysLabel(cls.week_days) %></dd><% } %>
+      <% if (cls.start_time) { %><dt>ساعت</dt><dd><%= fa(cls.start_time) %> تا <%= fa(cls.end_time || '') %></dd><% } %>
+      <% if (cls.location) { %><dt>مکان</dt><dd><%= cls.location %></dd><% } %>
+      <% if (classmates !== null) { %><dt>هم‌کلاسی‌ها</dt><dd><%= fa(classmates) %> نفر</dd><% } %>
+      <% if (cls.enrolled_at) { %><dt>تاریخ ثبت‌نام</dt><dd><%= jdate(String(cls.enrolled_at).slice(0, 10)) %></dd><% } %>
+    </dl></div></div>
+    <% if (teachers.length) { %>
+    <div class="card">
+      <div class="card-head"><h2 class="card-title"><%- icon('user') %>اساتید</h2></div>
+      <ul class="list"><% teachers.forEach(function (t) { %><li><div class="list-item"><span class="avatar"><% if (t.avatar) { %><img src="<%= media(t.avatar) %>" alt=""><% } else { %><%= initials(t.first_name + ' ' + t.last_name) %><% } %></span><span class="grow"><span class="list-title"><%= t.first_name %> <%= t.last_name %></span><span class="list-sub"><%= t.title || 'استاد' %><% if (s('portal.show_teacher_mobile') && t.mobile) { %> · <a class="ltr d-inline" href="tel:<%= t.mobile %>"><%= fa(t.mobile) %></a><% } %></span></span></div></li><% }) %></ul>
+    </div>
+    <% } %>
+    <% if (cls.description) { %><div class="card"><div class="card-head"><h2 class="card-title"><%- icon('info') %>درباره دوره</h2></div><div class="card-body text-2 text-sm" style="white-space:pre-line;line-height:2"><%= cls.description %></div></div><% } %>
+  </div>
+</div>

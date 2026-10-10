@@ -1,0 +1,29 @@
+<div class="page-head"><div><h1 class="page-title"><%- icon('history') %>گزارش فعالیت‌ها</h1><p class="page-sub">ثبت همه عملیات حساس کاربران برای ردیابی و امنیت</p></div></div>
+<div class="card">
+  <form class="filters" method="get">
+    <div class="field grow"><label class="label">عملیات</label><input class="input ltr" name="action" value="<%= query.action || '' %>" placeholder="مثلاً payments یا users.delete" list="audit-actions"></div>
+    <datalist id="audit-actions"><% ['auth.login', 'users.', 'classes.', 'payments.', 'invoices.', 'settings.', 'certificates.', 'sms.', 'prereg.', 'attendance.'].forEach(function (a) { %><option value="<%= a %>"><% }) %></datalist>
+    <div class="field"><label class="label">از</label><input class="input ltr text-center" name="from" value="<%= query.from || '' %>" data-jdp style="width:120px"></div>
+    <div class="field"><label class="label">تا</label><input class="input ltr text-center" name="to" value="<%= query.to || '' %>" data-jdp style="width:120px"></div>
+    <% if (query.user) { %><input type="hidden" name="user" value="<%= query.user %>"><% } %>
+    <button class="btn btn-primary" type="submit"><%- icon('filter', 'icon-sm') %>فیلتر</button>
+    <% if (query.action || query.from || query.to || query.user) { %><a class="btn btn-ghost" href="<%= url('/panel/audit') %>">حذف فیلتر</a><% } %>
+  </form>
+  <% if (!data.rows.length) { %><%- include('partials/empty', { emptyIcon: 'history', emptyTitle: 'فعالیتی یافت نشد' }) %><% } else { %>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>کاربر</th><th>عملیات</th><th>جزئیات</th><th>آی‌پی</th><th>زمان</th></tr></thead>
+    <tbody>
+    <% data.rows.forEach(function (a) { let det = a.details; try { const o = JSON.parse(a.details); det = Object.keys(o).map(function (k2) { return k2 + ': ' + (typeof o[k2] === 'object' ? JSON.stringify(o[k2]) : o[k2]); }).join(' · '); } catch (e) {} %>
+      <tr>
+        <td><% if (a.user_id) { %><a class="person" href="<%= url('/panel/audit') + qs({ user: a.user_id, page: null }) %>"><span class="avatar avatar-sm"><%= initials((a.first_name || '') + ' ' + (a.last_name || '')) %></span><span><span class="person-name"><%= a.first_name %> <%= a.last_name %></span><span class="person-sub ltr"><%= a.username %></span></span></a><% } else { %><span class="text-muted">سیستم / مهمان</span><% } %></td>
+        <td><span class="fw-6"><%= auditLabel(a.action) %></span><div class="text-xs text-muted ltr text-right mono"><%= a.action %><%= a.entity ? ' #' + (a.entity_id || '') : '' %></div></td>
+        <td class="text-xs text-2" style="max-width:340px;overflow-wrap:anywhere"><%= truncate(det || '', 200) %></td>
+        <td class="ltr text-right text-sm text-muted" title="<%= a.user_agent || '' %>"><%= a.ip || '—' %></td>
+        <td class="text-sm text-muted nowrap" title="<%= rel(a.created_at) %>"><%= jdt(a.created_at) %></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+  <%- include('partials/pagination', { data }) %>
+  <% } %>
+</div>

@@ -1,0 +1,23 @@
+<div class="page-head"><div><h1 class="page-title"><%- icon('book-open') %>کلاس‌های من</h1><p class="page-sub">همه کلاس‌هایی که در آن‌ها ثبت‌نام کرده‌اید</p></div></div>
+<% if (!classes.length) { %><div class="card"><%- include('partials/empty', { emptyIcon: 'book-open', emptyTitle: 'هنوز در کلاسی ثبت‌نام نشده‌اید', emptyAction: moduleOn('preregistration') ? { href: url('/'), label: 'مشاهده دوره‌ها', icon: 'search' } : null }) %></div><% } else { %>
+<div class="grid grid-3">
+  <% classes.forEach(function (c) { const a = att[c.id] || {}; %>
+  <a class="card class-card" style="--c:<%= c.color || 'var(--primary)' %>" href="<%= url('/panel/my/classes/' + c.id) %>">
+    <div class="cover"></div>
+    <div class="body">
+      <div class="flex justify-between items-center mb-2"><span class="text-xs text-muted"><%= c.category_name || '' %></span><%- badge('enrollment', c.enroll_status) %></div>
+      <span class="title"><%= c.title %></span>
+      <div class="meta">
+        <% if ((teachers[c.id] || []).length) { %><span><%- icon('user') %>استاد: <%= teachers[c.id].join('، ') %></span><% } %>
+        <% if (c.start_date) { %><span><%- icon('calendar') %><%= jdate(c.start_date) %><%= c.end_date ? ' تا ' + jdate(c.end_date) : '' %></span><% } %>
+        <% if (c.week_days) { %><span><%- icon('repeat') %><%= weekDaysLabel(c.week_days) %><% if (c.start_time) { %> · <%= fa(c.start_time) %>-<%= fa(c.end_time || '') %><% } %></span><% } %>
+        <% if (c.location) { %><span><%- icon('map-pin') %><%= c.location %></span><% } %>
+      </div>
+    </div>
+    <div class="foot">
+      <% if (a.rate !== undefined && a.rate !== null) { %><span class="text-sm">حضور: <b><%= fa(a.rate) %>٪</b></span><div class="progress progress-sm<%= a.rate < 70 ? ' danger' : a.rate < 85 ? ' warning' : ' success' %>" style="width:100px"><span style="width:<%= a.rate %>%"></span></div><% } else { %><span class="text-muted text-sm">حضور و غیابی ثبت نشده</span><span><%- icon('chevron-left', 'icon-sm') %></span><% } %>
+    </div>
+  </a>
+  <% }) %>
+</div>
+<% } %>

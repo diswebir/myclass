@@ -1,0 +1,11 @@
+<h2>بازیابی رمز عبور</h2>
+<p class="sub">شماره موبایل یا کد ملی ثبت‌شده در حساب خود را وارد کنید تا کد تأیید برایتان پیامک شود.</p>
+<form method="post" action="<%= url('/forgot') %>" class="stack">
+  <%- include('../../../../views/partials/csrf') %>
+  <div class="field">
+    <label class="label" for="identifier">موبایل یا کد ملی</label>
+    <div class="input-icon"><%- icon('phone', 'icon-sm') %><input class="input ltr" id="identifier" name="identifier" required autofocus data-en-digits inputmode="numeric"></div>
+  </div>
+  <button class="btn btn-primary btn-lg btn-block" type="submit"><%- icon('send', 'icon-sm') %>ارسال کد تأیید</button>
+  <a class="btn btn-ghost btn-block" href="<%= url('/login') %>"><%- icon('arrow-right', 'icon-sm') %>بازگشت به صفحه ورود</a>
+</form>

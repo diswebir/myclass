@@ -1,0 +1,44 @@
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('award') %>صدور مدرک</h1><p class="page-sub">شرایط هر دانشجو (حداقل حضور، تسویه شهریه و نمره) به صورت خودکار بررسی می‌شود.</p></div>
+  <div class="page-actions"><a class="btn btn-ghost" href="<%= url('/panel/certificates') %>"><%- icon('arrow-right', 'icon-sm') %>مدارک</a></div>
+</div>
+<form class="filters card mb-4" method="get" style="padding:14px 18px">
+  <div class="field grow"><label class="label">انتخاب کلاس</label><select class="input" name="class" data-autosubmit><option value="">— کلاس را انتخاب کنید —</option><% classes.forEach(function (c) { %><option value="<%= c.id %>"<%= cls && cls.id === c.id ? ' selected' : '' %>><%= c.title %> (<%= statusLabel('class', c.status) %>)</option><% }) %></select></div>
+</form>
+<% if (!cls) { %>
+  <div class="card"><%- include('partials/empty', { emptyIcon: 'school', emptyTitle: 'یک کلاس انتخاب کنید', emptyText: 'لیست دانشجویان کلاس به همراه وضعیت شرایط دریافت مدرک نمایش داده می‌شود.' }) %></div>
+<% } else if (!rows.length) { %>
+  <div class="card"><%- include('partials/empty', { emptyIcon: 'users', emptyTitle: 'دانشجویی در این کلاس ثبت‌نام نکرده است' }) %></div>
+<% } else { const eligible = rows.filter(function (r) { return r.elig.ok && !r.cert; }).length; %>
+<form method="post" action="<%= url('/panel/certificates/issue') %>" class="card">
+  <%- include('partials/csrf') %>
+  <input type="hidden" name="class_id" value="<%= cls.id %>">
+  <div class="card-head" style="flex-wrap:wrap;gap:10px">
+    <div><h2 class="card-title"><%= cls.title %></h2><p class="card-sub"><%= fa(rows.length) %> دانشجو · <%= fa(eligible) %> نفر واجد شرایط و بدون مدرک</p></div>
+    <label class="check"><input type="checkbox" data-checkall=".cb-eligible"> انتخاب همه واجدین شرایط</label>
+  </div>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th style="width:40px"></th><th>دانشجو</th><th>حضور</th><th>نمره</th><th>بدهی</th><th>شرایط</th><th>مدرک</th></tr></thead>
+    <tbody>
+    <% rows.forEach(function (r) { %>
+      <tr>
+        <td><% if (!r.cert) { %><input type="checkbox" class="cb <%= r.elig.ok ? 'cb-eligible' : 'cb-ineligible' %>" name="enrollment_ids" value="<%= r.id %>" data-bulk-item><% } %></td>
+        <td class="fw-6"><%= r.first_name %> <%= r.last_name %><div class="text-xs text-muted"><%= r.national_code ? fa(r.national_code) : '' %></div></td>
+        <td><%= r.elig.attendance === null || r.elig.attendance === undefined ? '—' : fa(r.elig.attendance) + '٪' %></td>
+        <td><%= r.grade === null || r.grade === undefined ? '—' : fa(r.grade) %></td>
+        <td class="text-sm"><%= r.elig.balance ? money(r.elig.balance) : '—' %></td>
+        <td><% if (r.elig.ok) { %><span class="badge badge-success">واجد شرایط</span><% } else { %><span class="badge badge-warning" title="<%= r.elig.issues.join('، ') %>"><%= r.elig.issues.join('، ') %></span><% } %></td>
+        <td><% if (r.cert) { %><a class="ltr d-inline mono text-sm" href="<%= url('/panel/certificates/' + r.cert.id) %>"><%= r.cert.serial %></a><% } else { %><span class="text-muted text-sm">صادر نشده</span><% } %></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+  <div class="card-foot flex gap-3 wrap items-end">
+    <div class="field"><label class="label">قالب مدرک</label><select class="input" name="template_id"><% templates.forEach(function (t) { %><option value="<%= t.id %>"><%= t.name %><%= t.is_default ? ' (پیش‌فرض)' : '' %></option><% }) %></select></div>
+    <div class="field"><label class="label">تاریخ صدور</label><input class="input ltr text-center" name="issued_date" data-jdp value="<%= jinput(jalali.today()) %>" style="width:130px"></div>
+    <label class="switch"><input type="checkbox" name="override" value="1"><span class="track"></span>صدور بدون بررسی شرایط</label>
+    <% if (moduleOn('sms')) { %><label class="switch"><input type="checkbox" name="notify" value="1" checked><span class="track"></span>ارسال پیامک</label><% } %>
+    <button class="btn btn-primary" type="submit" style="margin-right:auto"><%- icon('award', 'icon-sm') %>صدور مدرک برای انتخاب‌شده‌ها</button>
+  </div>
+</form>
+<% } %>

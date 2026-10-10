@@ -1,0 +1,22 @@
+<div class="container container-sm">
+  <div class="card verify-card">
+    <div class="card-body" style="padding:32px 28px">
+      <div class="text-center mb-4"><div class="verify-icon"><%- icon('search', 'icon-xl') %></div><h1 style="font-size:20px;font-weight:800">پیگیری پیش‌ثبت‌نام</h1><p class="text-muted">کد رهگیری و شماره موبایل ثبت‌شده را وارد کنید.</p></div>
+      <form method="post" action="<%= url('/track') %>" class="form-grid">
+        <%- include('partials/csrf') %>
+        <div class="field col-6"><label class="label">کد رهگیری</label><input class="input ltr text-center mono" name="code" required maxlength="20" data-en-digits value="<%= old('code', '') %>"></div>
+        <div class="field col-6"><label class="label">شماره موبایل</label><input class="input ltr text-center" name="mobile" required inputmode="tel" data-en-digits placeholder="09xxxxxxxxx"></div>
+        <div class="col-12"><button class="btn btn-primary btn-block" type="submit"><%- icon('search', 'icon-sm') %>پیگیری</button></div>
+      </form>
+      <% if (result === false) { %>
+        <div class="alert alert-danger mt-4 mb-0"><%- icon('x-circle') %><div>درخواستی با این مشخصات یافت نشد.</div></div>
+      <% } else if (result) { const st = { pending: ['در انتظار بررسی', 'warning', 'درخواست شما ثبت شده و به‌زودی توسط کارشناسان بررسی می‌شود.'], contacted: ['در حال پیگیری', 'info', 'کارشناسان موسسه با شما تماس گرفته‌اند / خواهند گرفت.'], approved: ['تأیید شده', 'success', 'ثبت‌نام شما قطعی شد. اطلاعات ورود به پنل برایتان ارسال می‌شود.'], rejected: ['رد شده', 'danger', 'متأسفانه درخواست شما تأیید نشد. برای اطلاعات بیشتر با موسسه تماس بگیرید.'] }[result.status] || [result.status, 'info', '']; %>
+        <div class="alert alert-<%= st[1] %> mt-4 mb-0"><%- icon(st[1] === 'success' ? 'check-circle-2' : st[1] === 'danger' ? 'x-circle' : 'info') %><div>
+          <b><%= result.first_name %> عزیز، وضعیت درخواست: <%= st[0] %></b>
+          <div class="mt-2"><%= st[2] %></div>
+          <div class="text-sm mt-2">دوره: <%= result.class_title || 'عمومی' %> · ثبت: <%= jdate(result.created_at) %></div>
+        </div></div>
+      <% } %>
+    </div>
+  </div>
+</div>

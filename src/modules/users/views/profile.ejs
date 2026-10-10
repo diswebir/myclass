@@ -1,0 +1,82 @@
+<% const u = user; const name = u.first_name + ' ' + u.last_name; const editable = u.kind !== 'student' || s('portal.allow_profile_edit', true); %>
+<div class="page-head">
+  <div><h1 class="page-title">پروفایل من</h1><p class="page-sub">مدیریت اطلاعات حساب، رمز عبور و نشست‌های فعال</p></div>
+</div>
+<% if (u.must_change_password) { %><div class="alert alert-warning"><%- icon('alert-triangle') %><div><b>تغییر رمز عبور الزامی است.</b> برای ادامه کار با سامانه، لطفاً رمز عبور اولیه خود را تغییر دهید.</div></div><% } %>
+<div class="grid grid-side">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 class="card-title"><%- icon('user') %>اطلاعات حساب</h2></div>
+      <div class="card-body">
+        <form method="post" action="<%= url('/panel/profile') %>">
+          <%- include('partials/csrf') %>
+          <div class="form-grid">
+            <div class="field col-6"><label class="label">نام و نام خانوادگی</label><input class="input" value="<%= name %>" readonly></div>
+            <div class="field col-6"><label class="label">نام کاربری</label><input class="input ltr" value="<%= u.username %>" readonly></div>
+            <div class="field col-6"><label class="label">موبایل</label><input class="input ltr" value="<%= u.mobile || '' %>" readonly></div>
+            <div class="field col-6"><label class="label">کد ملی</label><input class="input ltr" value="<%= u.national_code || '' %>" readonly></div>
+            <%- include('partials/field', { name: 'email', label: 'ایمیل', value: u.email, col: 6, ltr: true, type: 'email', attrs: editable ? '' : 'readonly' }) %>
+            <%- include('partials/field', { name: 'phone', label: 'تلفن ثابت', value: u.phone, col: 6, ltr: true, attrs: editable ? 'data-en-digits' : 'readonly' }) %>
+            <%- include('partials/field', { name: 'education', label: 'تحصیلات', value: u.education, col: 6, attrs: editable ? '' : 'readonly' }) %>
+            <%- include('partials/field', { name: 'job', label: 'شغل', value: u.job, col: 6, attrs: editable ? '' : 'readonly' }) %>
+            <%- include('partials/field', { name: 'postal_code', label: 'کد پستی', value: u.postal_code, col: 4, ltr: true, attrs: editable ? 'data-en-digits' : 'readonly' }) %>
+            <%- include('partials/field', { name: 'address', label: 'نشانی', value: u.address, col: 8, attrs: editable ? '' : 'readonly' }) %>
+          </div>
+          <% if (editable) { %><div class="form-actions mt-4"><button class="btn btn-primary" type="submit"><%- icon('save', 'icon-sm') %>ذخیره تغییرات</button></div><% } %>
+        </form>
+      </div>
+    </div>
+
+    <div class="card" id="password">
+      <div class="card-head"><h2 class="card-title"><%- icon('key-round') %>تغییر رمز عبور</h2></div>
+      <div class="card-body">
+        <form method="post" action="<%= url('/panel/profile/password') %>" autocomplete="off">
+          <%- include('partials/csrf') %>
+          <div class="form-grid">
+            <%- include('partials/field', { name: 'current_password', label: 'رمز عبور فعلی', type: 'password', col: 4, ltr: true, required: true, attrs: 'autocomplete="current-password"' }) %>
+            <%- include('partials/field', { name: 'password', label: 'رمز عبور جدید', type: 'password', col: 4, ltr: true, required: true, help: 'حداقل ' + fa(s('security.password_min', 8)) + ' کاراکتر', attrs: 'autocomplete="new-password"' }) %>
+            <%- include('partials/field', { name: 'password_confirm', label: 'تکرار رمز جدید', type: 'password', col: 4, ltr: true, required: true, attrs: 'autocomplete="new-password"' }) %>
+          </div>
+          <div class="form-actions mt-4"><button class="btn btn-primary" type="submit"><%- icon('check', 'icon-sm') %>تغییر رمز عبور</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card">
+      <div class="card-body text-center">
+        <span class="avatar avatar-xl" style="margin:0 auto 12px"><% if (u.avatar) { %><img src="<%= media(u.avatar) %>" alt=""><% } else { %><%= initials(name) %><% } %></span>
+        <h3 class="mb-0"><%= name %></h3>
+        <span class="badge badge-primary no-dot mt-2" style="<%= u.role_color ? 'background:' + u.role_color + '1a;color:' + u.role_color : '' %>"><%= u.role_name %></span>
+        <form method="post" action="<%= mpAction('/panel/profile/avatar') %>" enctype="multipart/form-data" class="mt-4">
+          <input class="input input-file" type="file" name="avatar" accept="image/png,image/jpeg,image/webp" required>
+          <button class="btn btn-soft btn-sm btn-block mt-2" type="submit"><%- icon('upload', 'icon-sm') %>تغییر تصویر پروفایل</button>
+        </form>
+      </div>
+      <div class="card-foot text-sm">
+        <dl class="kv" style="width:100%">
+          <dt>آخرین ورود</dt><dd><%= u.last_login_at ? jdt(u.last_login_at) : '—' %></dd>
+          <dt>نشست‌های فعال</dt><dd><%= fa(sessionsCount) %></dd>
+        </dl>
+      </div>
+    </div>
+    <% if (sessionsCount > 1) { %>
+    <div class="card"><div class="card-body">
+      <p class="text-sm text-2">در صورت مشاهده فعالیت مشکوک، نشست‌های سایر دستگاه‌ها را خاتمه دهید.</p>
+      <form method="post" action="<%= url('/panel/profile/sessions') %>" data-confirm="همه نشست‌های دیگر شما خاتمه یابد؟">
+        <%- include('partials/csrf') %>
+        <button class="btn btn-soft-danger btn-block" type="submit"><%- icon('log-out', 'icon-sm') %>خروج از سایر دستگاه‌ها</button>
+      </form>
+    </div></div>
+    <% } %>
+    <% if (logs.length) { %>
+    <div class="card">
+      <div class="card-head"><h2 class="card-title"><%- icon('history') %>فعالیت‌های اخیر</h2></div>
+      <div class="card-body"><ul class="timeline">
+        <% logs.forEach(function (l) { %><li><div class="t-title"><%= l.action %></div><div class="t-time"><%= rel(l.created_at) %> · <span class="ltr"><%= l.ip %></span></div></li><% }) %>
+      </ul></div>
+    </div>
+    <% } %>
+  </div>
+</div>

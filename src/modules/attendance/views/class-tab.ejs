@@ -1,0 +1,32 @@
+<% const L = { present: 'ح', absent: 'غ', late: 'ت', excused: 'م' }; %>
+<div class="grid grid-4 mb-4">
+  <div class="kv-item"><span>میانگین حضور کلاس</span><b><%= overall === null ? '—' : fa(overall) + '٪' %></b></div>
+  <div class="kv-item"><span>حاضر</span><b class="text-success"><%= fa(totals.present || 0) %></b></div>
+  <div class="kv-item"><span>غایب</span><b class="text-danger"><%= fa(totals.absent || 0) %></b></div>
+  <div class="kv-item"><span>تأخیر / موجه</span><b><%= fa(totals.late || 0) %> / <%= fa(totals.excused || 0) %></b></div>
+</div>
+<% if (!students.length || !sessions.length) { %>
+  <%- include('partials/empty', { emptyIcon: 'clipboard-check', emptyTitle: 'اطلاعاتی برای نمایش وجود ندارد', emptyText: 'برای نمایش جدول، کلاس باید دانشجو و جلسه داشته باشد.' }) %>
+<% } else { %>
+<div class="flex justify-between items-center mb-3 wrap gap-2">
+  <div class="flex gap-2 text-xs items-center"><span class="mark present">ح</span>حاضر <span class="mark absent">غ</span>غایب <span class="mark late">ت</span>تأخیر <span class="mark excused">م</span>موجه <span class="mark none">·</span>ثبت نشده</div>
+  <a class="btn btn-ghost btn-sm" href="<%= url('/panel/attendance/class/' + entity.id + '.csv') %>" data-no-loading><%- icon('download', 'icon-sm') %>خروجی اکسل</a>
+</div>
+<div class="table-wrap">
+  <table class="table matrix">
+    <thead><tr><th style="position:sticky;right:0;background:var(--surface);z-index:1">دانشجو</th>
+      <% sessions.forEach(function (se) { %><th class="text-center" title="<%= jdate(se.date) %>"><a href="<%= url('/panel/attendance/session/' + se.id) %>"><%= fa(se.session_no || '') %></a><div class="text-xs text-muted" style="font-weight:400"><%= fa(jinput(se.date).slice(5)) %></div></th><% }) %>
+      <th class="text-center">غیبت</th><th class="text-center">درصد</th></tr></thead>
+    <tbody>
+    <% students.forEach(function (st) { const sm = summary[st.id]; %>
+      <tr>
+        <td style="position:sticky;right:0;background:var(--surface);white-space:nowrap"><a href="<%= url('/panel/users/' + st.user_id) %>"><%= st.first_name %> <%= st.last_name %></a></td>
+        <% sessions.forEach(function (se) { const r = map[st.id + ':' + se.id]; %><td class="text-center"><span class="mark <%= r ? r.status : 'none' %>" title="<%= r ? statusLabel('attendance', r.status) + (r.note ? ' — ' + r.note : '') : 'ثبت نشده' %>"><%= r ? L[r.status] : '·' %></span></td><% }) %>
+        <td class="text-center fw-6 <%= sm.absent ? 'text-danger' : '' %>"><%= fa(sm.absent) %></td>
+        <td class="text-center"><% if (sm.rate === null) { %>—<% } else { %><span class="badge no-dot badge-<%= sm.rate >= 80 ? 'success' : sm.rate >= 60 ? 'warning' : 'danger' %>"><%= fa(sm.rate) %>٪</span><% } %></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>

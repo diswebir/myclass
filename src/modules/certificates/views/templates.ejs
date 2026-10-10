@@ -1,0 +1,29 @@
+<% const TH = { classic: 'کلاسیک', modern: 'مدرن', minimal: 'مینیمال', elegant: 'فاخر' }; %>
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('palette') %>قالب‌های مدرک</h1><p class="page-sub">طراحی ظاهر، متن و امضاهای گواهینامه‌ها</p></div>
+  <div class="page-actions"><a class="btn btn-primary" href="<%= url('/panel/certificate-templates/new') %>"><%- icon('plus', 'icon-sm') %>قالب جدید</a></div>
+</div>
+<div class="grid grid-3">
+  <% templates.forEach(function (t) { %>
+  <div class="card class-card" style="--c:<%= t.d.primary_color %>">
+    <div style="height:120px;display:grid;place-items:center;background:linear-gradient(135deg, <%= t.d.primary_color %>14, <%= t.d.accent_color %>22);border-bottom:1px solid var(--border);position:relative">
+      <div style="width:<%= t.d.orientation === 'portrait' ? 62 : 120 %>px;height:<%= t.d.orientation === 'portrait' ? 88 : 85 %>px;background:#fff;border:3px double <%= t.d.primary_color %>;border-radius:3px;display:grid;place-items:center;box-shadow:var(--shadow-sm)"><%- icon('award', 'icon-xl') %></div>
+      <% if (t.is_default) { %><span class="badge badge-success" style="position:absolute;top:10px;right:10px">پیش‌فرض</span><% } %>
+    </div>
+    <div class="body">
+      <span class="title"><%= t.name %></span>
+      <div class="meta">
+        <span><%- icon('palette') %>تم <%= TH[t.d.theme] || t.d.theme %> · <%= t.d.orientation === 'portrait' ? 'عمودی' : 'افقی' %></span>
+        <span><%- icon('award') %><%= fa(counts[t.id] || 0) %> مدرک صادر شده</span>
+      </div>
+    </div>
+    <div class="foot">
+      <div class="flex gap-1">
+        <a class="btn btn-soft btn-sm" href="<%= url('/panel/certificate-templates/' + t.id + '/edit') %>"><%- icon('pencil', 'icon-sm') %>ویرایش</a>
+        <a class="btn btn-ghost btn-sm" href="<%= url('/panel/certificate-templates/' + t.id + '/preview') %>" target="_blank"><%- icon('eye', 'icon-sm') %>پیش‌نمایش</a>
+      </div>
+      <% if (templates.length > 1) { %><form method="post" action="<%= url('/panel/certificate-templates/' + t.id + '/delete') %>" data-confirm="قالب «<%= t.name %>» حذف شود؟"><%- include('partials/csrf') %><button class="btn btn-ghost btn-icon btn-sm text-danger" type="submit"><%- icon('trash-2', 'icon-sm') %></button></form><% } %>
+    </div>
+  </div>
+  <% }) %>
+</div>

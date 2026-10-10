@@ -1,0 +1,46 @@
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('upload') %>ورود گروهی کاربران</h1><p class="page-sub">افزودن تعداد زیادی دانشجو یا کاربر از طریق فایل CSV (قابل ساخت با اکسل)</p></div>
+  <div class="page-actions"><a class="btn" href="<%= url('/panel/users/import/sample.csv') %>"><%- icon('download', 'icon-sm') %>دریافت فایل نمونه</a></div>
+</div>
+<% if (result) { %>
+<div class="card mb-4">
+  <div class="card-head"><h2 class="card-title"><%- icon('check-circle-2') %>نتیجه آخرین ورود اطلاعات</h2></div>
+  <div class="card-body">
+    <div class="grid grid-3 keep-2">
+      <div class="kv-item"><span>کاربر جدید</span><b class="text-success"><%= fa(result.created) %></b></div>
+      <div class="kv-item"><span>کاربر موجود</span><b><%= fa(result.existing) %></b></div>
+      <div class="kv-item"><span>ثبت‌نام در کلاس</span><b class="text-primary"><%= fa(result.enrolled) %></b></div>
+    </div>
+    <% if (result.errors.length) { %><div class="alert alert-warning mt-4 mb-0"><%- icon('alert-triangle') %><div><b><%= fa(result.errors.length) %> خطا:</b><ul class="mb-0"><% result.errors.slice(0, 30).forEach(function (e) { %><li><%= e %></li><% }) %></ul></div></div><% } %>
+  </div>
+</div>
+<% } %>
+<div class="grid grid-side">
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%- icon('file-text') %>بارگذاری فایل</h2></div>
+    <div class="card-body">
+      <form method="post" action="<%= mpAction('/panel/users/import') %>" enctype="multipart/form-data">
+        <div class="form-grid">
+          <div class="field col-12"><label class="label">فایل CSV <span class="req">*</span></label><input class="input input-file" type="file" name="file" accept=".csv,text/csv" required><span class="help">با کدگذاری UTF-8 ذخیره شود (در اکسل: Save As ← CSV UTF-8)</span></div>
+          <%- include('partials/field', { name: 'role_id', label: 'نقش کاربران', type: 'select', col: 6, required: true, value: (roles.find(function (r) { return r.kind === 'student'; }) || {}).id, options: roles.map(function (r) { return { value: r.id, label: r.name }; }) }) %>
+          <% if (classes.length) { %><%- include('partials/field', { name: 'class_id', label: 'ثبت‌نام در کلاس (اختیاری)', type: 'select', col: 6, empty: 'بدون ثبت‌نام', options: classes.map(function (c) { return { value: c.id, label: c.title }; }) }) %><% } %>
+          <% if (moduleOn('sms')) { %><label class="switch col-12"><input type="checkbox" name="send_sms" value="1"><span class="track"></span>ارسال پیامک اطلاعات ورود به کاربران جدید</label><% } %>
+        </div>
+        <div class="form-actions mt-4"><button class="btn btn-primary" type="submit"><%- icon('upload', 'icon-sm') %>شروع ورود اطلاعات</button></div>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2 class="card-title"><%- icon('info') %>راهنما</h2></div>
+    <div class="card-body text-sm text-2">
+      <p>ستون‌های فایل (سطر اول عنوان ستون‌ها):</p>
+      <div class="chips mb-3"><span class="chip ltr">first_name</span><span class="chip ltr">last_name</span><span class="chip ltr">mobile</span><span class="chip ltr">national_code</span><span class="chip ltr">father_name</span><span class="chip ltr">email</span><span class="chip ltr">gender</span></div>
+      <ul style="padding-right:18px;margin:0">
+        <li>کاربرانی که موبایل یا کد ملی آنها از قبل وجود داشته باشد، دوباره ساخته نمی‌شوند.</li>
+        <li>رمز اولیه طبق تنظیمات امنیتی تعیین می‌شود.</li>
+        <li>حداکثر ۵۰۰۰ سطر در هر بار بارگذاری.</li>
+        <li>مقدار gender: <span class="ltr">male</span> یا <span class="ltr">female</span></li>
+      </ul>
+    </div>
+  </div>
+</div>

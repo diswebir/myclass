@@ -1,0 +1,38 @@
+<% const today = jalali.today(); const F = { overdue: 'معوق', upcoming: 'آینده', paid: 'پرداخت شده', all: 'همه' }; %>
+<div class="page-head">
+  <div><h1 class="page-title"><%- icon('calendar-range') %>اقساط</h1><p class="page-sub">پیگیری سررسیدها و اقساط معوق</p></div>
+</div>
+<div class="tabs card mb-4" style="padding:0 12px">
+  <% Object.keys(F).forEach(function (k) { %><a class="tab<%= filter === k ? ' active' : '' %>" href="<%= qs({ filter: k, page: '' }) %>"><%= F[k] %></a><% }) %>
+</div>
+<div class="card">
+  <form class="filters" method="get">
+    <input type="hidden" name="filter" value="<%= filter %>">
+    <div class="field"><label class="label">کلاس</label><select class="input" name="class" data-autosubmit><option value="">همه کلاس‌ها</option><% classes.forEach(function (c) { %><option value="<%= c.id %>"<%= String(query.class) === String(c.id) ? ' selected' : '' %>><%= c.title %></option><% }) %></select></div>
+    <div class="grow"></div>
+    <div class="text-sm" style="align-self:center"><%= fa(data.total) %> قسط · مانده: <b class="<%= filter === 'overdue' ? 'text-danger' : '' %>"><%= money(remaining) %></b></div>
+  </form>
+  <% if (!data.rows.length) { %><%- include('partials/empty', { emptyIcon: 'calendar-check', emptyTitle: filter === 'overdue' ? 'قسط معوقی وجود ندارد 🎉' : 'قسطی یافت نشد' }) %><% } else { %>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>دانشجو</th><th>فاکتور</th><th>قسط</th><th>سررسید</th><th>مبلغ</th><th>مانده</th><th>وضعیت</th><th></th></tr></thead>
+    <tbody>
+    <% data.rows.forEach(function (it) { const rem = Number(it.amount) - Number(it.paid_amount); const late = it.status !== 'paid' && String(it.due_date).slice(0, 10) < today; %>
+      <tr>
+        <td><a href="<%= url('/panel/users/' + it.user_id) %>"><%= it.first_name %> <%= it.last_name %></a><div class="text-xs text-muted"><%= it.class_title || '' %></div></td>
+        <td><a class="ltr d-inline" href="<%= url('/panel/invoices/' + it.invoice_id) %>"><%= it.invoice_no %></a></td>
+        <td><%= fa(it.seq) %></td>
+        <td class="text-sm"><%= jdate(it.due_date) %><div class="text-xs <%= late ? 'text-danger fw-6' : 'text-muted' %>"><%= late ? fa(jalali.diffDays(it.due_date, today)) + ' روز تأخیر' : rel(it.due_date) %></div></td>
+        <td><%= money(it.amount) %></td>
+        <td class="fw-6 <%= rem > 0 ? 'text-danger' : 'text-success' %>"><%= num(rem) %></td>
+        <td><%- badge('installment', late ? 'overdue' : it.status) %><% if (it.reminded_at) { %><div class="text-xs text-muted">یادآوری: <%= rel(it.reminded_at) %></div><% } %></td>
+        <td class="actions">
+          <% if (rem > 0 && moduleOn('sms')) { %><form method="post" action="<%= url('/panel/installments/' + it.id + '/remind') %>" class="d-inline"><%- include('partials/csrf') %><button class="btn btn-ghost btn-sm" type="submit"><%- icon('bell', 'icon-sm') %>یادآوری</button></form><% } %>
+          <a class="btn btn-soft btn-sm" href="<%= url('/panel/invoices/' + it.invoice_id) %>">فاکتور</a>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+  <%- include('partials/pagination', { data }) %>
+  <% } %>
+</div>

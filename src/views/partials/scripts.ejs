@@ -1,0 +1,3 @@
+<script src="<%= asset('vendor/jalalidatepicker/jalalidatepicker.min.js') %>" defer></script>
+<% if ((typeof charts !== 'undefined' && charts) || (typeof body === 'string' && body.indexOf('data-chart=') !== -1)) { %><script src="<%= asset('vendor/apexcharts/apexcharts.min.js') %>" defer></script><% } %>
+<script src="<%= asset('js/app.js') %>" defer></script>
