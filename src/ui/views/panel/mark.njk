@@ -1,0 +1,47 @@
+{% extends "layout.njk" %}
+{% block title %}ثبت حضور — myclass{% endblock %}
+{% block content %}
+{% set labels = { 'present': 'حاضر', 'absent': 'غایب', 'late': 'تأخیر', 'excused': 'مرخصی', 'unset': 'ثبت‌نشده' } %}
+<div class="page-head">
+  <h1>ثبت حضور</h1>
+  <a href="/panel/teacher" class="btn btn-ghost">بازگشت به پنل</a>
+</div>
+<div class="card">
+  <p>
+    کلاس: <strong>{{ session.class_title }} ({{ session.class_code }})</strong> —
+    تاریخ: <strong>{{ session.session_date | faDate }}</strong> —
+    ساعت: <strong>{{ session.start_time or '—' }}</strong>
+    {% if session.topic %} — موضوع: <strong>{{ session.topic }}</strong>{% endif %}
+  </p>
+  <form method="post" action="/attendance/mark/{{ session.id }}">
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <table class="table">
+      <thead><tr><th>کد</th><th>نام</th><th>نام خانوادگی</th><th>وضعیت</th></tr></thead>
+      <tbody>
+        {% for r in roster %}
+        <tr>
+          <td>{{ r.code }}</td>
+          <td>{{ r.first_name }}</td>
+          <td>{{ r.last_name }}</td>
+          <td>
+            <input type="hidden" name="entries[{{ loop.index0 }}][studentId]" value="{{ r.student_id }}">
+            <select name="entries[{{ loop.index0 }}][status]">
+              {% for key, label in labels %}
+              <option value="{{ key }}" {{ 'selected' if r.current_status == key }}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty">فراگیری در این کلاس ثبت‌نام فعال ندارد.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if roster.length %}
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">ثبت حضور</button>
+    </div>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}

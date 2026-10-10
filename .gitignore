@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+.storage/
+storage/
+.test-data/
+*.log
+.DS_Store
+# قفل نصبpostos
+.install.lock
+coverage/
+*.sqlite
+*.sqlite-journal
+release/
+spike-output/

@@ -1,0 +1,32 @@
+{% extends "layout.njk" %}
+{% block title %}گزارش ممیزی — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>گزارش ممیزی (Audit Log)</h1>
+  <form method="get" class="search-form">
+    <input name="action" value="{{ action }}" placeholder="action (مثلاً login_success)">
+    <input name="module" value="{{ module }}" placeholder="module">
+    <button class="btn btn-ghost">فیلتر</button>
+  </form>
+</div>
+<table class="table">
+  <thead>
+    <tr><th>زمان</th><th>کاربر</th><th>action</th><th>module</th><th>entity</th><th>IP</th><th>meta</th></tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.created_at | faDateTime }}</td>
+      <td>{{ r.actor_id | faNum }}</td>
+      <td><code>{{ r.action }}</code></td>
+      <td>{{ r.module }}</td>
+      <td>{{ r.entity_type }}/{{ r.entity_id }}</td>
+      <td>{{ r.ip or '' }}</td>
+      <td><code>{{ r.meta }}</code></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="empty">لاگی ثبت نشده است.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

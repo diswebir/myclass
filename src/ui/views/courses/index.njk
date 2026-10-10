@@ -1,0 +1,25 @@
+{% extends "layout.njk" %}
+{% block title %}دوره‌ها — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>دوره‌ها</h1>
+  <a href="/courses/new" class="btn btn-primary">دوره جدید</a>
+</div>
+<table class="table">
+  <thead><tr><th>کد</th><th>عنوان</th><th>دسته</th><th>سطح</th><th>شهریه پیش‌فرض</th><th>وضعیت</th></tr></thead>
+  <tbody>
+    {% for c in courses %}
+    <tr>
+      <td><a href="/courses/{{ c.id }}">{{ c.code }}</a></td>
+      <td>{{ c.title }}</td>
+      <td>{{ c.category or '' }}</td>
+      <td>{{ c.level or '' }}</td>
+      <td>{{ c.default_fee | faMoney }}</td>
+      <td>{% if c.is_active == 1 %}<span class="badge ok">فعال</span>{% else %}<span class="badge">غیرفعال</span>{% endif %}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="empty">دوره‌ای یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

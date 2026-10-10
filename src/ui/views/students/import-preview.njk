@@ -1,0 +1,33 @@
+{% extends "layout.njk" %}
+{% block title %}پیش‌نمایش ورود گروهی — myclass{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>پیش‌نمایش ورود گروهی فراگیران</h1>
+  <p>✅ {{ parsed.okCount }} ردیف معتبر — ❌ {{ parsed.errorCount }} ردیف دارای خطا</p>
+  <table class="table">
+    <thead><tr><th>ردیف</th><th>کد</th><th>نام</th><th>موبایل</th><th>خطاها</th></tr></thead>
+    <tbody>
+      {% for r in parsed.rows %}
+      <tr>
+        <td>{{ r.row | faNum }}</td>
+        <td>{{ r.data.code }}</td>
+        <td>{{ r.data.firstName }} {{ r.data.lastName }}</td>
+        <td>{{ r.data.phone }}</td>
+        <td>{% if r.errors.length %}<span class="badge fail">{{ r.errors.join('؛ ') }}</span>{% else %}<span class="badge ok">OK</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <form method="post" action="/students/import/commit" id="commit-form">
+    <input type="hidden" name="rows" id="rows-json">
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">تأیید و ثبت {{ parsed.okCount }} ردیف معتبر</button>
+      <a href="/students" class="btn btn-ghost">انصراف</a>
+    </div>
+  </form>
+</div>
+<script>
+var okRows = {{ parsed.rows | selectattr('errors', 'equalto', []) | list | tojson }};
+document.getElementById('rows-json').value = JSON.stringify(okRows);
+</script>
+{% endblock %}

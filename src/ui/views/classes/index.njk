@@ -1,0 +1,25 @@
+{% extends "layout.njk" %}
+{% block title %}کلاس‌ها — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>کلاس‌ها</h1>
+  <a href="/classes/new" class="btn btn-primary">کلاس جدید</a>
+</div>
+<table class="table">
+  <thead><tr><th>کد</th><th>عنوان</th><th>ظرفیت</th><th>شهریه</th><th>تاریخ شروع</th><th>وضعیت</th></tr></thead>
+  <tbody>
+    {% for c in classes %}
+    <tr>
+      <td><a href="/classes/{{ c.id }}">{{ c.code }}</a></td>
+      <td>{{ c.title }}</td>
+      <td>{{ c.capacity | faNum }}</td>
+      <td>{{ c.fee | faMoney }}</td>
+      <td>{{ c.start_date | faDate }}</td>
+      <td><span class="badge">{{ c.status }}</span></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="empty">کلاسی یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

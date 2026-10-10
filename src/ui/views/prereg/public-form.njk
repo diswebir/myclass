@@ -1,0 +1,30 @@
+{% extends "layout.njk" %}
+{% block title %}پیش‌ثبت‌نام — {{ cls.title }}{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>پیش‌ثبت‌نام — {{ cls.title }}</h1>
+  <p>کد کلاس: <code>{{ cls.code }}</code> — شهریه: {{ cls.fee | faMoney }}</p>
+  <form method="post" action="/prereg/public/{{ cls.code }}">
+    <input type="text" name="website" value="" style="display:none" tabindex="-1" autocomplete="off">
+    <div class="field"><label>نام و نام خانوادگی *</label><input name="applicantName" required></div>
+    <div class="field"><label>شماره موبایل *</label><input name="phone" required placeholder="09123456789"></div>
+    <div class="field"><label>ایمیل</label><input type="email" name="email"></div>
+    {% if form %}
+      {% set fields = form.fields | jsonParse %}
+      {% for f in fields %}
+      <div class="field">
+        <label>{{ f.label }}{% if f.required %} *{% endif %}</label>
+        {% if f.type == 'select' %}
+        <select name="fieldValues[{{ f.key }}]">
+          {% for o in (f.options or []) %}<option value="{{ o }}">{{ o }}</option>{% endfor %}
+        </select>
+        {% else %}
+        <input name="fieldValues[{{ f.key }}]" {{ 'required' if f.required }}>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% endif %}
+    <button type="submit" class="btn btn-primary btn-block">ثبت پیش‌ثبت‌نام</button>
+  </form>
+</div>
+{% endblock %}

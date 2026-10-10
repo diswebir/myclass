@@ -1,0 +1,30 @@
+{% extends "layout.njk" %}
+{% block title %}نصب — myclass{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>نصب myclass</h1>
+  <p>پایگاه داده و حساب مدیر را مشخص کنید. پس از نصب، این صفحه غیرفعال می‌شود.</p>
+  {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+  <form method="post" action="/install/run">
+    <h2>پایگاه داده (MariaDB/MySQL)</h2>
+    <div class="grid2">
+      <div class="field"><label>هاست</label><input name="dbHost" value="{{ values.dbHost or 'localhost' }}" required></div>
+      <div class="field"><label>پورت</label><input name="dbPort" value="{{ values.dbPort or 3306 }}" required></div>
+      <div class="field"><label>نام پایگاه داده</label><input name="dbName" value="{{ values.dbName or '' }}" required></div>
+      <div class="field"><label>نام کاربری</label><input name="dbUser" value="{{ values.dbUser or '' }}" required></div>
+      <div class="field"><label>رمز عبور</label><input type="password" name="dbPassword"></div>
+      <div class="field"><label>آدرس سایت</label><input name="appBaseUrl" value="{{ values.appBaseUrl or '' }}" placeholder="https://example.com"></div>
+    </div>
+    <h2>حساب مدیر</h2>
+    <div class="grid2">
+      <div class="field"><label>نام کاربری</label><input name="adminUsername" value="{{ values.adminUsername or 'admin' }}" required></div>
+      <div class="field"><label>نام کامل</label><input name="adminFullName" value="{{ values.adminFullName or 'مدیر سیستم' }}"></div>
+      <div class="field"><label>رمز عبور</label><input type="password" name="adminPassword" required></div>
+    </div>
+    <div class="actions">
+      <button type="submit" formaction="/install/check" class="btn btn-ghost">بررسی سازگاری</button>
+      <button type="submit" class="btn btn-primary">شروع نصب</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

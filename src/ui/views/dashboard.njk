@@ -1,0 +1,22 @@
+{% extends "layout.njk" %}
+{% block title %}داشبورد — myclass{% endblock %}
+{% block content %}
+<h1>داشبورد</h1>
+<div class="card">
+  <p>خوش آمدید، <strong>{{ user.fullName }}</strong>.</p>
+  <p>نقش‌ها: {{ user.roles.join('، ') }}</p>
+  {% if user.mustChangePassword %}
+  <div class="alert alert-warn">رمز عبور شما باید تغییر کند. <a href="/auth/change-password?force=1">تغییر رمز</a></div>
+  {% endif %}
+  {% if user.roles.includes('teacher') or user.roles.includes('student') %}
+  <div class="actions">
+    {% if user.roles.includes('teacher') %}
+    <a href="/panel/teacher" class="btn btn-primary">پنل استاد</a>
+    {% endif %}
+    {% if user.roles.includes('student') %}
+    <a href="/panel/student" class="btn btn-primary">پنل فراگیر</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "layout.njk" %}
+{% block title %}سلامت سیستم — myclass{% endblock %}
+{% block content %}
+<h1>سلامت سیستم</h1>
+<div class="card">
+  <table class="table">
+    <tr><th>وضعیت</th><td>{{ info.status }}</td></tr>
+    <tr><th>نسخه Node</th><td>{{ info.node }}</td></tr>
+    <tr><th>Dialect پایگاه داده</th><td>{{ info.dialect }}</td></tr>
+    <tr><th>اتصال DB</th><td>{{ 'OK' if info.dbConnected else 'FAIL' }}</td></tr>
+    <tr><th>تعداد migrationهای اجرا شده</th><td>{{ info.migrationsApplied }}</td></tr>
+    <tr><th>خطاهای اخیر (۱ ساعت)</th><td>{{ info.recentErrors | faNum }}</td></tr>
+    <tr><th>فضای آزاد دیسک (بایت)</th><td>{{ info.diskFreeBytes | faNum }}</td></tr>
+    <tr><th>حافظه RSS (بایت)</th><td>{{ info.memoryRssBytes | faNum }}</td></tr>
+    <tr><th>Uptime (ثانیه)</th><td>{{ info.uptimeSeconds | faNum }}</td></tr>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "layout.njk" %}
+{% block title %}پنل فراگیر — myclass{% endblock %}
+{% block content %}
+{% set labels = { 'present': 'حاضر', 'absent': 'غایب', 'late': 'تأخیر', 'excused': 'مرخصی', 'unset': 'ثبت‌نشده' } %}
+<div class="page-head">
+  <h1>پنل فراگیر</h1>
+  <a href="/panel/student/profile" class="btn btn-ghost">پروفایل من</a>
+</div>
+
+{% if flashReceipt %}
+<div class="alert alert-ok">رسید شما با موفقیت ثبت شد و در انتظار بررسی است.</div>
+{% endif %}
+
+<div class="card">
+  <h2>کلاس‌های من</h2>
+  <table class="table">
+    <thead><tr><th>کد</th><th>عنوان</th><th>شروع</th><th>پایان</th><th>ساعت</th><th>محل</th><th>وضعیت</th></tr></thead>
+    <tbody>
+      {% for c in classes %}
+      <tr>
+        <td>{{ c.code }}</td>
+        <td>{{ c.title }}</td>
+        <td>{{ c.start_date | faDate }}</td>
+        <td>{{ c.end_date | faDate }}</td>
+        <td>{{ c.start_time or '—' }}{% if c.end_time %} تا {{ c.end_time }}{% endif %}</td>
+        <td>{{ c.location or '—' }}</td>
+        <td><span class="badge">{{ c.enrollment_status }}</span></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="empty">شما در کلاسی ثبت‌نام ندارید.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>حضور و غیاب من</h2>
+  <p>
+    تعداد جلسات: <strong>{{ attendance.total | faNum }}</strong> —
+    حاضر: <strong>{{ attendance.present | faNum }}</strong> —
+    غایب: <strong>{{ attendance.absent | faNum }}</strong> —
+    مرخصی: <strong>{{ attendance.excused | faNum }}</strong> —
+    درصد حضور: <strong>{{ attendance.percent | faNum }}٪</strong>
+  </p>
+  <table class="table">
+    <thead><tr><th>کلاس</th><th>تاریخ جلسه</th><th>وضعیت</th></tr></thead>
+    <tbody>
+      {% for r in attendance.rows %}
+      <tr>
+        <td>{{ r.class_title }} ({{ r.class_code }})</td>
+        <td>{{ r.session_date | faDate }}</td>
+        <td><span class="badge {{ 'ok' if r.status == 'present' or r.status == 'late' else ('fail' if r.status == 'absent' else '') }}">{{ labels[r.status] or r.status }}</span></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3" class="empty">حضوری ثبت نشده است.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>امور مالی من</h2>
+  <table class="table">
+    <thead><tr><th>کلاس</th><th>مبلغ (تومان)</th><th>تخفیف</th><th>پرداخت‌شده</th><th>مانده</th></tr></thead>
+    <tbody>
+      {% for f in finance.enrollments %}
+      <tr>
+        <td>{{ f.enrollment.class_title }} ({{ f.enrollment.class_code }})</td>
+        <td>{{ f.enrollment.fee_amount | faMoney }}</td>
+        <td>{{ f.enrollment.discount_amount | faMoney }}</td>
+        <td>{{ f.paid | faMoney }}</td>
+        <td><strong>{{ f.balance | faMoney }}</strong></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="empty">ثبت‌نامی یافت نشد.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h3>پرداخت‌ها</h3>
+  <table class="table">
+    <thead><tr><th>مبلغ</th><th>وضعیت</th><th>تاریخ</th></tr></thead>
+    <tbody>
+      {% for p in finance.payments %}
+      <tr>
+        <td>{{ p.amount | faMoney }}</td>
+        <td><span class="badge">{{ p.status }}</span></td>
+        <td>{{ p.created_at | faDateTime }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3" class="empty">پرداختی ثبت نشده است.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>آپلود رسید کارت‌به‌کارت</h2>
+  {% if classes.length %}
+  <form method="post" action="/panel/student/receipts" enctype="multipart/form-data">
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <input type="hidden" name="idempotencyKey" id="idem" value="">
+    <div class="grid2">
+      <div class="field"><label>ثبت‌نام</label>
+        <select name="enrollmentId" required>
+          {% for c in classes %}
+          <option value="{{ c.enrollment_id }}">{{ c.title }} ({{ c.code }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field"><label>مبلغ (تومان)</label><input name="amount" required placeholder="مثلاً ۵۰۰۰۰۰"></div>
+    </div>
+    <div class="field"><label>تصویر رسید</label><input type="file" name="file" accept="image/*,application/pdf" required></div>
+    <div class="actions"><button type="submit" class="btn btn-primary">ارسال رسید</button></div>
+  </form>
+  <script>document.getElementById('idem').value = crypto.randomUUID();</script>
+  {% else %}
+  <p class="empty">برای آپلود رسید ابتدا باید در کلاسی ثبت‌نام داشته باشید.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>مدارک من</h2>
+  <table class="table">
+    <thead><tr><th>کد مدرک</th><th>کلاس</th><th>وضعیت</th><th>تاریخ صدور</th></tr></thead>
+    <tbody>
+      {% for cert in certificates %}
+      <tr>
+        <td>{{ cert.code }}</td>
+        <td>{{ cert.class_title }} ({{ cert.class_code }})</td>
+        <td><span class="badge {{ 'ok' if cert.status == 'issued' else 'fail' }}">{{ cert.status }}</span></td>
+        <td>{{ cert.issued_at | faDate }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="empty">مدرکی صادر نشده است.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
