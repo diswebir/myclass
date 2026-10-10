@@ -76,6 +76,12 @@ describe('HTTP Endpoints & Web Routing Integration', () => {
       updated_at: now
     }).execute();
 
+    // Mark system as installed so login & portal tests can run
+    await db.updateTable('system_settings')
+      .set({ value_json: JSON.stringify(true), updated_at: now })
+      .where('key', '=', 'installed')
+      .execute();
+
     // Helper to log in with proper CSRF token
     async function loginUser(mobile: string, pass: string) {
       const page = await request(app).get('/auth/login');

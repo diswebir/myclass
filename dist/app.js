@@ -141,7 +141,8 @@ function createApp() {
     });
     // Installer
     app.get('/install', async (req, res) => {
-        if (await installerService.isInstalled()) {
+        const isInstalled = await installerService.isInstalled();
+        if (isInstalled && req.query.force !== '1') {
             return res.redirect('/auth/login');
         }
         const env = await installerService.checkEnvironment();
@@ -229,7 +230,11 @@ function createApp() {
         }
     });
     // Auth: Login & Logout
-    app.get('/auth/login', (req, res) => {
+    app.get('/auth/login', async (req, res) => {
+        const isInstalled = await installerService.isInstalled();
+        if (!isInstalled) {
+            return res.redirect('/install');
+        }
         if (req.user) {
             if (req.user.role_name === 'teacher')
                 return res.redirect('/teacher');
@@ -311,12 +316,24 @@ function createApp() {
         }
         next();
     }
-    app.get('/', requireAuth, (req, res) => {
-        if (req.user?.role_name === 'teacher')
-            return res.redirect('/teacher');
-        if (req.user?.role_name === 'student')
-            return res.redirect('/student');
-        res.redirect('/admin');
+    app.get('/', async (req, res, next) => {
+        try {
+            const isInstalled = await installerService.isInstalled();
+            if (!isInstalled) {
+                return res.redirect('/install');
+            }
+            if (!req.user) {
+                return res.redirect('/auth/login');
+            }
+            if (req.user?.role_name === 'teacher')
+                return res.redirect('/teacher');
+            if (req.user?.role_name === 'student')
+                return res.redirect('/student');
+            res.redirect('/admin');
+        }
+        catch (err) {
+            next(err);
+        }
     });
     // ==========================================
     // Admin Routes
