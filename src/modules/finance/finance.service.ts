@@ -113,6 +113,15 @@ export class FinanceService {
         enrollmentId: input.enrollmentId ?? null,
         amount,
       });
+      try {
+        const { NotificationsService } = await import('../notifications/notifications.service');
+        await new NotificationsService(this.db).notifyStudent(input.studentId, {
+          type: 'payment_approved',
+          title: 'پرداخت شما ثبت شد',
+          body: amount,
+          link: '/panel/student/finance',
+        });
+      } catch { /* best-effort */ }
     }
     return { paymentId: res, status };
   }
@@ -478,6 +487,15 @@ export class FinanceService {
         enrollmentId: receipt.enrollment_id ? Number(receipt.enrollment_id) : null,
         amount: String(receipt.amount),
       });
+      try {
+        const { NotificationsService } = await import('../notifications/notifications.service');
+        await new NotificationsService(this.db).notifyStudent(Number(receipt.student_id), {
+          type: 'receipt_approved',
+          title: 'رسید پرداخت شما تأیید شد',
+          body: String(receipt.amount),
+          link: '/panel/student/finance',
+        });
+      } catch { /* best-effort */ }
     }
     return { status: 'approved', paymentId };
   }

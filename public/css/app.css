@@ -110,3 +110,10 @@ input:focus, select:focus, textarea:focus { outline: 2px solid #bfdbfe; border-c
 .perm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:.35rem; max-height:24rem; overflow:auto; border:1px solid var(--border,#e2e8f0); border-radius:.5rem; padding:.6rem; }
 .perm-item { display:flex; align-items:center; gap:.4rem; font-size:.8rem; }
 .perm-item code { direction:ltr; }
+
+/* اعلان‌ها — زنگوله + سطرهای نخوانده */
+.notif-bell { position: relative; }
+.notif-badge { display: inline-block; min-width: 1.1rem; padding: 0 0.3rem; border-radius: 999px; background: var(--fail); color: #fff; font-size: 0.7rem; text-align: center; vertical-align: middle; }
+.table tr.unread { background: #fffbeb; }
+.table tr.unread td:first-child { border-right: 3px solid #f59e0b; }
+.head-actions { display: flex; gap: 0.5rem; align-items: center; }

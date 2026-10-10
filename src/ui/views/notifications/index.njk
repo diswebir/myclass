@@ -1,0 +1,42 @@
+{% extends "layout.njk" %}
+{% block title %}اعلان‌ها — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>اعلان‌ها</h1>
+  <div class="head-actions">
+    <a class="btn btn-ghost" href="/notifications?unread=1">ن‌خوانده</a>
+    <a class="btn btn-ghost" href="/notifications">همه</a>
+    <form method="post" action="/notifications/read-all" class="inline-form">
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <button type="submit" class="btn btn-ghost">همه اعلان‌ها خوانده شد</button>
+    </form>
+  </div>
+</div>
+<table class="table">
+  <thead>
+    <tr><th>زمان</th><th>عنوان</th><th>متن</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr class="{{ 'unread' if not r.read_at }}">
+      <td>{{ r.created_at | faDateTime }}</td>
+      <td>
+        {% if r.link %}<a href="{{ r.link }}">{{ r.title }}</a>{% else %}{{ r.title }}{% endif %}
+        {% if not r.read_at %}<span class="badge">ن‌خوانده</span>{% endif %}
+      </td>
+      <td>{{ r.body or '' }}</td>
+      <td>
+        {% if not r.read_at %}
+        <form method="post" action="/notifications/{{ r.id }}/read" class="inline-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <button type="submit" class="btn btn-ghost">خوانده شد</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="empty">اعلان جدیدی نیست.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

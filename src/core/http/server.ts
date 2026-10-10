@@ -17,6 +17,7 @@ import { settingsRoutes } from '../../modules/settings/settings.routes';
 import { installerRoutes } from '../../modules/installer/installer.routes';
 import { healthRoutes } from '../../modules/health/health.routes';
 import { auditRoutes } from '../../modules/audit/audit.routes';
+import { notificationsRoutes } from '../../modules/notifications/notifications.routes';
 import { teachersRoutes } from '../../modules/teachers/teachers.routes';
 import { studentsRoutes } from '../../modules/students/students.routes';
 import { coursesRoutes } from '../../modules/courses/courses.routes';
@@ -179,6 +180,7 @@ export function createApp(ctx: AppContext): express.Express {
   app.use('/rbac', gate('rbac'), rbacRoutes(ctx));
   app.use('/settings', gate('settings'), settingsRoutes(ctx));
   app.use('/audit', gate('audit'), auditRoutes(ctx));
+  app.use('/notifications', gate('notifications'), notificationsRoutes(ctx));
   app.use('/teachers', gate('teachers'), teachersRoutes(ctx));
   app.use('/students', gate('students'), studentsRoutes(ctx));
   app.use('/courses', gate('courses'), coursesRoutes(ctx));

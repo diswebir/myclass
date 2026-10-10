@@ -349,6 +349,16 @@ export class CertificatesService {
       studentName: `${student.first_name} ${student.last_name}`,
       classTitle: cls.title,
     });
+    // اعلان داخل برنامه — best-effort
+    try {
+      const { NotificationsService } = await import('../notifications/notifications.service');
+      await new NotificationsService(this.db).notifyStudent(input.studentId, {
+        type: 'certificate_issued',
+        title: 'مدرک شما صادر شد',
+        body: cls.title,
+        link: '/panel/student/certificates',
+      });
+    } catch { /* best-effort */ }
     return this.getById(certId);
   }
 
