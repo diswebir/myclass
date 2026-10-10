@@ -3,12 +3,13 @@
  *   node dist/core/db/migrate-cli.js
  * متغیرهای محیطی (یا فایل .env) توسط loadConfig خوانده می‌شوند.
  */
-import { loadConfig } from '../config/env';
+import { loadConfig, loadDotEnv } from '../config/env';
 import { createDatabase } from './database';
 import { migrateToLatest } from './migrate';
 import { logger } from '../logger/logger';
 
 async function main(): Promise<void> {
+  loadDotEnv();
   const config = loadConfig();
   const db = createDatabase(config);
   try {

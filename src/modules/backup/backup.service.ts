@@ -128,8 +128,8 @@ export class BackupService {
     }
   }
 
-  /** ساخت پشتیبان — DB + فایل‌ها. */
-  async createBackup(actor: AuthUser): Promise<{ id: string; meta: BackupMeta }> {
+  /** ساخت پشتیبان — DB + فایل‌ها. `actor=null` برای CLI (سیستم). */
+  async createBackup(actor: { id: number } | null): Promise<{ id: string; meta: BackupMeta }> {
     const id = new Date()
       .toISOString()
       .replace(/[-:]/g, '')
@@ -168,7 +168,7 @@ export class BackupService {
     };
     fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify(meta, null, 2), 'utf8');
     await this.audit.log({
-      actorId: actor.id,
+      actorId: actor?.id ?? null,
       action: 'backup_created',
       module: 'backup',
       entityType: 'backup',

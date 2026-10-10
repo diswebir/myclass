@@ -18,7 +18,8 @@
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "schema:dump": "tsx scripts/dump-schema.ts"
+    "schema:dump": "tsx scripts/dump-schema.ts",
+    "backup:cli": "node dist/modules/backup/backup-cli.js"
   },
   "dependencies": {
     "alpinejs": "^3.14.9",

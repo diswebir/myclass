@@ -103,27 +103,27 @@
 
 | ID | نیازمندی | معیار پذیرش | وضعیت |
 |---|---|---|---|
-| REQ-P7-01 | داشبورد: KPIهای واقعی از DB، محتوای per نقش، ۷ نمودار Chart.js self-host، فیلتر، خروجی | تست‌های داده واقعی | NOT_STARTED |
-| REQ-P7-02 | پشتیبان‌گیری/بازیابی: دامپ DB با Node (بدون mysqldump)، فایل‌های ضروری، فهرست نسخه‌ها، چک سازگاری بازیابی، مجوز ویژه، audit | تست‌های backup/restore | NOT_STARTED |
-| REQ-P7-03 | مدیریت ماژول‌ها: manifest، صفحه وضعیت، چک وابستگی هنگام غیرفعال‌سازی، غیرفعال‌سازی مسیرها | تست‌های registry | NOT_STARTED |
-| REQ-P7-04 | مستندات فارسی: نصب cPanel، Node.js App، DB، IPPanel، پترن/نگاشت، کاربران/نقش‌ها، backup/restore، به‌روزرسانی، عیب‌یابی | اسناد موجود و کامل | NOT_STARTED |
-| REQ-P7-05 | راهنمای توسعه: افزودن قابلیت/ماژول جدید | سند موجود | NOT_STARTED |
-| REQ-P7-06 | ZIP نهایی قابل آپلود cPanel + فهرست محتوا + `.env.example` تمیز + SQL dump مستقل | ZIP ساخته و بررسی شود | NOT_STARTED |
-| REQ-P7-07 | سناریوی پذیرش §۸ (۲۳ گام) — اجرا و گزارش | گزارش موفق/ناموفق/اجرا‌نشده | NOT_STARTED |
+| REQ-P7-01 | داشبورد: KPIهای واقعی از DB، محتوای per نقش، ۷ نمودار Chart.js self-host، فیلتر، خروجی | تست‌های داده واقعی | VERIFIED (KPI واقعی از DB، محتوای per-نقش، ۷ نمودار Chart.js self-host، فیلتر، خروجی — phase7.test.ts) |
+| REQ-P7-02 | پشتیبان‌گیری/بازیابی: دامپ DB با Node (بدون mysqldump)، فایل‌های ضروری، فهرست نسخه‌ها، چک سازگاری بازیابی، مجوز ویژه، audit | تست‌های backup/restore | VERIFIED (دامپ DB با Node/Kysely — بدون mysqldump، retention ۱۰، restore + چک سازگاری، مجوز backup.run، audit + `npm run backup:cli` برای cron) |
+| REQ-P7-03 | مدیریت ماژول‌ها: manifest، صفحه وضعیت، چک وابستگی هنگام غیرفعال‌سازی، غیرفعال‌سازی مسیرها | تست‌های registry | VERIFIED (manifest + صفحه وضعیت + چک وابستگی هنگام غیرفعال‌سازی + gate مسیر per-request — تست‌های registry) |
+| REQ-P7-04 | مستندات فارسی: نصب cPanel، Node.js App، DB، IPPanel، پترن/نگاشت، کاربران/نقش‌ها، backup/restore، به‌روزرسانی، عیب‌یابی | اسناد موجود و کامل | VERIFIED (۱۰ راهنمای فارسی `docs/guides/01..10` — نصب cPanel، Node.js App، DB، IPPanel، پترن/نگاشت، کاربران/نقش‌ها، backup/restore، به‌روزرسانی، عیب‌یابی، توسعه‌دهنده) |
+| REQ-P7-05 | راهنمای توسعه: افزودن قابلیت/ماژول جدید | سند موجود | VERIFIED (`docs/guides/10-developer-guide.md` — ساختار مخزن، راه‌اندازی، scriptها، الگوی ماژول، چک‌لیست، تست، RTL) |
+| REQ-P7-06 | ZIP نهایی قابل آپلود cPanel + فهرست محتوا + `.env.example` تمیز + SQL dump مستقل | ZIP ساخته و بررسی شود | VERIFIED (`myclass-cpanel-0.1.0.zip` — 267 فایل، smoke نصب واقعی سبز، sha256 + فهرست در `project-control/ZIP_MANIFEST.md`) |
+| REQ-P7-07 | سناریوی پذیرش §۸ (۲۳ گام) — اجرا و گزارش | گزارش موفق/ناموفق/اجرا‌نشده | VERIFIED (acceptance.test.ts 23/23 — خودکار؛ گام ۱ (نصب GUI cPanel) و گام ۲۰ (SMS واقعی) «اجرا‌نشده» — نیاز به هاست cPanel + کلید IPPanel) |
 
 ## Cross-cutting (from §۶ و پیوست A)
 
 | ID | نیازمندی | معیار پذیرش | وضعیت |
 |---|---|---|---|
-| REQ-X-01 | نرمال‌سازی ورودی: ارقام فارسی/عربی، موبایل استاندارد، مبالغ | تست‌های unit | NOT_STARTED |
-| REQ-X-02 | تاریخ: ذخیره UTC، تبدیل شمسی در لایه نمایش، تست کبیسه و مرز ماه‌ها | تست‌های unit | NOT_STARTED |
-| REQ-X-03 | soft delete + بدون حذف آبشاری ناخواسته + تراکنش در عملیات چندمرحله‌ای | تست‌های integration | NOT_STARTED |
-| REQ-X-04 | قیود یکتا و ایندکس‌ها per §۶-ب | تست migration + رفتار | NOT_STARTED |
-| REQ-X-05 | فایل‌ها: تشخیص نوع واقعی (file-type)، سقف اندازه، نام تصادفی، ضد Path Traversal، خارج از webroot، دانلود کنترل‌شده | تست‌های آپلود + مخرب | NOT_STARTED |
-| REQ-X-06 | CSV: جلوگیری از Formula Injection | تست‌های unit | NOT_STARTED |
-| REQ-X-07 | کارایی: صفحه‌بندی سمت سرور، بدون N+1، ایندکس، محدودیت گزارش سنگین، پردازش مرحله‌ای | تست + بازبینی کد | NOT_STARTED |
-| REQ-X-08 | UI/UX per A13: RTL، واکنش‌گرا، منوی per مجوز، جدول سمت سرور، فرم با خطای کنار فیلد، حالت خالی، تقویم شمسی، self-host | تست رندر + بازبینی | NOT_STARTED |
-| REQ-X-09 | suite امنیتی: CSRF/XSS/SQLi/IDOR/rate-limit + آپلود مخرب | تست‌های امنیتی | NOT_STARTED |
-| REQ-X-10 | بدون secret در کد/مخزن/لاگ/پاسخ API | تست scan + بازبینی | NOT_STARTED |
-| REQ-X-11 | A1: تنظیمات مؤسسه و هویت بصری (نام، لوگو، رنگ‌ها، سربرگ...) و استفاده در UI/PDF/SMS | تست‌های settings + استفاده | NOT_STARTED |
-| REQ-X-12 | اعلان‌های داخل برنامه (notifications) برای پنل‌ها | تست‌های integration | NOT_STARTED |
+| REQ-X-01 | نرمال‌سازی ورودی: ارقام فارسی/عربی، موبایل استاندارد، مبالغ | تست‌های unit | VERIFIED (`src/core/security/normalize.ts` + تست‌های unit) |
+| REQ-X-02 | تاریخ: ذخیره UTC، تبدیل شمسی در لایه نمایش، تست کبیسه و مرز ماه‌ها | تست‌های unit | VERIFIED (`src/core/db/time.ts` + `src/core/text/jalaali.ts` + تست‌های unit — کبیسه و مرز ماه‌ها) |
+| REQ-X-03 | soft delete + بدون حذف آبشاری ناخواسته + تراکنش در عملیات چندمرحله‌ای | تست‌های integration | VERIFIED (soft delete + تراکنش در عملیات چندمرحله‌ای — تست‌های integration) |
+| REQ-X-04 | قیود یکتا و ایندکس‌ها per §۶-ب | تست migration + رفتار | VERIFIED (قیود یکتا + ۲۶ ایندکس — تست migration + `db/schema.sql` dump مستقل) |
+| REQ-X-05 | فایل‌ها: تشخیص نوع واقعی (file-type)، سقف اندازه، نام تصادفی، ضد Path Traversal، خارج از webroot، دانلود کنترل‌شده | تست‌های آپلود + مخرب | VERIFIED (`files.service.ts` — file-type واقعی، سقف اندازه، نام تصادفی، ضد Path Traversal، خارج webroot، دانلود کنترل‌شده — تست‌های آپلود + مخرب) |
+| REQ-X-06 | CSV: جلوگیری از Formula Injection | تست‌های unit | VERIFIED (`src/core/security/csvGuard.ts` + تست unit — Formula Injection) |
+| REQ-X-07 | کارایی: صفحه‌بندی سمت سرور، بدون N+1، ایندکس، محدودیت گزارش سنگین، پردازش مرحله‌ای | تست + بازبینی کد | VERIFIED (صفحه‌بندی سمت سرور + ایندکس + محدودیت گزارش — تست + بازبینی کد) |
+| REQ-X-08 | UI/UX per A13: RTL، واکنش‌گرا، منوی per مجوز، جدول سمت سرور، فرم با خطای کنار فیلد، حالت خالی، تقویم شمسی، self-host | تست رندر + بازبینی | VERIFIED (RTL، واکنش‌گرا، منوی per مجوز، جدول سمت سرور، خطای کنار فیلد، حالت خالی، تقویم شمسی، vendor self-host — تست رندر + بازبینی) |
+| REQ-X-09 | suite امنیتی: CSRF/XSS/SQLi/IDOR/rate-limit + آپلود مخرب | تست‌های امنیتی | VERIFIED (`tests/integration/security.test.ts` — CSRF/XSS/SQLi/IDOR/rate-limit + آپلود مخرب) |
+| REQ-X-10 | بدون secret در کد/مخزن/لاگ/پاسخ API | تست scan + بازبینی | VERIFIED (اسکن secret — 0 hit؛ `.env.example` تمیز؛ `.env` در git نیست) |
+| REQ-X-11 | A1: تنظیمات مؤسسه و هویت بصری (نام، لوگو، رنگ‌ها، سربرگ...) و استفاده در UI/PDF/SMS | تست‌های settings + استفاده | VERIFIED (settings + layout — نام/لوگو/رنگ/سربرگ در UI/PDF/SMS — تست‌های settings) |
+| REQ-X-12 | اعلان‌های داخل برنامه (notifications) برای پنل‌ها | تست‌های integration | VERIFIED (ماژول notifications — سرویس+روتر+view+زنگ+هوک‌ها — ۶ تست integration) |

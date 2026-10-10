@@ -1,7 +1,7 @@
 # STATE.md — کنترل وضعیت پروژه
 
 > این فایل در پایان هر نشست کاری به‌روز می‌شود.
-> آخرین به‌روزرسانی: 2026-10-10 — پایان فاز ۶ (پیامک/IPPanel) — ۲۲۰ تست سبز
+> آخرین به‌روزرسانی: 2026-10-10 — پایان فاز ۷ + تحویل نهایی (ZIP + ۱۰ راهنما + SQL dump) — ۲۵۶ تست سبز
 
 ## تاریخچه نشست‌ها
 
@@ -93,12 +93,29 @@
 - ارسال آزمایشی مدیر (sms.test_send.run) + viewهای صف/پترن/رویداد + nav «پیامک‌ها».
 - ۱۹ تست جدید (phase6.test.ts). REQ-P6-01..05 → VERIFIED (P6-01 با caveat B2). تست‌ها: **۲۲۰ موفق**. typecheck + build + cron smoke سبز.
 
+### 2026-10-10 — Session 9 (فاز ۷ — ماژول‌ها، ۱۰ راهنمای فارسی، SQL dump مستقل، ZIP نهایی + smoke نصب)
+
+- **ماژول notifications (REQ-X-12)** کامل شد: سرویس + روتر + view + زنگ layout + ۳ هوک رویداد + ۶ تست integration. ۲۵۶/۲۵۶ سبز.
+- **راهنمای فارسی ۰۱–۰۵** (نصب cPanel، Node.js App، DB، IPPanel، پترن/نگاشت) — کامل و commit شد (`81f163e`).
+- **راهنمای ۰۶–۱۰** — کامل و commit شد (`0cf4a7c`): کاربران/نقش‌ها/دسترسی‌ها، backup/restore، به‌روزرسانی، عیب‌یابی (incl. خطای Laragon `Cannot find module ... dist/index.js` + syntax پورت در Windows)، راهنمای توسعه‌دهنده.
+- **خطای کاربر (Laragon/Windows)** — در راهنمای ۰۹ + ۰۱ مستند شد (`aa8023b`): `npm start` نیاز به `dist/` دارد؛ ZIP نهایی شامل `dist/` است.
+- **SQL dump مستقل**: `scripts/dump-schema.ts` (Kysely DummyDriver + MysqlDialect — بدون DB زنده) → `db/schema.sql` (۶ migration، ۶۳ statement، ۳۴ جدول، ۲۶ ایندکس). `npm run schema:dump`. commit `6ca77db`.
+- **ZIP نهایی**: `myclass-cpanel-0.1.0.zip` — ۲۶۷ فایل (dist/ ۱۴۲، src/ui/views/ ۷۰، public/ ۲۰، docs/ ۲۰، migrations/ ۸، db/schema.sql، package.json، package-lock.json، .env.example، README.md، ZIP_MANIFEST.md). sha256: `904fa0e1187132a9355f4e27881f0ae62443452e3add1802818653f8d48f27fd`.
+- **Smoke Test نصب واقعی از ZIP** (پوشه‌ی تمیز، `npm ci --omit=dev`): migrate از `.env` (۶ migration)، `backup:cli` (پشتیبان ساخته شد)، boot — `/install` 200، `/` 302، `/admin/health` 302 (auth). سه باگ/gap واقعی پیدا و رفع شد:
+  1. `migrate-cli` فایل `.env` را نمی‌خواند (فراخوانی `loadDotEnv` نداشت) → رفع شد.
+  2. `DB_SQLITE_PATH` پیش‌فرض به `.test-data/` اشاره می‌کرد + پوشه‌ی پدر ساخته نمی‌شد → پیش‌فرض `./storage/myclass.sqlite` + mkdir خودکار.
+  3. `npm run backup:cli` در راهنمای ۰۷ آمده بود ولی اسکریپت نداشت → `src/modules/backup/backup-cli.ts` + اسکریپت npm اضافه شد (`createBackup(null)` برای CLI).
+- **REQUIREMENTS.md**: REQ-P7-01..07 و REQ-X-01..12 همه VERIFIED (۱۹ ردیف).
+- تست‌ها: **۲۵۶/۲۵۶ سبز** (۲۱ فایل)، typecheck ۰ خطا، build ۰ خطا.
+- اسکن secret (REQ-X-10): ۰ hit — هیچ secret در کد/مخزن/لاگ.
+- **تحویل نهایی**: ZIP + `project-control/ZIP_MANIFEST.md` (فهرست تأییدشده + sha256 + نتایج smoke).
+
 ## وضعیت فعلی
 
-- فاز: **۶ — پیامک/IPPanel — کامل شد ✅ (۲۲۰ تست) → شروع فاز ۷ (داشبورد/backup/ZIP نهایی)**
-- آخرین نیازمندی VERIFIED: REQ-P6-05 (P6-01 با caveat B2 — wire format IPPanel تأییدنشده)
-- در حال انجام: فاز ۷ — REQ-P7-01.. (داشبورد KPI + ۷ نمودار، backup/restore، ماژول‌ها، ۹ راهنمای فارسی، سناریوی پذیرش §۸، ZIP نهایی)
-- تست‌ها: ۲۲۰ موفق / ۰ ناموفق — `npm test` + `npm run typecheck` + `npm run build` سبز؛ boot smoke (install + full mode) سبز.
+- فاز: **۷ — داشبورد، backup، ماژول‌ها، مستندات، ZIP نهایی — کامل شد ✅ (۲۵۶ تست) → تحویل نهایی**
+- آخرین نیازمندی VERIFIED: REQ-X-12 (notifications) + REQ-P7-01..07 + REQ-X-01..10 — همه‌ی ۱۹ ردیف P7/X VERIFIED
+- تحویل: `myclass-cpanel-0.1.0.zip` (۲۶۷ فایل، smoke نصب واقعی سبز) + `project-control/ZIP_MANIFEST.md` + ۱۰ راهنمای فارسی + `db/schema.sql`
+- تست‌ها: ۲۵۶ موفق / ۰ ناموفق — `npm test` + `npm run typecheck` + `npm run build` سبز؛ smoke نصب از ZIP سبز (migrate + backup:cli + boot).
 
 ## نتایج تست
 

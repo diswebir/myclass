@@ -13,6 +13,8 @@ import type {
   QueryCompiler,
   QueryResult,
 } from 'kysely';
+import fs from 'node:fs';
+import path from 'node:path';
 import { SqliteAdapter, SqliteIntrospector, SqliteQueryCompiler } from 'kysely';
 
 // --- لود ماژول داخلی node:sqlite (بدون import استاتیک — vite/tsc آن را resolve نمی‌کنند) ---
@@ -78,8 +80,13 @@ class NodeSqliteDriver implements Driver {
   private readonly conn: NodeSqliteConnection;
   private txDepth = 0;
 
-  constructor(path: string) {
-    this.db = new DatabaseSync(path);
+  constructor(filePath: string) {
+    // ساخت پوشه‌ی پدر (نصب تازه: storage/ ممکن است موجود نباشد)
+    if (filePath !== ':memory:') {
+      const dir = path.dirname(path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath));
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    this.db = new DatabaseSync(filePath);
     this.conn = new NodeSqliteConnection(this.db);
   }
 

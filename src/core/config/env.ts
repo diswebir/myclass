@@ -42,7 +42,7 @@ const envSchema = z.object({
   DB_NAME: z.string().default('myclass'),
   DB_USER: z.string().default('myclass'),
   DB_PASSWORD: z.string().default(''),
-  DB_SQLITE_PATH: z.string().default('./.test-data/app.sqlite'),
+  DB_SQLITE_PATH: z.string().default('./storage/myclass.sqlite'),
 
   SESSION_SECRET: z.string().min(16).default(DEV_DEFAULT_SESSION_SECRET),
   SESSION_TTL_HOURS: z.coerce.number().int().positive().default(12),
