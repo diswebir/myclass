@@ -145,3 +145,44 @@ Grep of tracked source for key/token/password literals: only test fixtures (`ins
 
 ## 7. Repository sync note
 The local branch ref had been reset to the initial commit during the session. The remote branch `arena/a2a4ec6f-myclass` held the pushed work (`55cc069`). The working tree was compared file-by-file with that commit (identical), then the local branch was moved to `55cc069` with a mixed reset. No files were lost. `dist/` is tracked in git, so the rebuilt output is committed with this run.
+
+---
+
+# Review round 2 (code review and fixes)
+
+Scope: line-by-line review of auth, users, roles, RBAC, installer, migrator, DB layer, middleware, error handling and UI shell. Each defect below was reproduced or demonstrated from the code, fixed, and covered by a test or a live check.
+
+| # | Defect | Severity | Fix | Verified by |
+|---|---|---|---|---|
+| 1 | **Migrator lock split across pooled connections.** `GET_LOCK` and `RELEASE_LOCK` ran through the pool, so release could miss and the lock could stay held by a pooled connection, blocking every later migration. | Critical | `Database.withConnection` pins one connection; lock, status and all statements run on it; a connection that hits a fatal error is destroyed, not reused. | unit: `migrator` ×3 (same connection, release on failure, busy lock) |
+| 2 | **CSP blocked the brand style.** Layout emitted `<style>:root{--brand…}</style>` while the policy is `style-src 'self'`, so the browser dropped it. | High (UI) | Colour moves to `data-brand` on `<html>`; `app.js` applies it after validating `#RRGGBB`. | unit: `http-gate` CSP regression; live: no `<style>`, `data-brand="#1d4ed8"` |
+| 3 | **Idle timeout not enforced.** Code comment promised idle expiry; only the 8-hour absolute expiry was checked. | High | `sessionIdleMinutes` (default 120) rejects idle sessions. | unit: idle rejected, active accepted |
+| 4 | **Session expiry used `INTERVAL ? HOUR` in a prepared statement.** Parameter typing for INTERVAL is driver-dependent. | Medium | Expiry computed in JS and bound as a Date. | unit: no INTERVAL, ~8 h Date |
+| 5 | **Password silently truncated at login** to 256 characters. | Medium | Over-long input is rejected as invalid credentials; create and install enforce the same cap. | unit: no DB call; live: 401 |
+| 6 | **Last-super-admin check was a race.** Count and update were separate statements. | High | Count with `SELECT … FOR UPDATE` inside a transaction (role change and disable). | code review; needs DB to exercise concurrency |
+| 7 | **Username normalisation inconsistent.** Login used `normalizeText`, create/install used `trim().toLowerCase()`. | Medium | One `normalizeUsername` (digits folded, trimmed, lowercased) everywhere. | unit: normalisation cases |
+| 8 | **User search ignored Persian digits.** Searching ۰۹۱۲ missed stored `0912…`. | Medium | Search term digit-folded; spaces and hyphens removed. | unit: `%0912123%` param |
+| 9 | **Role edit could strip permissions the editor does not hold.** Anti-escalation only checked the new list. | High (RBAC) | Editor must hold the role's current permissions too. | unit: 403 and no permission rows changed |
+| 10 | **Super-admin catalogue check compared counts only.** A same-size list with an unknown code passed. | Medium | Exact set match required. | unit: `LOCKED_ROLE` |
+| 11 | **Role delete race** surfaced as a raw FK error (500). | Low | `ER_ROW_IS_REFERENCED_2` mapped to a 409 conflict. | code review |
+| 12 | **Stranded install** (admin committed, lock file write failed → cannot reinstall). Known gap from earlier. | High (ops) | Admin, institute name and an `system.installed_at` marker commit in one transaction. A retry with a marker present writes the lock file. Concurrent installs are refused in-process. | code review; needs DB to exercise |
+| 13 | **Users created without the password cap**, and the create path skipped `MAX_PASSWORD_LENGTH`. | Low | Cap enforced in create and install. | unit: 400 before any DB work |
+| 14 | **Health read `process.env` directly** instead of the loaded config. | Low | Uses `cfg.installToken`. | code review |
+| 15 | **Dead code in login success path** (`void user`). | Cosmetic | Removed. | build |
+| 16 | **Database-unavailable error shape.** (From round 1.) | Medium | 503 with Persian message, no driver text. | live: 45/45 incl. DB-down login → 503 |
+
+## Live verification after the fixes
+- Pre-install matrix: **10/10 pass** (`scripts/e2e-http.sh`).
+- Post-install matrix: **48/48 pass** (includes new checks: no inline style, data-brand present, over-long password → 401).
+- Unit tests: **53/53 pass** (`npm test`); strict type-check clean.
+
+## Not verified (still needs a real MySQL/MariaDB)
+- Every fix that touches SQL behaviour: migrator on a real server, transactions and `FOR UPDATE`, the installer's marker path, session idle and expiry against stored rows, duplicate-key mapping.
+- The browser-side brand application in `app.js` (no browser available).
+
+## Known limitations left open on purpose
+- Login throttling is keyed on the username and IP, so an attacker can lock a known username for 15 minutes. This is a deliberate trade-off against password guessing; it should be revisited with a CAPTCHA or admin unlock before go-live.
+- The installer's token-failure counter is in memory and resets when the process restarts.
+- `login_attempts` and `audit_logs` have no retention policy yet.
+- `GET /admin/system/health` calls `CREATE TABLE IF NOT EXISTS` (via the migrator status). A read-only DB user would see that page fail.
+- Migrations: MySQL commits DDL implicitly, so a failed migration can leave partial schema. Mitigated by the pre-migration backup instruction, not by code.

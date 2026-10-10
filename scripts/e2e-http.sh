@@ -54,6 +54,10 @@ if [ "$MODE" = "post-install" ]; then
   check "X-Content-Type-Options nosniff" "$(echo "$H" | grep -ci 'x-content-type-options: nosniff')" 1
   LEAK="$(curl -s -m 10 -b "$JAR" -X POST -d "_csrf=$CSRF&username=a&password=b" "$BASE/login" | grep -ciE 'at [A-Za-z.]+ \(|ECONNREFUSED|ER_ACCESS|stack|mysql')"
   check "failed login (DB down) leaks no driver or stack text" "$LEAK" 0
+  check "login page has no inline style element (CSP)" "$(curl -s -m 10 "$BASE/login" | grep -c '<style')" 0
+  check "brand colour carried as data-brand" "$(curl -s -m 10 "$BASE/login" | grep -c 'data-brand="#')" "[1-9][0-9]*"
+  LONGPW="$(printf 'a%.0s' $(seq 1 300))"
+  check "over-long password rejected (401, not truncated)" "$(code -b "$JAR" -X POST --data-urlencode "_csrf=$CSRF" --data-urlencode "username=admin" --data-urlencode "password=$LONGPW" "$BASE/login")" 401
   check "failed login (DB down) -> 503 Persian page" "$(code -b "$JAR" -X POST -d "_csrf=$CSRF&username=a&password=b" "$BASE/login")" 503
 fi
 

@@ -1,9 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuthService = void 0;
+exports.AuthService = exports.MAX_PASSWORD_LENGTH = void 0;
 const errors_1 = require("../../lib/errors");
 const crypto_1 = require("../../lib/crypto");
 const persian_1 = require("../../lib/persian");
+/** Longest accepted password. Longer input is rejected rather than truncated. */
+exports.MAX_PASSWORD_LENGTH = 256;
 const GENERIC_LOGIN_ERROR = 'نام کاربری یا رمز عبور نادرست است.';
 const LAST_SEEN_THROTTLE_MS = 5 * 60 * 1000;
 /**
@@ -22,13 +24,19 @@ class AuthService {
     get windowMinutes() {
         return this.options.lockWindowMinutes ?? 15;
     }
+    get idleMinutes() {
+        return this.options.sessionIdleMinutes ?? 120;
+    }
     async countFailures(column, hash) {
         const rows = await this.db.query(`SELECT COUNT(*) AS n FROM login_attempts
         WHERE ${column} = ? AND success = 0 AND attempted_at >= (UTC_TIMESTAMP(3) - INTERVAL ? MINUTE)`, [hash, this.windowMinutes]);
         return Number(rows[0]?.n ?? 0);
     }
     async login(input) {
-        const username = (0, persian_1.normalizeText)(input.username).toLowerCase();
+        if (input.password.length > exports.MAX_PASSWORD_LENGTH) {
+            throw new errors_1.AppError(401, 'INVALID_CREDENTIALS', GENERIC_LOGIN_ERROR);
+        }
+        const username = (0, persian_1.normalizeUsername)(input.username);
         const identifierHash = (0, crypto_1.sha256Hex)(`id:${username}`);
         const ipHash = (0, crypto_1.sha256Hex)(`ip:${input.ip ?? 'unknown'}`);
         const [identFail, ipFail] = await Promise.all([
@@ -71,8 +79,10 @@ class AuthService {
     }
     async createSession(userId, ip, userAgent) {
         const token = (0, crypto_1.randomToken)(32);
+        // Expiry is computed here (UTC instant) rather than with INTERVAL ? in a prepared statement.
+        const expiresAt = new Date(Date.now() + this.options.sessionTtlHours * 3600 * 1000);
         await this.db.execute(`INSERT INTO sessions (user_id, token_hash, ip_address, user_agent, expires_at)
-       VALUES (?, ?, ?, ?, DATE_ADD(UTC_TIMESTAMP(3), INTERVAL ? HOUR))`, [userId, (0, crypto_1.sha256Hex)(token), ip ? ip.slice(0, 45) : null, userAgent ? userAgent.slice(0, 255) : null, this.options.sessionTtlHours]);
+       VALUES (?, ?, ?, ?, ?)`, [userId, (0, crypto_1.sha256Hex)(token), ip ? ip.slice(0, 45) : null, userAgent ? userAgent.slice(0, 255) : null, expiresAt]);
         return token;
     }
     /** Resolves a session token to an active user, or null. Touches last_seen_at at most every 5 minutes. */
@@ -90,6 +100,8 @@ class AuthService {
         if (!row || row.revoked_at || row.status !== 'active')
             return null;
         if (new Date(row.expires_at).getTime() <= Date.now())
+            return null;
+        if (Date.now() - new Date(row.last_seen_at).getTime() > this.idleMinutes * 60 * 1000)
             return null;
         if (Date.now() - new Date(row.last_seen_at).getTime() > LAST_SEEN_THROTTLE_MS) {
             await this.db.execute('UPDATE sessions SET last_seen_at = UTC_TIMESTAMP(3) WHERE id = ?', [row.session_id]);
@@ -129,7 +141,7 @@ class AuthService {
         if (password.length < minLength) {
             throw errors_1.errors.badRequest(`رمز عبور باید حداقل ${minLength} نویسه باشد.`, { password: `حداقل ${minLength} نویسه لازم است.` });
         }
-        if (password.length > 256)
+        if (password.length > exports.MAX_PASSWORD_LENGTH)
             throw errors_1.errors.badRequest('رمز عبور بیش از حد طولانی است.', { password: 'رمز عبور بیش از حد طولانی است.' });
         const hash = await (0, crypto_1.hashPassword)(password);
         await this.db.execute('UPDATE users SET password_hash = ?, must_change_password = ?, password_changed_at = UTC_TIMESTAMP(3) WHERE id = ?', [hash, mustChange ? 1 : 0, userId]);

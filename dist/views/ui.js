@@ -77,14 +77,13 @@ function layout(o) {
       </header>`
         : (0, html_1.raw)('');
     const page = (0, html_1.html) `<!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="fa" dir="rtl" data-brand="${o.primaryColor}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>${o.title} · ${o.instituteName}</title>
 <link rel="stylesheet" href="/assets/app.css">
-<style>:root{--brand:${o.primaryColor};}</style>
 </head>
 <body class="${auth ? 'is-app' : 'is-guest'}">
 <a class="skip-link" href="#main">رفتن به محتوای اصلی</a>

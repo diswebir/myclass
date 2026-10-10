@@ -35,7 +35,7 @@ export function bootstrap(appRoot: string, env: NodeJS.ProcessEnv = process.env)
     maxFailures: 5,
   });
   // The login lock threshold is read from settings so administrators can tune it without code changes.
-  const users = new UsersService(db, audit, auth, rbac, () => settings.get<number>('security.password_min_length'));
+  const users = new UsersService(db, audit, auth, () => settings.get<number>('security.password_min_length'));
   const roles = new RolesService(db, audit);
   const dashboard = new DashboardService(db);
   const install = new InstallService(cfg, db, rbac, users, audit, migrationsDir, () => undefined);

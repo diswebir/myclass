@@ -1,11 +1,11 @@
-import type { Database } from '../../db/database';
+import type { Database, Queryable } from '../../db/database';
 import { errors, AppError } from '../../lib/errors';
 import { generateTemporaryPassword, hashPassword } from '../../lib/crypto';
-import { normalizeIranMobile, normalizeText } from '../../lib/persian';
+import { MAX_PASSWORD_LENGTH } from '../auth/auth.service';
+import { normalizeIranMobile, normalizeText, normalizeUsername, toEnglishDigits } from '../../lib/persian';
 import { SUPER_ADMIN_ROLE, missingGrantablePermissions } from '../../rbac/permissions';
 import type { AuditService } from '../audit/audit.service';
 import type { AuthService } from '../auth/auth.service';
-import type { RbacService } from '../rbac/rbac.service';
 
 export interface Actor {
   id: number;
@@ -43,7 +43,7 @@ const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
 function validateProfile(input: Partial<UserInput>, requireUsername: boolean): Record<string, string> {
   const fe: Record<string, string> = {};
   if (requireUsername) {
-    const u = (input.username ?? '').trim().toLowerCase();
+    const u = normalizeUsername(input.username ?? '');
     if (!USERNAME_RE.test(u)) fe.username = 'نام کاربری باید ۳ تا ۶۴ نویسه از حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط باشد.';
   }
   const name = normalizeText(input.fullName ?? '');
@@ -69,7 +69,6 @@ export class UsersService {
     private readonly db: Database,
     private readonly audit: AuditService,
     private readonly auth: AuthService,
-    private readonly rbac: RbacService,
     private readonly passwordMinLength: () => Promise<number>,
   ) {}
 
@@ -77,7 +76,9 @@ export class UsersService {
     const where: string[] = [];
     const params: (string | number)[] = [];
     if (filter.q) {
-      const like = `%${filter.q.trim().replace(/[%_\\]/g, '\\$&')}%`;
+      // Persian/Arabic digits are folded so searching ۰۹۱۲ finds 0912 (phones are stored ASCII).
+      const term = toEnglishDigits(normalizeText(filter.q)).replace(/[\s-]/g, '');
+      const like = `%${term.replace(/[%_\\]/g, '\\$&')}%`;
       where.push('(u.username LIKE ? OR u.full_name LIKE ? OR u.phone LIKE ? OR u.email LIKE ?)');
       params.push(like, like, like, like);
     }
@@ -142,13 +143,17 @@ export class UsersService {
     return target;
   }
 
-  private async countActiveSuperAdmins(): Promise<number> {
-    const [row] = await this.db.query<{ n: number }>(
-      `SELECT COUNT(*) AS n FROM users u JOIN roles r ON r.id = u.role_id
-        WHERE r.slug = ? AND u.status = 'active'`,
+  /**
+   * Counts active super administrators and locks their rows (FOR UPDATE) inside the caller's transaction,
+   * so two concurrent requests cannot each see "2 admins" and demote both.
+   */
+  private async countActiveSuperAdminsLocked(q: Queryable): Promise<number> {
+    const rows = await q.query<{ id: number }>(
+      `SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id
+        WHERE r.slug = ? AND u.status = 'active' FOR UPDATE`,
       [SUPER_ADMIN_ROLE],
     );
-    return Number(row?.n ?? 0);
+    return rows.length;
   }
 
   async create(actor: Actor, input: UserInput): Promise<number> {
@@ -156,10 +161,11 @@ export class UsersService {
     const minLen = await this.passwordMinLength();
     const password = input.password ?? '';
     if (password.length < minLen) fe.password = `رمز عبور باید حداقل ${minLen} نویسه باشد.`;
+    else if (password.length > MAX_PASSWORD_LENGTH) fe.password = 'رمز عبور بیش از حد طولانی است.';
     if (Object.keys(fe).length) throw errors.badRequest('لطفاً خطاهای فرم را برطرف کنید.', fe);
 
     await this.assertCanGrantRole(actor, input.roleId);
-    const username = input.username!.trim().toLowerCase();
+    const username = normalizeUsername(input.username!);
     const phone = input.phone && input.phone.trim() ? normalizeIranMobile(input.phone) : null;
     const email = input.email && input.email.trim() ? input.email.trim().toLowerCase() : null;
     const hash = await hashPassword(password);
@@ -193,25 +199,28 @@ export class UsersService {
     const fe = validateProfile(input, false);
     if (Object.keys(fe).length) throw errors.badRequest('لطفاً خطاهای فرم را برطرف کنید.', fe);
     const target = await this.assertCanManageTarget(actor, id);
-    if (target.role_id !== input.roleId) {
+    const roleChanged = target.role_id !== input.roleId;
+    if (roleChanged) {
       if (id === actor.id) throw new AppError(400, 'SELF_ROLE_CHANGE', 'امکان تغییر نقش خودتان وجود ندارد.');
       await this.assertCanGrantRole(actor, input.roleId);
-      if (target.role_slug === SUPER_ADMIN_ROLE && (await this.countActiveSuperAdmins()) <= 1) {
-        throw errors.conflict('آخرین مدیر اصلی فعال را نمی‌توان تغییر نقش داد.');
-      }
     }
     const phone = input.phone && input.phone.trim() ? normalizeIranMobile(input.phone) : null;
     const email = input.email && input.email.trim() ? input.email.trim().toLowerCase() : null;
     try {
-      await this.db.execute(
-        'UPDATE users SET full_name = ?, email = ?, phone = ?, role_id = ? WHERE id = ?',
-        [normalizeText(input.fullName), email, phone, input.roleId, id],
-      );
+      await this.db.transaction(async (tx) => {
+        if (roleChanged && target.role_slug === SUPER_ADMIN_ROLE && (await this.countActiveSuperAdminsLocked(tx)) <= 1) {
+          throw errors.conflict('آخرین مدیر اصلی فعال را نمی‌توان تغییر نقش داد.');
+        }
+        await tx.execute(
+          'UPDATE users SET full_name = ?, email = ?, phone = ?, role_id = ? WHERE id = ?',
+          [normalizeText(input.fullName), email, phone, input.roleId, id],
+        );
+      });
     } catch (err) {
       throw this.mapDuplicate(err);
     }
     await this.audit.record({
-      action: target.role_id !== input.roleId ? 'user.role_changed' : 'user.updated',
+      action: roleChanged ? 'user.role_changed' : 'user.updated',
       actorUserId: actor.id,
       entityType: 'user',
       entityId: id,
@@ -223,10 +232,12 @@ export class UsersService {
   async setStatus(actor: Actor, id: number, active: boolean): Promise<void> {
     if (id === actor.id) throw new AppError(400, 'SELF_DISABLE', 'امکان غیرفعال‌کردن حساب خودتان وجود ندارد.');
     const target = await this.assertCanManageTarget(actor, id);
-    if (!active && target.role_slug === SUPER_ADMIN_ROLE && (await this.countActiveSuperAdmins()) <= 1) {
-      throw errors.conflict('آخرین مدیر اصلی فعال را نمی‌توان غیرفعال کرد.');
-    }
-    await this.db.execute("UPDATE users SET status = ? WHERE id = ?", [active ? 'active' : 'disabled', id]);
+    await this.db.transaction(async (tx) => {
+      if (!active && target.role_slug === SUPER_ADMIN_ROLE && (await this.countActiveSuperAdminsLocked(tx)) <= 1) {
+        throw errors.conflict('آخرین مدیر اصلی فعال را نمی‌توان غیرفعال کرد.');
+      }
+      await tx.execute('UPDATE users SET status = ? WHERE id = ?', [active ? 'active' : 'disabled', id]);
+    });
     if (!active) await this.auth.revokeUserSessions(id);
     await this.audit.record({ action: active ? 'user.activated' : 'user.disabled', actorUserId: actor.id, entityType: 'user', entityId: id, ip: actor.ip });
   }
@@ -249,15 +260,14 @@ export class UsersService {
   }
 
   /** Used by the installer to create the first super administrator. */
-  async createFirstSuperAdmin(input: { username: string; fullName: string; email?: string; password: string }): Promise<number> {
-    await this.rbac.syncCatalog();
-    const [role] = await this.db.query<{ id: number }>('SELECT id FROM roles WHERE slug = ?', [SUPER_ADMIN_ROLE]);
+  async createFirstSuperAdmin(q: Queryable, input: { username: string; fullName: string; email?: string; password: string }): Promise<number> {
+    const [role] = await q.query<{ id: number }>('SELECT id FROM roles WHERE slug = ?', [SUPER_ADMIN_ROLE]);
     if (!role) throw new Error('نقش مدیر اصلی یافت نشد.');
     const hash = await hashPassword(input.password);
-    const res = await this.db.execute(
+    const res = await q.execute(
       `INSERT INTO users (username, email, full_name, password_hash, role_id, must_change_password)
        VALUES (?, ?, ?, ?, ?, 0)`,
-      [input.username.toLowerCase(), input.email ? input.email.toLowerCase() : null, normalizeText(input.fullName), hash, role.id],
+      [normalizeUsername(input.username), input.email ? input.email.trim().toLowerCase() : null, normalizeText(input.fullName), hash, role.id],
     );
     return Number(res.insertId);
   }

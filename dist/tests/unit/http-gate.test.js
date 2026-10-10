@@ -148,3 +148,16 @@ async function withServer(services, fn) {
         strict_1.default.equal(missing.status, 404);
     });
 });
+(0, node_test_1.default)('CSP regression: rendered pages contain no inline style or script (brand colour is applied by app.js)', async () => {
+    await withServer(stubServices({ installed: true }), async (base) => {
+        const res = await fetch(`${base}/login`);
+        const csp = res.headers.get('content-security-policy') ?? '';
+        strict_1.default.match(csp, /style-src 'self'/);
+        strict_1.default.doesNotMatch(csp, /style-src[^;]*unsafe-inline/);
+        const html = await res.text();
+        strict_1.default.doesNotMatch(html, /<style[\s>]/i, 'inline <style> elements are blocked by the CSP');
+        strict_1.default.doesNotMatch(html, /\sstyle="/i, 'inline style attributes are blocked by the CSP');
+        strict_1.default.doesNotMatch(html, /<script(?![^>]*\ssrc=)[^>]*>/i, 'inline script is blocked by the CSP');
+        strict_1.default.match(html, /<html lang="fa" dir="rtl" data-brand="#1d4ed8">/);
+    });
+});

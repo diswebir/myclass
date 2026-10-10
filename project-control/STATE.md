@@ -12,7 +12,7 @@ Foundation phase is implemented and tested at the unit level. A release ZIP was 
 |---|---|---|
 | TypeScript strict type-check | `npm run check` | pass |
 | Build | `npm run build` | pass |
-| Unit tests | `npm test` (build + `node --test dist/tests/unit/*.test.js`) | **38 / 38 pass, 0 fail** |
+| Unit tests | `npm test` (build + `node --test dist/tests/unit/*.test.js`) | **53 / 53 pass, 0 fail** (see EVIDENCE.md, review round 2) |
 | DB integration tests | `npm run test:integration` | **skipped** (no `TEST_DB_*`; no DB available). Test is written: migrations, installer, RBAC escalation, last-super-admin lockout, role change and session revocation, settings, audit, dashboard counts. **Not executed.** |
 | SQL syntax (static) | `node-sql-parser` MySQL grammar on `migrations/001_foundation.sql` | 8 / 8 statements parse (static only; not run on a server) |
 | Live preview (no DB) | `node app.js` on port 3123 | `/install` 200 with RTL Persian checks; DB-failure message shows no host; `/login` and `/admin` → 302 `/install`; `/health` 503 `{"status":"error"}`; `/assets/app.css` 200 `text/css`; `/package.json` not served (302 to installer) |
@@ -32,14 +32,13 @@ Foundation phase is implemented and tested at the unit level. A release ZIP was 
 
 ## Known gaps and risks (must be addressed before any production claim)
 
-- **DB never executed.** The installer, migrations, RBAC writes, sessions, audit inserts and dashboard counts are all unexecuted SQL. Run `npm run test:integration` on a disposable MySQL/MariaDB as the first next step.
-- Known install edge case: when users exist but no `install.lock` is present, the installer refuses to proceed and can leave a partial install stranded. Needs a recovery path plus a test.
-- `users.service.create` maps duplicate-key errors by matching index names in the message; verify on real MySQL.
-- Login rate-limit and session expiry are implemented but not exercised by tests.
-- zod 4 `z.email()` and `z.number()` usage is not exercised against a runtime test beyond the config tests.
-- Cosmetic cleanups pending: a no-op in `auth.routes.ts` login success path; a stray re-export and unused imports in `pages.ts`; duplicated Persian-digit mapping between `pagerHtml` and `pages.ts` (should use `lib/persian`).
-- Installer failure counters are in memory (reset on restart); acceptable for install-only use, documented as a limitation.
+- **DB never executed.** The installer, migrations, RBAC writes, sessions, audit inserts and dashboard counts are all unexecuted SQL. Run `npm run test:integration` on a disposable MySQL/MariaDB as the first next step. Review round 2 (EVIDENCE.md) changed several SQL paths, so this matters more now.
+- Login throttling is keyed on username and IP, so it can be used to lock a known username for 15 minutes (deliberate trade-off; revisit with CAPTCHA or admin unlock).
+- Installer token-failure counter is in memory (resets on restart).
+- `login_attempts` and `audit_logs` have no retention policy.
+- Health page runs `CREATE TABLE IF NOT EXISTS` through the migrator status check.
 - Pagination lists have no sorting (UI-03).
+- Browser-side behaviour (brand application, responsive layout) has not been tested in a browser.
 
 ## IPPanel Edge contracts (read from official docs, 2026-10-09; no code written yet)
 

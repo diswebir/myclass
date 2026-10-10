@@ -6,7 +6,7 @@ Status legend: `NOT_STARTED` · `IN_PROGRESS` · `IMPLEMENTED_UNVERIFIED` (code 
 
 Verification environment limits (affect many rows): no MySQL/MariaDB server is reachable from the sandbox (apt, dev.mysql.com, cdn.mysql.com, archive.mariadb.org are blocked), so **every database-backed behaviour is `IMPLEMENTED_UNVERIFIED`**. No cPanel host, Phusion Passenger, or IPPanel API access is available either.
 
-Evidence keys: `unit:<file>` = test file in `src/tests/unit` (38 tests, all pass via `npm test`; files: jalali, persian, security, settings-config, http-gate); `I` = the single DB integration test in `src/tests/integration/database.test.ts` with subtests for migrations, installer, RBAC/anti-escalation, last-super-admin lockout, role change and session revocation, settings, audit and dashboard counts (written, **skipped — not executed, no DB**); `P` = manual check in the running preview; `S` = static check.
+Evidence keys: `unit:<file>` = test file in `src/tests/unit` (53 tests, all pass via `npm test`; files: jalali, persian, security, settings-config, http-gate); `I` = the single DB integration test in `src/tests/integration/database.test.ts` with subtests for migrations, installer, RBAC/anti-escalation, last-super-admin lockout, role change and session revocation, settings, audit and dashboard counts (written, **skipped — not executed, no DB**); `P` = manual check in the running preview; `S` = static check.
 
 ## 1. Architecture and technology (spec §1)
 

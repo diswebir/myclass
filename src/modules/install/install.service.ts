@@ -5,7 +5,8 @@ import type { Database } from '../../db/database';
 import { Migrator } from '../../db/migrator';
 import { errors } from '../../lib/errors';
 import { safeEqual } from '../../lib/crypto';
-import { normalizeText } from '../../lib/persian';
+import { normalizeText, normalizeUsername } from '../../lib/persian';
+import { MAX_PASSWORD_LENGTH } from '../auth/auth.service';
 import { APP_VERSION } from '../../version';
 import type { AuditService } from '../audit/audit.service';
 import type { RbacService } from '../rbac/rbac.service';
@@ -30,6 +31,9 @@ export interface InstallInput {
 }
 
 const MIN_TOKEN_LENGTH = 24;
+const USERNAME_RE = /^[a-z0-9][a-z0-9_.-]{2,63}$/;
+/** Settings key written in the same transaction as the first admin; proves the install completed. */
+export const INSTALL_MARKER = 'system.installed_at';
 
 /**
  * Web installer. It is available only while storage/install.lock is absent.
@@ -38,6 +42,7 @@ const MIN_TOKEN_LENGTH = 24;
  */
 export class InstallService {
   private failedTokenAttempts = 0;
+  private installing = false;
 
   constructor(
     private readonly cfg: AppConfig,
@@ -124,6 +129,7 @@ export class InstallService {
 
   async install(input: InstallInput, ip: string | null): Promise<void> {
     if (this.isInstalled()) throw errors.conflict('نصب قبلاً انجام شده است.');
+    if (this.installing) throw errors.conflict('نصب در حال انجام است. چند ثانیه صبر کنید.');
     if (this.failedTokenAttempts >= 10) throw errors.tooMany('تلاش‌های ناموفق زیاد بود. برای امنیت، برنامه را دوباره راه‌اندازی کنید.');
     if (this.cfg.installToken.length < MIN_TOKEN_LENGTH) {
       throw errors.badRequest('ابتدا INSTALL_TOKEN را در تنظیمات محیطی تعریف کنید.');
@@ -132,42 +138,70 @@ export class InstallService {
       this.failedTokenAttempts++;
       throw errors.badRequest('توکن نصب نادرست است.', { token: 'توکن نصب نادرست است.' });
     }
+    this.installing = true;
+    try {
+      await this.runInstall(input, ip);
+    } finally {
+      this.installing = false;
+    }
+  }
+
+  private async runInstall(input: InstallInput, ip: string | null): Promise<void> {
     const fe: Record<string, string> = {};
     if (normalizeText(input.fullName).length < 2) fe.fullName = 'نام مدیر را وارد کنید.';
-    if (!/^[a-z0-9][a-z0-9_.-]{2,63}$/.test(input.username.trim().toLowerCase())) fe.username = 'نام کاربری نامعتبر است (حروف انگلیسی، عدد، نقطه، خط تیره، زیرخط).';
+    if (!USERNAME_RE.test(normalizeUsername(input.username))) fe.username = 'نام کاربری نامعتبر است (حروف انگلیسی، عدد، نقطه، خط تیره، زیرخط).';
     if (input.password.length < 10) fe.password = 'رمز عبور باید حداقل ۱۰ نویسه باشد.';
+    else if (input.password.length > MAX_PASSWORD_LENGTH) fe.password = 'رمز عبور بیش از حد طولانی است.';
     if (input.password !== input.passwordConfirm) fe.passwordConfirm = 'تکرار رمز عبور با رمز عبور یکسان نیست.';
     if (normalizeText(input.instituteName).length < 2) fe.instituteName = 'نام رسمی مؤسسه را وارد کنید.';
     if (Object.keys(fe).length) throw errors.badRequest('لطفاً خطاهای فرم را برطرف کنید.', fe);
 
-    const migrator = new Migrator(this.db, this.migrationsDir);
-    await migrator.migrate();
+    await new Migrator(this.db, this.migrationsDir).migrate();
     await this.rbac.syncCatalog();
 
-    const [existing] = await this.db.query<{ n: number }>('SELECT COUNT(*) AS n FROM users');
-    if (Number(existing?.n ?? 0) > 0) {
-      throw errors.conflict('کاربری در پایگاه داده وجود دارد اما فایل قفل نصب موجود نیست. با پشتیبان یا مدیر فنی تماس بگیرید.');
+    // Admin account, institute name and the "installed" marker are one transaction. If the lock file write
+    // below fails, the marker still exists, so a retry can finish the install instead of getting stranded.
+    const marker = await this.db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM settings WHERE setting_key = ?`, [INSTALL_MARKER]);
+    if (Number(marker[0]?.n ?? 0) === 0) {
+      const [existing] = await this.db.query<{ n: number }>('SELECT COUNT(*) AS n FROM users');
+      if (Number(existing?.n ?? 0) > 0) {
+        throw errors.conflict('کاربری در پایگاه داده وجود دارد اما نشانه نصب کامل نیست. با پشتیبان یا مدیر فنی تماس بگیرید.');
+      }
+      const adminId = await this.db.transaction(async (tx) => {
+        const id = await this.users.createFirstSuperAdmin(tx, {
+          username: input.username,
+          fullName: input.fullName,
+          email: input.email?.trim() || undefined,
+          password: input.password,
+        });
+        await tx.execute(
+          `INSERT INTO settings (setting_key, value_json, updated_by) VALUES ('institute.name_official', ?, ?)
+           ON DUPLICATE KEY UPDATE value_json = VALUES(value_json)`,
+          [JSON.stringify(normalizeText(input.instituteName)), id],
+        );
+        await tx.execute(
+          `INSERT INTO settings (setting_key, value_json, updated_by) VALUES (?, ?, ?)`,
+          [INSTALL_MARKER, JSON.stringify(new Date().toISOString()), id],
+        );
+        return id;
+      });
+      await this.audit.record({ action: 'system.installed', actorUserId: adminId, entityType: 'system', entityId: APP_VERSION, ip, details: { version: APP_VERSION } });
     }
 
-    const adminId = await this.users.createFirstSuperAdmin({
-      username: input.username.trim(),
-      fullName: input.fullName,
-      email: input.email?.trim() || undefined,
-      password: input.password,
-    });
-    await this.db.execute(
-      `INSERT INTO settings (setting_key, value_json, updated_by) VALUES ('institute.name_official', ?, ?)
-       ON DUPLICATE KEY UPDATE value_json = VALUES(value_json)`,
-      [JSON.stringify(normalizeText(input.instituteName)), adminId],
-    );
-    await this.audit.record({ action: 'system.installed', actorUserId: adminId, entityType: 'system', entityId: APP_VERSION, ip, details: { version: APP_VERSION } });
-
-    fs.mkdirSync(this.cfg.storageDir, { recursive: true });
-    fs.writeFileSync(
-      this.cfg.installLockFile,
-      JSON.stringify({ installedAt: new Date().toISOString(), version: APP_VERSION }, null, 2),
-      { flag: 'wx' },
-    );
+    this.writeLockFile();
     this.onInstalled();
+  }
+
+  private writeLockFile(): void {
+    fs.mkdirSync(this.cfg.storageDir, { recursive: true });
+    try {
+      fs.writeFileSync(
+        this.cfg.installLockFile,
+        JSON.stringify({ installedAt: new Date().toISOString(), version: APP_VERSION }, null, 2),
+        { flag: 'wx' },
+      );
+    } catch (err) {
+      if ((err as { code?: string }).code !== 'EEXIST') throw err;
+    }
   }
 }

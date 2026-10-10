@@ -155,3 +155,17 @@ test('static assets are served from /assets only and unknown paths return 404', 
     assert.equal(missing.status, 404);
   });
 });
+
+test('CSP regression: rendered pages contain no inline style or script (brand colour is applied by app.js)', async () => {
+  await withServer(stubServices({ installed: true }), async (base) => {
+    const res = await fetch(`${base}/login`);
+    const csp = res.headers.get('content-security-policy') ?? '';
+    assert.match(csp, /style-src 'self'/);
+    assert.doesNotMatch(csp, /style-src[^;]*unsafe-inline/);
+    const html = await res.text();
+    assert.doesNotMatch(html, /<style[\s>]/i, 'inline <style> elements are blocked by the CSP');
+    assert.doesNotMatch(html, /\sstyle="/i, 'inline style attributes are blocked by the CSP');
+    assert.doesNotMatch(html, /<script(?![^>]*\ssrc=)[^>]*>/i, 'inline script is blocked by the CSP');
+    assert.match(html, /<html lang="fa" dir="rtl" data-brand="#1d4ed8">/);
+  });
+});

@@ -1,7 +1,7 @@
 import type { Queryable, Database } from '../../db/database';
 import { errors, AppError } from '../../lib/errors';
 import { hashPassword, randomToken, sha256Hex, verifyPassword } from '../../lib/crypto';
-import { normalizeText } from '../../lib/persian';
+import { normalizeUsername } from '../../lib/persian';
 import type { AuditService } from '../audit/audit.service';
 
 export interface AuthUser {
@@ -22,9 +22,14 @@ export interface AuthenticatedSession {
 
 export interface AuthOptions {
   sessionTtlHours: number;
+  /** Sessions unused for longer than this are rejected even before the absolute expiry. */
+  sessionIdleMinutes?: number;
   maxFailures: number;
   lockWindowMinutes?: number;
 }
+
+/** Longest accepted password. Longer input is rejected rather than truncated. */
+export const MAX_PASSWORD_LENGTH = 256;
 
 const GENERIC_LOGIN_ERROR = 'نام کاربری یا رمز عبور نادرست است.';
 const LAST_SEEN_THROTTLE_MS = 5 * 60 * 1000;
@@ -44,6 +49,10 @@ export class AuthService {
     return this.options.lockWindowMinutes ?? 15;
   }
 
+  private get idleMinutes(): number {
+    return this.options.sessionIdleMinutes ?? 120;
+  }
+
   private async countFailures(column: 'identifier_hash' | 'ip_hash', hash: string): Promise<number> {
     const rows = await this.db.query<{ n: number }>(
       `SELECT COUNT(*) AS n FROM login_attempts
@@ -54,7 +63,10 @@ export class AuthService {
   }
 
   async login(input: { username: string; password: string; ip: string | null; userAgent: string | null }): Promise<string> {
-    const username = normalizeText(input.username).toLowerCase();
+    if (input.password.length > MAX_PASSWORD_LENGTH) {
+      throw new AppError(401, 'INVALID_CREDENTIALS', GENERIC_LOGIN_ERROR);
+    }
+    const username = normalizeUsername(input.username);
     const identifierHash = sha256Hex(`id:${username}`);
     const ipHash = sha256Hex(`ip:${input.ip ?? 'unknown'}`);
 
@@ -108,10 +120,12 @@ export class AuthService {
 
   async createSession(userId: number, ip: string | null, userAgent: string | null): Promise<string> {
     const token = randomToken(32);
+    // Expiry is computed here (UTC instant) rather than with INTERVAL ? in a prepared statement.
+    const expiresAt = new Date(Date.now() + this.options.sessionTtlHours * 3600 * 1000);
     await this.db.execute(
       `INSERT INTO sessions (user_id, token_hash, ip_address, user_agent, expires_at)
-       VALUES (?, ?, ?, ?, DATE_ADD(UTC_TIMESTAMP(3), INTERVAL ? HOUR))`,
-      [userId, sha256Hex(token), ip ? ip.slice(0, 45) : null, userAgent ? userAgent.slice(0, 255) : null, this.options.sessionTtlHours],
+       VALUES (?, ?, ?, ?, ?)`,
+      [userId, sha256Hex(token), ip ? ip.slice(0, 45) : null, userAgent ? userAgent.slice(0, 255) : null, expiresAt],
     );
     return token;
   }
@@ -132,6 +146,7 @@ export class AuthService {
     const row = rows[0];
     if (!row || row.revoked_at || row.status !== 'active') return null;
     if (new Date(row.expires_at).getTime() <= Date.now()) return null;
+    if (Date.now() - new Date(row.last_seen_at).getTime() > this.idleMinutes * 60 * 1000) return null;
     if (Date.now() - new Date(row.last_seen_at).getTime() > LAST_SEEN_THROTTLE_MS) {
       await this.db.execute('UPDATE sessions SET last_seen_at = UTC_TIMESTAMP(3) WHERE id = ?', [row.session_id]);
     }
@@ -184,7 +199,7 @@ export class AuthService {
     if (password.length < minLength) {
       throw errors.badRequest(`رمز عبور باید حداقل ${minLength} نویسه باشد.`, { password: `حداقل ${minLength} نویسه لازم است.` });
     }
-    if (password.length > 256) throw errors.badRequest('رمز عبور بیش از حد طولانی است.', { password: 'رمز عبور بیش از حد طولانی است.' });
+    if (password.length > MAX_PASSWORD_LENGTH) throw errors.badRequest('رمز عبور بیش از حد طولانی است.', { password: 'رمز عبور بیش از حد طولانی است.' });
     const hash = await hashPassword(password);
     await this.db.execute(
       'UPDATE users SET password_hash = ?, must_change_password = ?, password_changed_at = UTC_TIMESTAMP(3) WHERE id = ?',

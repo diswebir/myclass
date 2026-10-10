@@ -21,7 +21,7 @@ function authRoutes(s) {
     r.post('/login', async (req, res) => {
         const b = (0, render_1.bodyOf)(req);
         const username = (b.username ?? '').slice(0, 190);
-        const password = (b.password ?? '').slice(0, 256);
+        const password = b.password ?? '';
         try {
             if (!username || !password)
                 throw errors_1.errors.badRequest('نام کاربری و رمز عبور را وارد کنید.');

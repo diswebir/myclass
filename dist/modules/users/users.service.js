@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const errors_1 = require("../../lib/errors");
 const crypto_1 = require("../../lib/crypto");
+const auth_service_1 = require("../auth/auth.service");
 const persian_1 = require("../../lib/persian");
 const permissions_1 = require("../../rbac/permissions");
 const USERNAME_RE = /^[a-z0-9][a-z0-9_.-]{2,63}$/;
@@ -10,7 +11,7 @@ const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
 function validateProfile(input, requireUsername) {
     const fe = {};
     if (requireUsername) {
-        const u = (input.username ?? '').trim().toLowerCase();
+        const u = (0, persian_1.normalizeUsername)(input.username ?? '');
         if (!USERNAME_RE.test(u))
             fe.username = 'نام کاربری باید ۳ تا ۶۴ نویسه از حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط باشد.';
     }
@@ -37,20 +38,20 @@ class UsersService {
     db;
     audit;
     auth;
-    rbac;
     passwordMinLength;
-    constructor(db, audit, auth, rbac, passwordMinLength) {
+    constructor(db, audit, auth, passwordMinLength) {
         this.db = db;
         this.audit = audit;
         this.auth = auth;
-        this.rbac = rbac;
         this.passwordMinLength = passwordMinLength;
     }
     async list(filter) {
         const where = [];
         const params = [];
         if (filter.q) {
-            const like = `%${filter.q.trim().replace(/[%_\\]/g, '\\$&')}%`;
+            // Persian/Arabic digits are folded so searching ۰۹۱۲ finds 0912 (phones are stored ASCII).
+            const term = (0, persian_1.toEnglishDigits)((0, persian_1.normalizeText)(filter.q)).replace(/[\s-]/g, '');
+            const like = `%${term.replace(/[%_\\]/g, '\\$&')}%`;
             where.push('(u.username LIKE ? OR u.full_name LIKE ? OR u.phone LIKE ? OR u.email LIKE ?)');
             params.push(like, like, like, like);
         }
@@ -105,10 +106,14 @@ class UsersService {
             throw errors_1.errors.forbidden();
         return target;
     }
-    async countActiveSuperAdmins() {
-        const [row] = await this.db.query(`SELECT COUNT(*) AS n FROM users u JOIN roles r ON r.id = u.role_id
-        WHERE r.slug = ? AND u.status = 'active'`, [permissions_1.SUPER_ADMIN_ROLE]);
-        return Number(row?.n ?? 0);
+    /**
+     * Counts active super administrators and locks their rows (FOR UPDATE) inside the caller's transaction,
+     * so two concurrent requests cannot each see "2 admins" and demote both.
+     */
+    async countActiveSuperAdminsLocked(q) {
+        const rows = await q.query(`SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id
+        WHERE r.slug = ? AND u.status = 'active' FOR UPDATE`, [permissions_1.SUPER_ADMIN_ROLE]);
+        return rows.length;
     }
     async create(actor, input) {
         const fe = validateProfile(input, true);
@@ -116,10 +121,12 @@ class UsersService {
         const password = input.password ?? '';
         if (password.length < minLen)
             fe.password = `رمز عبور باید حداقل ${minLen} نویسه باشد.`;
+        else if (password.length > auth_service_1.MAX_PASSWORD_LENGTH)
+            fe.password = 'رمز عبور بیش از حد طولانی است.';
         if (Object.keys(fe).length)
             throw errors_1.errors.badRequest('لطفاً خطاهای فرم را برطرف کنید.', fe);
         await this.assertCanGrantRole(actor, input.roleId);
-        const username = input.username.trim().toLowerCase();
+        const username = (0, persian_1.normalizeUsername)(input.username);
         const phone = input.phone && input.phone.trim() ? (0, persian_1.normalizeIranMobile)(input.phone) : null;
         const email = input.email && input.email.trim() ? input.email.trim().toLowerCase() : null;
         const hash = await (0, crypto_1.hashPassword)(password);
@@ -153,24 +160,27 @@ class UsersService {
         if (Object.keys(fe).length)
             throw errors_1.errors.badRequest('لطفاً خطاهای فرم را برطرف کنید.', fe);
         const target = await this.assertCanManageTarget(actor, id);
-        if (target.role_id !== input.roleId) {
+        const roleChanged = target.role_id !== input.roleId;
+        if (roleChanged) {
             if (id === actor.id)
                 throw new errors_1.AppError(400, 'SELF_ROLE_CHANGE', 'امکان تغییر نقش خودتان وجود ندارد.');
             await this.assertCanGrantRole(actor, input.roleId);
-            if (target.role_slug === permissions_1.SUPER_ADMIN_ROLE && (await this.countActiveSuperAdmins()) <= 1) {
-                throw errors_1.errors.conflict('آخرین مدیر اصلی فعال را نمی‌توان تغییر نقش داد.');
-            }
         }
         const phone = input.phone && input.phone.trim() ? (0, persian_1.normalizeIranMobile)(input.phone) : null;
         const email = input.email && input.email.trim() ? input.email.trim().toLowerCase() : null;
         try {
-            await this.db.execute('UPDATE users SET full_name = ?, email = ?, phone = ?, role_id = ? WHERE id = ?', [(0, persian_1.normalizeText)(input.fullName), email, phone, input.roleId, id]);
+            await this.db.transaction(async (tx) => {
+                if (roleChanged && target.role_slug === permissions_1.SUPER_ADMIN_ROLE && (await this.countActiveSuperAdminsLocked(tx)) <= 1) {
+                    throw errors_1.errors.conflict('آخرین مدیر اصلی فعال را نمی‌توان تغییر نقش داد.');
+                }
+                await tx.execute('UPDATE users SET full_name = ?, email = ?, phone = ?, role_id = ? WHERE id = ?', [(0, persian_1.normalizeText)(input.fullName), email, phone, input.roleId, id]);
+            });
         }
         catch (err) {
             throw this.mapDuplicate(err);
         }
         await this.audit.record({
-            action: target.role_id !== input.roleId ? 'user.role_changed' : 'user.updated',
+            action: roleChanged ? 'user.role_changed' : 'user.updated',
             actorUserId: actor.id,
             entityType: 'user',
             entityId: id,
@@ -182,10 +192,12 @@ class UsersService {
         if (id === actor.id)
             throw new errors_1.AppError(400, 'SELF_DISABLE', 'امکان غیرفعال‌کردن حساب خودتان وجود ندارد.');
         const target = await this.assertCanManageTarget(actor, id);
-        if (!active && target.role_slug === permissions_1.SUPER_ADMIN_ROLE && (await this.countActiveSuperAdmins()) <= 1) {
-            throw errors_1.errors.conflict('آخرین مدیر اصلی فعال را نمی‌توان غیرفعال کرد.');
-        }
-        await this.db.execute("UPDATE users SET status = ? WHERE id = ?", [active ? 'active' : 'disabled', id]);
+        await this.db.transaction(async (tx) => {
+            if (!active && target.role_slug === permissions_1.SUPER_ADMIN_ROLE && (await this.countActiveSuperAdminsLocked(tx)) <= 1) {
+                throw errors_1.errors.conflict('آخرین مدیر اصلی فعال را نمی‌توان غیرفعال کرد.');
+            }
+            await tx.execute('UPDATE users SET status = ? WHERE id = ?', [active ? 'active' : 'disabled', id]);
+        });
         if (!active)
             await this.auth.revokeUserSessions(id);
         await this.audit.record({ action: active ? 'user.activated' : 'user.disabled', actorUserId: actor.id, entityType: 'user', entityId: id, ip: actor.ip });
@@ -206,14 +218,13 @@ class UsersService {
         return n;
     }
     /** Used by the installer to create the first super administrator. */
-    async createFirstSuperAdmin(input) {
-        await this.rbac.syncCatalog();
-        const [role] = await this.db.query('SELECT id FROM roles WHERE slug = ?', [permissions_1.SUPER_ADMIN_ROLE]);
+    async createFirstSuperAdmin(q, input) {
+        const [role] = await q.query('SELECT id FROM roles WHERE slug = ?', [permissions_1.SUPER_ADMIN_ROLE]);
         if (!role)
             throw new Error('نقش مدیر اصلی یافت نشد.');
         const hash = await (0, crypto_1.hashPassword)(input.password);
-        const res = await this.db.execute(`INSERT INTO users (username, email, full_name, password_hash, role_id, must_change_password)
-       VALUES (?, ?, ?, ?, ?, 0)`, [input.username.toLowerCase(), input.email ? input.email.toLowerCase() : null, (0, persian_1.normalizeText)(input.fullName), hash, role.id]);
+        const res = await q.execute(`INSERT INTO users (username, email, full_name, password_hash, role_id, must_change_password)
+       VALUES (?, ?, ?, ?, ?, 0)`, [(0, persian_1.normalizeUsername)(input.username), input.email ? input.email.trim().toLowerCase() : null, (0, persian_1.normalizeText)(input.fullName), hash, role.id]);
         return Number(res.insertId);
     }
 }

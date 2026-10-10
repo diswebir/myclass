@@ -1,6 +1,11 @@
 import mysql from 'mysql2/promise';
 import type { AppConfig } from '../config/env';
 
+/** mysql2 marks connection-level failures with fatal: true; ordinary SQL errors keep the connection usable. */
+function isFatal(err: unknown): boolean {
+  return Boolean((err as { fatal?: boolean } | null)?.fatal);
+}
+
 export type SqlValue = string | number | bigint | boolean | Date | null;
 
 export interface Queryable {
@@ -41,30 +46,56 @@ export class Database implements Queryable {
     return res as mysql.ResultSetHeader;
   }
 
-  /** Runs `fn` inside a transaction; rolls back on any thrown error. */
-  async transaction<T>(fn: (tx: Queryable) => Promise<T>): Promise<T> {
+  /**
+   * Runs `fn` on ONE pooled connection. Required for session-scoped state such as GET_LOCK/RELEASE_LOCK.
+   * If any statement fails, the connection is destroyed instead of returned to the pool, so session
+   * state (like a named lock) cannot leak into later requests.
+   */
+  async withConnection<T>(fn: (q: Queryable) => Promise<T>): Promise<T> {
     const conn = await this.pool.getConnection();
-    try {
-      await conn.beginTransaction();
-      const tx: Queryable = {
-        query: async <R>(sql: string, params: SqlValue[] = []) => {
+    let broken = false;
+    const q: Queryable = {
+      query: async <R>(sql: string, params: SqlValue[] = []) => {
+        try {
           const [rows] = await conn.query(sql, params);
           return rows as R[];
-        },
-        execute: async (sql: string, params: SqlValue[] = []) => {
+        } catch (err) {
+          if (isFatal(err)) broken = true;
+          throw err;
+        }
+      },
+      execute: async (sql: string, params: SqlValue[] = []) => {
+        try {
           const [res] = await conn.execute(sql, params);
           return res as mysql.ResultSetHeader;
-        },
-      };
-      const result = await fn(tx);
-      await conn.commit();
-      return result;
-    } catch (err) {
-      await conn.rollback();
-      throw err;
+        } catch (err) {
+          if (isFatal(err)) broken = true;
+          throw err;
+        }
+      },
+    };
+    try {
+      return await fn(q);
     } finally {
-      conn.release();
+      if (broken) conn.destroy();
+      else conn.release();
     }
+  }
+
+  /** Runs `fn` inside a transaction; rolls back on any thrown error. */
+  async transaction<T>(fn: (tx: Queryable) => Promise<T>): Promise<T> {
+    return this.withConnection(async (q) => {
+      // The transaction runs on the same pinned connection.
+      await q.query('START TRANSACTION');
+      try {
+        const result = await fn(q);
+        await q.query('COMMIT');
+        return result;
+      } catch (err) {
+        await q.query('ROLLBACK').catch(() => undefined);
+        throw err;
+      }
+    });
   }
 
   async ping(): Promise<void> {

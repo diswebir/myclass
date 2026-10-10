@@ -23,6 +23,14 @@ export function normalizeText(input: string): string {
 }
 
 /**
+ * Canonical form of a username: Persian/Arabic digits folded to ASCII, Persian letters normalised,
+ * whitespace trimmed and lowercased. Used for storage, login and lookups so they always agree.
+ */
+export function normalizeUsername(input: string): string {
+  return toEnglishDigits(normalizeText(input)).toLowerCase();
+}
+
+/**
  * Normalises an Iranian mobile number to the canonical form 09XXXXXXXXX.
  * Accepts: 09121234567, 9121234567, +989121234567, 00989121234567, Persian/Arabic digits, spaces, dashes.
  * Returns null when the input is not a valid mobile number.

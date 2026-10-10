@@ -51,7 +51,7 @@ export class HealthService {
       warnings.push('پوشه ذخیره‌سازی قابل نوشتن نیست.');
     }
     const installed = this.isInstalled();
-    if (installed && process.env.INSTALL_TOKEN) {
+    if (installed && this.cfg.installToken) {
       warnings.push('INSTALL_TOKEN هنوز در تنظیمات محیطی است؛ پس از نصب آن را حذف کنید.');
     }
     if (this.cfg.isProduction && !this.cfg.cookieSecure) warnings.push('COOKIE_SECURE فعال نیست.');

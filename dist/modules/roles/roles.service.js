@@ -83,12 +83,18 @@ class RolesService {
         const role = await this.get(id);
         const perms = this.permissionIds(input.permissions);
         if (role.slug === permissions_1.SUPER_ADMIN_ROLE) {
-            // The super administrator always holds every permission; only the display name may change.
-            if (perms.length !== permissions_1.PERMISSIONS.length)
+            // The super administrator always holds exactly the full catalogue; only the display name may change.
+            const full = new Set(permissions_1.PERMISSIONS.map((p) => p.code));
+            if (perms.length !== full.size || perms.some((c) => !full.has(c))) {
                 throw new errors_1.AppError(400, 'LOCKED_ROLE', 'مجوزهای مدیر اصلی قابل تغییر نیست.');
+            }
         }
         else {
             this.validatePermissions(actor, perms);
+            // Editing a role also changes what it grants, so the actor must hold the permissions being removed
+            // as well as the ones being added (otherwise a manager could strip rights they cannot grant).
+            if ((0, permissions_1.missingGrantablePermissions)(actor.permissions, role.permissions).length > 0)
+                throw errors_1.errors.forbidden();
         }
         await this.db.transaction(async (tx) => {
             await tx.execute('UPDATE roles SET name_fa = ?, description = ? WHERE id = ?', [(0, persian_1.normalizeText)(input.nameFa), input.description?.trim() || null, id]);
@@ -121,7 +127,16 @@ class RolesService {
             throw new errors_1.AppError(400, 'SYSTEM_ROLE', 'نقش‌های سیستمی قابل حذف نیستند.');
         if (role.user_count > 0)
             throw errors_1.errors.conflict('این نقش به کاربران اختصاص داده شده است. ابتدا نقش آن‌ها را تغییر دهید یا نقش را غیرفعال کنید.');
-        await this.db.execute('DELETE FROM roles WHERE id = ?', [id]);
+        try {
+            await this.db.execute('DELETE FROM roles WHERE id = ?', [id]);
+        }
+        catch (err) {
+            // A user was assigned between the check and the delete; the FK (ON DELETE RESTRICT) is the final guard.
+            if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+                throw errors_1.errors.conflict('این نقش هم‌زمان به کاربری اختصاص داده شد. دوباره تلاش کنید.');
+            }
+            throw err;
+        }
         await this.audit.record({ action: 'role.deleted', actorUserId: actor.id, entityType: 'role', entityId: id, ip: actor.ip, details: { slug: role.slug } });
     }
 }

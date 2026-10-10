@@ -57,8 +57,11 @@ class Migrator {
     }
     async status() {
         await this.ensureTable();
+        return this.statusOn(this.db);
+    }
+    async statusOn(q) {
         const files = loadMigrations(this.dir);
-        const rows = await this.db.query('SELECT version, name, checksum, applied_at FROM schema_migrations ORDER BY version');
+        const rows = await q.query('SELECT version, name, checksum, applied_at FROM schema_migrations ORDER BY version');
         const appliedMap = new Map(rows.map((r) => [r.version, r]));
         const modified = files
             .filter((f) => appliedMap.has(f.version) && appliedMap.get(f.version).checksum !== f.checksum)
@@ -74,38 +77,44 @@ class Migrator {
             modified,
         };
     }
-    /** Applies all pending migrations. Refuses to run if an applied migration file was edited. */
+    /**
+     * Applies all pending migrations. Refuses to run if an applied migration file was edited.
+     * The named lock, the status read and every statement run on ONE pooled connection: GET_LOCK is
+     * session-scoped, so releasing it on a different connection would leave the lock held.
+     */
     async migrate() {
         await this.ensureTable();
-        const lock = await this.db.query('SELECT GET_LOCK(?, 10) AS got', [LOCK_NAME]);
-        if (!lock[0] || lock[0].got !== 1)
-            throw new Error('اجرای migration در حال انجام است. کمی بعد دوباره تلاش کنید.');
-        try {
-            const status = await this.status();
-            if (status.modified.length > 0) {
-                throw new Error(`فایل migration تغییر کرده است: ${status.modified.join(', ')}`);
+        return this.db.withConnection(async (q) => {
+            const lock = await q.query('SELECT GET_LOCK(?, 10) AS got', [LOCK_NAME]);
+            if (!lock[0] || lock[0].got !== 1)
+                throw new Error('اجرای migration در حال انجام است. کمی بعد دوباره تلاش کنید.');
+            try {
+                const status = await this.statusOn(q);
+                if (status.modified.length > 0) {
+                    throw new Error(`فایل migration تغییر کرده است: ${status.modified.join(', ')}`);
+                }
+                const files = loadMigrations(this.dir);
+                const applied = [];
+                for (const m of files) {
+                    if (status.applied.some((a) => a.version === m.version))
+                        continue;
+                    await this.applyOne(q, m);
+                    applied.push(m.file);
+                }
+                return { applied };
             }
-            const files = loadMigrations(this.dir);
-            const applied = [];
-            for (const m of files) {
-                if (status.applied.some((a) => a.version === m.version))
-                    continue;
-                await this.applyOne(m);
-                applied.push(m.file);
+            finally {
+                await q.query('SELECT RELEASE_LOCK(?)', [LOCK_NAME]);
             }
-            return { applied };
-        }
-        finally {
-            await this.db.query('SELECT RELEASE_LOCK(?)', [LOCK_NAME]);
-        }
+        });
     }
-    async applyOne(m) {
+    async applyOne(q, m) {
         const started = Date.now();
         for (const stmt of m.statements) {
-            await this.db.execute(stmt);
+            await q.execute(stmt);
         }
         const elapsed = Math.min(Date.now() - started, 4294967295);
-        await this.db.execute('INSERT INTO schema_migrations (version, name, checksum, execution_ms) VALUES (?, ?, ?, ?)', [m.version, m.name, m.checksum, elapsed]);
+        await q.execute('INSERT INTO schema_migrations (version, name, checksum, execution_ms) VALUES (?, ?, ?, ?)', [m.version, m.name, m.checksum, elapsed]);
     }
 }
 exports.Migrator = Migrator;

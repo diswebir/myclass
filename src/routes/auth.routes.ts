@@ -21,7 +21,7 @@ export function authRoutes(s: AppServices): Router {
   r.post('/login', async (req, res) => {
     const b = bodyOf(req);
     const username = (b.username ?? '').slice(0, 190);
-    const password = (b.password ?? '').slice(0, 256);
+    const password = b.password ?? '';
     try {
       if (!username || !password) throw errors.badRequest('نام کاربری و رمز عبور را وارد کنید.');
       const token = await s.auth.login({ username, password, ip: req.clientIp ?? null, userAgent: req.headers['user-agent'] ?? null });

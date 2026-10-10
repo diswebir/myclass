@@ -34,5 +34,10 @@
     setTimeout(function () { form.dataset.submitting = '0'; }, 4000);
   });
 
+  // Brand colour comes from the server as data-brand (inline <style> is blocked by the CSP).
+  // Only a strict #RRGGBB value is applied.
+  var brand = root.getAttribute('data-brand');
+  if (brand && /^#[0-9a-fA-F]{6}$/.test(brand)) root.style.setProperty('--brand', brand);
+
   root.setAttribute('data-js', '1');
 })();

@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.toEnglishDigits = toEnglishDigits;
 exports.toPersianDigits = toPersianDigits;
 exports.normalizeText = normalizeText;
+exports.normalizeUsername = normalizeUsername;
 exports.normalizeIranMobile = normalizeIranMobile;
 const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
 const ARABIC_DIGITS = '٠١٢٣٤٥٦٧٨٩';
@@ -23,6 +24,13 @@ function toPersianDigits(input) {
 /** Normalises Arabic letters commonly typed on Persian keyboards (ي ك → ی ک) and trims spaces. */
 function normalizeText(input) {
     return input.replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/\u200c+/g, '\u200c').replace(/\s+/g, ' ').trim();
+}
+/**
+ * Canonical form of a username: Persian/Arabic digits folded to ASCII, Persian letters normalised,
+ * whitespace trimmed and lowercased. Used for storage, login and lookups so they always agree.
+ */
+function normalizeUsername(input) {
+    return toEnglishDigits(normalizeText(input)).toLowerCase();
 }
 /**
  * Normalises an Iranian mobile number to the canonical form 09XXXXXXXXX.
