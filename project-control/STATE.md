@@ -1,7 +1,7 @@
 # STATE.md — کنترل وضعیت پروژه
 
 > این فایل در پایان هر نشست کاری به‌روز می‌شود.
-> آخرین به‌روزرسانی: 2026-10-10 — Session 5: installer با انتخاب درایور mysql/sqlite — ۱۷۵ تست سبز
+> آخرین به‌روزرسانی: 2026-10-10 — پایان فاز ۴ (مالی) — ۱۹۱ تست سبز
 
 ## تاریخچه نشست‌ها
 
@@ -64,19 +64,28 @@
 - REQ-P1-14 → VERIFIED (مسیر sqlite کاملاً تست شد؛ مسیر mysql روی سرور واقعی هنوز اجرا‌نشده — sandbox MySQL ندارد).
 - تست‌ها: **۱۷۵ موفق** — typecheck + build سبز.
 
+
+### 2026-10-10 — Session 6 (فاز ۴ — مالی)
+
+- ماژول finance کامل شد: پرداخت‌ها (create/approve/reject/reverse + idempotency + ledger append-only + تراکنش)، اقساط (schedule + تخصیص خودکار پرداخت به قدیمی‌ترین قسط)، رسید کارت‌به‌کارت (review approve/reject → پرداخت خودکار + ledger)، گزارش‌ها (درآمد per روش، بدهکاران، مالی کلاس)، PaymentGateway interface + FakeGateway.
+- Viewها: finance/{payments,receipts,installments,reports}.njk + لینک «مالی» در nav.
+- ۱۶ تست جدید (phase4.test.ts) —امات concretos: ledger credit/reversal، idempotency 409، تخصیص قسط، تأیید رسید → پرداخت + موجودی، گزارش‌ها، 403 استاد/فراگیر.
+- **رفع خطای سیستماتیک نویسه‌ای «ثبت» (ث→س) در ۴۱ فایل / ۱۹۷ رخداد** — علت: pipeline تایپ. ابزار `fa_check.py` (واژه‌سنج فارسی مبتنی بر corpus) ساخته شد
+- REQ-P4-01..06 → VERIFIED. تست‌ها: **۱۹۱ موفق**. typecheck + build سبز.
+
 ## وضعیت فعلی
 
-- فاز: **۳ — کامل شد ✅ (۱۷۵ تست پس از Session 5) → شروع فاز ۴ (مالی)**
-- آخرین نیازمندی VERIFIED: REQ-P1-14 (installer با انتخاب درایور — مسیر sqlite e2e)
-- در حال انجام: فاز ۴ — REQ-P4-01.. (پرداخت‌ها، اقساط، دفتر کل، بررسی رسید، گزارش‌های مالی، PaymentGateway interface)
-- تست‌ها: ۱۷۵ موفق / ۰ ناموفق — `npm test` + `npm run typecheck` + `npm run build` سبز؛ boot smoke (install + full mode) سبز.
+- فاز: **۴ — مالی — کامل شد ✅ (۱۹۱ تست) → شروع فاز ۵ (مدارک/PDF/QR)**
+- آخرین نیازمندی VERIFIED: REQ-P4-06
+- در حال انجام: فاز ۵ — REQ-P5-01..04 (قالب‌ها، صدور مدرک PDF+QR، صفحه عمومی اعتبارسنجی، لغو)
+- تست‌ها: ۱۹۱ موفق / ۰ ناموفق — `npm test` + `npm run typecheck` + `npm run build` سبز؛ boot smoke (install + full mode) سبز.
 
 ## نتایج تست
 
 | suite | نتیجه |
 |---|---|
 | unit | ۷۸ موفق |
-| integration | ۹۷ موفق (install incl. sqlite e2e, auth, rbac, settings, migration, security, audit, phase2, phase3) |
+| integration | ۱۱۳ موفق (install incl. sqlite e2e, auth, rbac, settings, migration, security, audit, phase2, phase3, phase4) |
 | typecheck / build | سبز |
 | boot smoke (install mode, virgin DB) | سبز — /install 200، /healthz 200، installer failure graceful |
 | boot smoke (full mode, sqlite) | سبز — migrate-cli + login/logout + dashboard + panels + attendance |

@@ -28,6 +28,9 @@
         {% if user.permissions.includes('*:*') or user.permissions.includes('health.view') %}
         <a href="/admin/health" class="{{ 'active' if currentPath.startsWith('/admin/health') }}">سلامت</a>
         {% endif %}
+        {% if user.permissions.includes('*:*') or user.permissions.includes('finance.*') %}
+        <a href="/finance/payments" class="{{ 'active' if currentPath.startsWith('/finance') }}">مالی</a>
+        {% endif %}
         {% if user.roles.includes('teacher') %}
         <a href="/panel/teacher" class="{{ 'active' if currentPath.startsWith('/panel/teacher') }}">پنل استاد</a>
         {% endif %}

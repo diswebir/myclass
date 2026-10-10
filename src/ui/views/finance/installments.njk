@@ -1,0 +1,37 @@
+{% extends "layout.njk" %}
+{% block title %}اقساط — myclass{% endblock %}
+{% block content %}
+{% set statusLabels = { 'pending': 'در انتظار', 'partial': 'پرداخت جزئی', 'paid': 'پرداخت‌شده', 'overdue': 'معوق' } %}
+<div class="page-head">
+  <h1>اقساط</h1>
+  <a href="/finance/payments" class="btn btn-ghost">پرداخت‌ها</a>
+</div>
+<div class="card">
+  <form method="get" class="grid2">
+    <div class="field"><label>وضعیت</label>
+      <select name="status">
+        <option value="">همه</option>
+        {% for k, v in statusLabels %}<option value="{{ k }}" {{ 'selected' if filters.status == k }}>{{ v }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="actions"><button type="submit" class="btn btn-primary">فیلتر</button></div>
+  </form>
+</div>
+<table class="table">
+  <thead><tr><th>کد</th><th>فراگیر</th><th>مبلغ قسط</th><th>پرداخت‌شده</th><th>سررسید</th><th>وضعیت</th></tr></thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.id | faNum }}</td>
+      <td>{{ r.first_name }} {{ r.last_name }} ({{ r.student_code }})</td>
+      <td>{{ r.amount | faMoney }}</td>
+      <td>{{ r.paid_amount | faMoney }}</td>
+      <td>{{ r.due_date | faDate }}</td>
+      <td><span class="badge {{ 'ok' if r.status == 'paid' else ('fail' if r.status == 'overdue' else '') }}">{{ statusLabels[r.status] or r.status }}</span></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="empty">قسطی یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

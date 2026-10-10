@@ -25,6 +25,7 @@ import { preregRoutes } from '../../modules/preregistration/prereg.routes';
 import { enrollmentRoutes } from '../../modules/enrollment/enrollment.routes';
 import { attendanceRoutes } from '../../modules/attendance/attendance.routes';
 import { filesRoutes } from '../../modules/files/files.routes';
+import { financeRoutes } from '../../modules/finance/finance.routes';
 import { teacherPanelRoutes } from '../../modules/panels/teacher-panel.routes';
 import { studentPanelRoutes } from '../../modules/panels/student-panel.routes';
 import { isSecureCookies } from '../config/env';
@@ -166,6 +167,7 @@ export function createApp(ctx: AppContext): express.Express {
   app.use('/enrollments', enrollmentRoutes(ctx));
   app.use('/attendance', attendanceRoutes(ctx));
   app.use('/files', filesRoutes(ctx));
+  app.use('/finance', financeRoutes(ctx));
   app.use('/panel/teacher', teacherPanelRoutes(ctx));
   app.use('/panel/student', studentPanelRoutes(ctx));
   app.use('/', healthRoutes(ctx));

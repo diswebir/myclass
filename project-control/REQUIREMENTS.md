@@ -73,12 +73,12 @@
 
 | ID | نیازمندی | معیار پذیرش | وضعیت |
 |---|---|---|---|
-| REQ-P4-01 | Money: BIGINT واحد کوچک، parse/normalize/format، بدون FLOAT | تست‌های unit | NOT_STARTED |
-| REQ-P4-02 | پرداخت‌ها، اقساط، مانده/معوق، دفترکل append-only + تراکنش معکوس | تست‌های محاسبه | NOT_STARTED |
-| REQ-P4-03 | رسید کارت‌به‌کارت: آپلود فراگیر، در انتظار بررسی، تأیید/رد با علت، idempotency، ضد دست‌کاری مبلغ | تست‌های integration | NOT_STARTED |
-| REQ-P4-04 | گزارش‌های مالی: رسید پرداخت، بدهکاران، درآمد، اقساط، مالی کلاس‌ها؛ دسترسی مالی جدا | تست‌های integration | NOT_STARTED |
-| REQ-P4-05 | رابط PaymentGateway (آماده درگاه آینده) | typecheck + تست mock | NOT_STARTED |
-| REQ-P4-06 | گذر فاز ۴: تست محاسبات + پرداخت تکراری | گزارش نتایج | NOT_STARTED |
+| REQ-P4-01 | Money: BIGINT واحد کوچک، parse/normalize/format، بدون FLOAT | تست‌های unit | VERIFIED |
+| REQ-P4-02 | پرداخت‌ها، اقساط، مانده/معوق، دفترکل append-only + تراکنش معکوس | تست‌های محاسبه | VERIFIED |
+| REQ-P4-03 | رسید کارت‌به‌کارت: آپلود فراگیر، در انتظار بررسی، تأیید/رد با علت، idempotency، ضد دست‌کاری مبلغ | تست‌های integration | VERIFIED |
+| REQ-P4-04 | گزارش‌های مالی: رسید پرداخت، بدهکاران، درآمد، اقساط، مالی کلاس‌ها؛ دسترسی مالی جدا | تست‌های integration | VERIFIED |
+| REQ-P4-05 | رابط PaymentGateway (آماده درگاه آینده) | typecheck + تست mock | VERIFIED |
+| REQ-P4-06 | گذر فاز ۴: تست محاسبات + پرداخت تکراری | گزارش نتایج | VERIFIED |
 
 ## فاز ۵ — مدارک
 
