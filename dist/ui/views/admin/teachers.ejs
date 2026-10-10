@@ -1,0 +1,77 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h2 style="color: #1e3a8a;">مدیریت اساتید و مدرسین</h2>
+    <p style="color: #64748b;">ثبت پرونده اساتید، قراردادها و کلاس‌های تحت تدریس</p>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; margin-bottom: 2rem;">
+  <!-- فرم ثبت استاد جدید -->
+  <div class="card">
+    <h3 style="margin-bottom: 1rem; color: #1e3a8a;">➕ افزودن استاد جدید</h3>
+    <form method="POST" action="/admin/teachers/create">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-group">
+        <label for="fullName">نام و نام خانوادگی</label>
+        <input type="text" id="fullName" name="fullName" required placeholder="دکتر احمد حسینی">
+      </div>
+      <div class="form-group">
+        <label for="mobile">شماره همراه (نام کاربری)</label>
+        <input type="text" id="mobile" name="mobile" required placeholder="۰۹۱۲۳۴۵۶۷۸۹">
+      </div>
+      <div class="form-group">
+        <label for="password">کلمه عبور اولیه</label>
+        <input type="password" id="password" name="password" required minlength="8" placeholder="حداقل ۸ کاراکتر">
+      </div>
+      <div class="form-group">
+        <label for="internalCode">کد داخلی استاد</label>
+        <input type="text" id="internalCode" name="internalCode" required placeholder="TCH-1001">
+      </div>
+      <div class="form-group">
+        <label for="specialties">تخصص‌ها و حوزه‌های تدریس</label>
+        <input type="text" id="specialties" name="specialties" placeholder="جاوااسکریپت، هوش مصنوعی، پایگاه داده">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%;">ثبت اطلاعات استاد</button>
+    </form>
+  </div>
+
+  <!-- جدول اساتید -->
+  <div class="card">
+    <h3 style="margin-bottom: 1rem; color: #1e3a8a;">فهرست اساتید مؤسسه</h3>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>کد استاد</th>
+            <th>نام و نام خانوادگی</th>
+            <th>شماره همراه</th>
+            <th>تخصص‌ها</th>
+            <th>کلاس‌های فعال</th>
+            <th>وضعیت</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (teachers.length === 0) { %>
+            <tr><td colspan="6" style="text-align: center; color: #64748b;">هیچ استادی ثبت نشده است.</td></tr>
+          <% } %>
+          <% teachers.forEach(t => { %>
+            <tr>
+              <td><code><%= t.internal_code %></code></td>
+              <td><strong><%= t.full_name %></strong></td>
+              <td><%= t.mobile %></td>
+              <td><%= t.specialties || '-' %></td>
+              <td><%= t.assignedClassesCount.toLocaleString('fa-IR') %> کلاس</td>
+              <td>
+                <% if (t.contract_status === 'active') { %>
+                  <span class="badge badge-green">فعال</span>
+                <% } else { %>
+                  <span class="badge badge-red">غیرفعال</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

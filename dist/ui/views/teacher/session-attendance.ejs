@@ -1,0 +1,58 @@
+<div style="margin-bottom: 2rem;">
+  <a href="/teacher/class/<%= session.class_id %>" class="btn btn-secondary" style="margin-bottom: 1rem; padding: 0.35rem 0.75rem; font-size: 0.85rem;">← بازگشت به لیست جلسات</a>
+  <h2 style="color: #1e3a8a;">ثبت حضور و غیاب جلسه <%= session.session_number %></h2>
+  <p style="color: #64748b;">تاریخ: <%= session.session_date %> | ساعت: <%= session.start_time %> تا <%= session.end_time %> | مبحث: <%= session.topic || 'عمومی' %></p>
+</div>
+
+<div class="card">
+  <form method="POST" action="/teacher/session/<%= session.id %>/attendance">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="table-responsive" style="margin-bottom: 1.5rem;">
+      <table>
+        <thead>
+          <tr>
+            <th>شماره فراگیر</th>
+            <th>نام و نام خانوادگی</th>
+            <th>وضعیت حضور در جلسه</th>
+            <th>یادداشت / توضیحات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (roster.length === 0) { %>
+            <tr><td colspan="4" style="text-align: center; color: #64748b;">هیچ فراگیر فعالی در این کلاس ثبت‌نام نکرده است.</td></tr>
+          <% } %>
+          <% roster.forEach(st => { %>
+            <tr>
+              <td><code><%= st.studentCode %></code></td>
+              <td><strong><%= st.studentName %></strong></td>
+              <td>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                  <label style="display: flex; align-items: center; gap: 0.25rem; cursor: pointer; color: #15803d;">
+                    <input type="radio" name="status_<%= st.studentId %>" value="present" <%= st.status === 'present' ? 'checked' : '' %>> حاضر
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 0.25rem; cursor: pointer; color: #b91c1c;">
+                    <input type="radio" name="status_<%= st.studentId %>" value="absent" <%= st.status === 'absent' ? 'checked' : '' %>> غایب
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 0.25rem; cursor: pointer; color: #b45309;">
+                    <input type="radio" name="status_<%= st.studentId %>" value="late" <%= st.status === 'late' ? 'checked' : '' %>> تأخیر
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 0.25rem; cursor: pointer; color: #0284c7;">
+                    <input type="radio" name="status_<%= st.studentId %>" value="excused" <%= st.status === 'excused' ? 'checked' : '' %>> موجه
+                  </label>
+                </div>
+              </td>
+              <td>
+                <input type="text" name="note_<%= st.studentId %>" value="<%= st.note || '' %>" placeholder="علت غیبت یا تاخیر" style="max-width: 250px; padding: 0.4rem 0.6rem;">
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if (roster.length > 0) { %>
+      <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;">💾 ثبت نهایی لیست حضور و غیاب</button>
+    <% } %>
+  </form>
+</div>

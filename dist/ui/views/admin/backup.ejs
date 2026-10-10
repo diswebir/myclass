@@ -1,0 +1,43 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h2 style="color: #1e3a8a;">پشتیبان‌گیری از پایگاه داده (Database Backup)</h2>
+    <p style="color: #64748b;">تهیه نسخه پشتیبان SQL کامل با موتور پردازشی Pure JavaScript بدون نیاز به باینری mysqldump</p>
+  </div>
+  <div>
+    <form method="POST" action="/admin/backup/create">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn-primary">⚡ ایجاد فایل پشتیبان جدید</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-bottom: 1rem; color: #1e3a8a;">فهرست نسخه‌های پشتیبان موجود در فضای سرور</h3>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>نام فایل</th>
+          <th>حجم فایل</th>
+          <th>تاریخ تولید</th>
+          <th>عملیات</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (backups.length === 0) { %>
+          <tr><td colspan="4" style="text-align: center; color: #64748b;">هنوز نسخه پشتیبانی تولید نشده است.</td></tr>
+        <% } %>
+        <% backups.forEach(b => { %>
+          <tr>
+            <td><code><%= b.filename %></code></td>
+            <td><%= (b.sizeBytes / 1024).toFixed(1) %> KB</td>
+            <td><%= toJalaliDate(b.createdAt, true) %></td>
+            <td>
+              <a href="/admin/backup/download/<%= b.filename %>" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">📥 دانلود فایل SQL</a>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>

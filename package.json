@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc && mkdir -p dist/ui && cp -r src/ui/views dist/ui/",
+    "build": "tsc && node -e \"const fs = require('fs'); fs.cpSync('src/ui/views', 'dist/ui/views', { recursive: true });\"",
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",

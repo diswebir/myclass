@@ -1,0 +1,131 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h2 style="color: #1e3a8a;">مدیریت فراگیران و ثبت‌نام‌ها</h2>
+    <p style="color: #64748b;">پرونده تحصیلی فراگیران، ثبت‌نام دستی، ورود گروهی با CSV و کارتابل پیش‌ثبت‌نام‌ها</p>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+  <!-- فرم ثبت فراگیر تکی -->
+  <div class="card">
+    <h3 style="margin-bottom: 1rem; color: #1e3a8a;">➕ ثبت‌نام فراگیر جدید</h3>
+    <form method="POST" action="/admin/students/create">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-group">
+        <label for="fullName">نام و نام خانوادگی</label>
+        <input type="text" id="fullName" name="fullName" required placeholder="سارا کاظمی">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label for="mobile">شماره همراه (نام کاربری)</label>
+          <input type="text" id="mobile" name="mobile" required placeholder="۰۹۱۲۳۴۵۶۷۸۹">
+        </div>
+        <div class="form-group">
+          <label for="nationalId">کد ملی</label>
+          <input type="text" id="nationalId" name="nationalId" placeholder="۰۰۱۲۳۴۵۶۷۸">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="parentPhone">شماره همراه ولی / تماس اضطراری</label>
+        <input type="text" id="parentPhone" name="parentPhone" placeholder="۰۹۱۲۰۰۰۰۰۰۰">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%;">ثبت اطلاعات فراگیر</button>
+    </form>
+  </div>
+
+  <!-- فرم ورود دسته‌ای با CSV -->
+  <div class="card">
+    <h3 style="margin-bottom: 1rem; color: #1e3a8a;">📥 ورود گروهی فراگیران (CSV)</h3>
+    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.75rem;">
+      سطر اول فایل باید حاوی سربرگ باشد: <code>fullName,mobile,nationalId,parentPhone</code>
+    </p>
+    <form method="POST" action="/admin/students/import-csv">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-group">
+        <label for="csvData">متن داده‌های CSV</label>
+        <textarea id="csvData" name="csvData" rows="5" required placeholder="fullName,mobile,nationalId,parentPhone&#10;علی محمدی,09121112233,0012345678,09123334455&#10;مریم رضایی,09351112233,0023456789,09124445566"></textarea>
+      </div>
+      <button type="submit" class="btn btn-secondary" style="width: 100%;">پردازش و ذخیره گروهی فراگیران</button>
+    </form>
+  </div>
+</div>
+
+<!-- کارتابل پیش‌ثبت‌نام‌های ورودی -->
+<% if (typeof preregistrations !== 'undefined' && preregistrations.length > 0) { %>
+  <div class="card" style="margin-bottom: 2rem; border-right: 4px solid #0284c7;">
+    <h3 style="margin-bottom: 1rem; color: #0369a1;">📋 درخواست‌های پیش‌ثبت‌نام در انتظار تأیید</h3>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>کد پیگیری</th>
+            <th>متقاضی</th>
+            <th>شماره همراه</th>
+            <th>کلاس انتخابی</th>
+            <th>تاریخ ثبت</th>
+            <th>عملیات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% preregistrations.forEach(pr => { %>
+            <tr>
+              <td><code><%= pr.tracking_code %></code></td>
+              <td><strong><%= pr.full_name %></strong></td>
+              <td><%= pr.mobile %></td>
+              <td><%= pr.class_title %></td>
+              <td><%= toJalaliDate(pr.created_at) %></td>
+              <td>
+                <form method="POST" action="/admin/preregistrations/<%= pr.id %>/approve" style="display: inline;">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn-success" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">تأیید و ثبت‌نام قطعی</button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>
+
+<!-- فهرست کل فراگیران -->
+<div class="card">
+  <h3 style="margin-bottom: 1rem; color: #1e3a8a;">فهرست فراگیران آکادمی</h3>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>کد فراگیر</th>
+          <th>نام و نام خانوادگی</th>
+          <th>شماره همراه</th>
+          <th>کد ملی</th>
+          <th>شماره ولی / اضطراری</th>
+          <th>تاریخ عضویت</th>
+          <th>وضعیت</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (students.length === 0) { %>
+          <tr><td colspan="7" style="text-align: center; color: #64748b;">هیچ فراگیری ثبت نشده است.</td></tr>
+        <% } %>
+        <% students.forEach(s => { %>
+          <tr>
+            <td><code><%= s.student_code %></code></td>
+            <td><strong><%= s.full_name %></strong></td>
+            <td><%= s.mobile %></td>
+            <td><%= s.national_id || '-' %></td>
+            <td><%= s.parent_phone || s.emergency_contact || '-' %></td>
+            <td><%= toJalaliDate(s.created_at) %></td>
+            <td>
+              <% if (s.user_status === 'active') { %>
+                <span class="badge badge-green">فعال</span>
+              <% } else { %>
+                <span class="badge badge-red">غیرفعال</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>

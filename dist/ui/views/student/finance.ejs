@@ -1,0 +1,67 @@
+<div style="margin-bottom: 2rem;">
+  <h2 style="color: #1e3a8a;">وضعیت شهریه، اقساط و ثبت فیش پرداختی</h2>
+  <p style="color: #64748b;">مشاهده سوابق واریزی، زمان‌بندی اقساط و ثبت شماره فیش کارت‌به‌کارت</p>
+</div>
+
+<!-- فرم ارسال رسید واریز -->
+<div class="card" style="margin-bottom: 2rem; max-width: 600px;">
+  <h3 style="margin-bottom: 1rem; color: #1e3a8a;">➕ ثبت فیش واریز کارت‌به‌کارت</h3>
+  <form method="POST" action="/student/payments/submit">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="form-group">
+      <label for="enrollmentId">انتخاب کلاس آموزشی</label>
+      <select id="enrollmentId" name="enrollmentId" required>
+        <% enrollments.forEach(enr => { %>
+          <option value="<%= enr.id %>"><%= enr.class_title %> (شهریه: <%= formatCurrency(enr.tuition_agreed) %>)</option>
+        <% }); %>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="amount">مبلغ واریز شده (تومان)</label>
+      <input type="number" id="amount" name="amount" required min="1000" placeholder="مثال: ۱۵۰۰۰۰۰">
+    </div>
+
+    <div class="form-group">
+      <label for="receiptNumber">شماره پیگیری / شماره ارجاع فیش</label>
+      <input type="text" id="receiptNumber" name="receiptNumber" required placeholder="مثال: 849201">
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width: 100%;">ثبت و ارسال فیش جهت بررسی مالی</button>
+  </form>
+</div>
+
+<!-- تاریخچه پرداخت‌های فراگیر -->
+<div class="card">
+  <h3 style="margin-bottom: 1rem; color: #1e3a8a;">سوابق پرداخت‌های ثبت‌شده</h3>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>شناسه</th>
+          <th>مبلغ</th>
+          <th>روش پرداخت</th>
+          <th>شماره رسید</th>
+          <th>تاریخ ثبت</th>
+          <th>وضعیت تأیید</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (payments.length === 0) { %>
+          <tr><td colspan="6" style="text-align: center; color: #64748b;">هنوز پرداختی ثبت نکرده‌اید.</td></tr>
+        <% } %>
+        <% payments.forEach(p => { %>
+          <tr>
+            <td>#<%= p.id %></td>
+            <td><strong><%= formatCurrency(p.amount) %></strong></td>
+            <td><%= p.payment_method %></td>
+            <td><code><%= p.receipt_number || '-' %></code></td>
+            <td><%= toJalaliDate(p.created_at, true) %></td>
+            <td><span class="badge <%= getStatusBadge(p.status).class %>"><%= getStatusBadge(p.status).label %></span></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>

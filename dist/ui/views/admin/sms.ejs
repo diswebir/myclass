@@ -1,0 +1,96 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h2 style="color: #1e3a8a;">سامانه پیامک هوشمند (IPPanel Edge)</h2>
+    <p style="color: #64748b;">مدیریت پترن‌های پیامکی، تست ارسال سریع و تاریخچه صف پیامک‌ها</p>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; margin-bottom: 2rem;">
+  <!-- فرم تست ارسال پیامک -->
+  <div class="card">
+    <h3 style="margin-bottom: 1rem; color: #1e3a8a;">📱 ارسال پیامک تستی</h3>
+    <form method="POST" action="/admin/sms/test">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-group">
+        <label for="testMobile">شماره همراه گیرنده</label>
+        <input type="text" id="testMobile" name="mobile" required placeholder="۰۹۱۲۳۴۵۶۷۸۹">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%;">ارسال پیامک آزمایشی</button>
+    </form>
+  </div>
+
+  <!-- جدول الگوها -->
+  <div class="card">
+    <h3 style="margin-bottom: 1rem; color: #1e3a8a;">الگوهای پیامکی سامانه (IPPanel Patterns)</h3>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>رویداد</th>
+            <th>کد پترن</th>
+            <th>متغیرها</th>
+            <th>وضعیت</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% templates.forEach(t => { %>
+            <tr>
+              <td><strong><%= t.title %></strong><br><small style="color: #64748b;"><%= t.event_key %></small></td>
+              <td><code><%= t.ippanel_pattern_code %></code></td>
+              <td><small><%= t.variable_mappings_json %></small></td>
+              <td>
+                <% if (t.is_active) { %>
+                  <span class="badge badge-green">فعال</span>
+                <% } else { %>
+                  <span class="badge badge-gray">غیرفعال</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- لاگ پیامک‌های اخیر -->
+<div class="card">
+  <h3 style="margin-bottom: 1rem; color: #1e3a8a;">تاریخچه صف و لاگ پیامک‌ها</h3>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>گیرنده</th>
+          <th>رویداد</th>
+          <th>کد پترن</th>
+          <th>وضعیت</th>
+          <th>شناسه پیامک درگاه</th>
+          <th>زمان ثبت</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (logs.length === 0) { %>
+          <tr><td colspan="6" style="text-align: center; color: #64748b;">هیچ پیامکی ثبت نشده است.</td></tr>
+        <% } %>
+        <% logs.forEach(l => { %>
+          <tr>
+            <td><%= l.recipient_mobile %></td>
+            <td><%= l.event_key %></td>
+            <td><code><%= l.pattern_code %></code></td>
+            <td>
+              <% if (l.status === 'sent') { %>
+                <span class="badge badge-green">ارسال‌شده</span>
+              <% } else if (l.status === 'queued') { %>
+                <span class="badge badge-yellow">در صف ارسال</span>
+              <% } else { %>
+                <span class="badge badge-red">ناموفق</span>
+              <% } %>
+            </td>
+            <td><%= l.provider_message_id || '-' %></td>
+            <td><%= toJalaliDate(l.created_at, true) %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>

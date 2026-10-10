@@ -1,5 +1,4 @@
 node_modules/
-dist/
 storage/installed.lock
 storage/*.sqlite*
 storage/*.wal
