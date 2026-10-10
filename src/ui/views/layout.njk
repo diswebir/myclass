@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}myclass{% endblock %}</title>
+  <link rel="stylesheet" href="/public/css/fonts.css">
+  <link rel="stylesheet" href="/public/css/app.css">
+  <script src="/public/vendor/htmx.min.js" defer></script>
+  <script src="/public/vendor/alpine.min.js" defer></script>
+</head>
+<body>
+  {% if user %}
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">myclass</a>
+      <nav class="nav">
+        <a href="/" class="{{ 'active' if currentPath == '/' }}">داشبورد</a>
+        {% if user.permissions.includes('*:*') or user.permissions.includes('users.*') %}
+        <a href="/users" class="{{ 'active' if currentPath.startsWith('/users') }}">کاربران</a>
+        {% endif %}
+        {% if user.permissions.includes('*:*') or user.permissions.includes('settings.*') %}
+        <a href="/settings" class="{{ 'active' if currentPath.startsWith('/settings') }}">تنظیمات</a>
+        {% endif %}
+        {% if user.permissions.includes('*:*') or user.permissions.includes('audit.view') %}
+        <a href="/audit" class="{{ 'active' if currentPath.startsWith('/audit') }}">گزارش ممیزی</a>
+        {% endif %}
+        {% if user.permissions.includes('*:*') or user.permissions.includes('health.view') %}
+        <a href="/admin/health" class="{{ 'active' if currentPath.startsWith('/admin/health') }}">سلامت</a>
+        {% endif %}
+        {% if user.roles.includes('teacher') %}
+        <a href="/panel/teacher" class="{{ 'active' if currentPath.startsWith('/panel/teacher') }}">پنل استاد</a>
+        {% endif %}
+        {% if user.roles.includes('student') %}
+        <a href="/panel/student" class="{{ 'active' if currentPath.startsWith('/panel/student') }}">پنل فراگیر</a>
+        {% endif %}
+      </nav>
+      <div class="userbox">
+        <span class="username">{{ user.fullName }}</span>
+        <form method="post" action="/auth/logout" class="inline-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <button type="submit" class="btn btn-ghost">خروج</button>
+        </form>
+      </div>
+    </div>
+  </header>
+  {% endif %}
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer"><small>myclass — پلتفرم مدیریت مؤسسه آموزشی</small></footer>
+</body>
+</html>

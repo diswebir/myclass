@@ -1,0 +1,10 @@
+{% extends "layout.njk" %}
+{% block title %}پیش‌ثبت‌نام ثبت شد{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>✅ پیش‌ثبت‌نام شما ثبت شد</h1>
+  <p>کد پیگیری: <code style="font-size:1.3rem">{{ trackingCode }}</code></p>
+  <p>کلاس: {{ cls.title }}</p>
+  <p>برای پیگیری وضعیت، این کد را نگه دارید: <a href="/prereg/tracking/{{ trackingCode }}">پیگیری</a></p>
+</div>
+{% endblock %}

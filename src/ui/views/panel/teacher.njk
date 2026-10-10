@@ -1,0 +1,77 @@
+{% extends "layout.njk" %}
+{% block title %}پنل استاد — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>پنل استاد</h1>
+  <a href="/panel/teacher/profile" class="btn btn-ghost">پروفایل من</a>
+</div>
+
+<div class="card">
+  <h2>کلاس‌های من</h2>
+  <table class="table">
+    <thead><tr><th>کد</th><th>عنوان</th><th>ظرفیت</th><th>شروع</th><th>پایان</th><th>محل</th><th>وضعیت</th></tr></thead>
+    <tbody>
+      {% for c in classes %}
+      <tr>
+        <td>{{ c.code }}</td>
+        <td>{{ c.title }}</td>
+        <td>{{ c.capacity | faNum }}</td>
+        <td>{{ c.start_date | faDate }}</td>
+        <td>{{ c.end_date | faDate }}</td>
+        <td>{{ c.location or '—' }}</td>
+        <td><span class="badge">{{ c.status }}</span></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="empty">کلاسی به شما اختصاص نیافته است.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>جلسات پیشِ رو</h2>
+  <table class="table">
+    <thead><tr><th>تاریخ</th><th>کلاس</th><th>موضوع</th><th>ساعت</th><th>عملیات</th></tr></thead>
+    <tbody>
+      {% for s in sessions %}
+      <tr>
+        <td>{{ s.session_date | faDate }}</td>
+        <td>{{ s.class_title }} ({{ s.class_code }})</td>
+        <td>{{ s.topic or '—' }}</td>
+        <td>{{ s.start_time or '—' }}</td>
+        <td><a href="/panel/teacher/mark/{{ s.id }}" class="btn btn-sm btn-primary">ثبت حضور</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="empty">جلسه‌ی پیشِ رو یافت نشد.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>گزارش حضور کلاس‌های من</h2>
+  <table class="table">
+    <thead><tr><th>کلاس</th><th>تعداد فراگیر</th><th>تعداد جلسه</th><th>درصد حضور جلسات</th></tr></thead>
+    <tbody>
+      {% for r in reports %}
+      <tr>
+        <td>{{ r.classTitle }} ({{ r.classCode }})</td>
+        <td>{{ r.studentCount | faNum }}</td>
+        <td>{{ r.sessionCount | faNum }}</td>
+        <td>
+          {% if r.sessionPercents.length %}
+            {% for sp in r.sessionPercents %}
+              <span class="badge {{ 'ok' if sp.percent != null and sp.percent >= 70 else '' }}">{{ sp.date | faDate }}: {{ sp.percent | faNum }}٪</span>
+            {% endfor %}
+          {% else %}
+            <span class="empty">جلسه‌ای ثبت نشده است.</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="empty">گزارشی موجود نیست.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

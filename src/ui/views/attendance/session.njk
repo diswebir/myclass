@@ -1,0 +1,29 @@
+{% extends "layout.njk" %}
+{% block title %}حضور جلسه — myclass{% endblock %}
+{% block content %}
+{% set labels = { 'present': 'حاضر', 'absent': 'غایب', 'late': 'تأخیر', 'excused': 'مرخصی', 'unset': 'ثبت‌نشده' } %}
+<div class="page-head">
+  <h1>حضور جلسه {{ sessionId | faNum }}</h1>
+  <a href="/classes" class="btn btn-ghost">بازگشت</a>
+</div>
+<div class="card">
+  <table class="table">
+    <thead><tr><th>کد</th><th>نام</th><th>نام خانوادگی</th><th>موبایل</th><th>وضعیت</th><th>یادداشت</th><th>زمان ثبت</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.code }}</td>
+        <td>{{ r.first_name }}</td>
+        <td>{{ r.last_name }}</td>
+        <td>{{ r.phone | faNum }}</td>
+        <td><span class="badge {{ 'ok' if r.status == 'present' or r.status == 'late' else ('fail' if r.status == 'absent' else '') }}">{{ labels[r.status] or r.status }}</span></td>
+        <td>{{ r.note or '—' }}</td>
+        <td>{{ r.marked_at | faDateTime }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="empty">حضوری برای این جلسه ثبت نشده است.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

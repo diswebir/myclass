@@ -1,0 +1,31 @@
+{% extends "layout.njk" %}
+{% block title %}کاربران — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>کاربران</h1>
+  <a href="/users/new" class="btn btn-primary">کاربر جدید</a>
+</div>
+<form method="get" class="search-form">
+  <input name="q" value="{{ q }}" placeholder="جستجو (نام کاربری، نام، موبایل)">
+  <button class="btn btn-ghost">جستجو</button>
+</form>
+<table class="table">
+  <thead>
+    <tr><th>نام کاربری</th><th>نام کامل</th><th>موبایل</th><th>نقش‌ها</th><th>آخرین ورود</th><th>وضعیت</th></tr>
+  </thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td><a href="/users/{{ u.id }}">{{ u.username }}</a></td>
+      <td>{{ u.full_name }}</td>
+      <td>{{ u.phone | faNum }}</td>
+      <td>{{ u.role_slugs }}</td>
+      <td>{{ u.last_login_at | faDateTime }}</td>
+      <td>{% if u.is_active == 1 %}<span class="badge ok">فعال</span>{% else %}<span class="badge fail">غیرفعال</span>{% endif %}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="empty">کاربری یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

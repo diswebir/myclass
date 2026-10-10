@@ -1,0 +1,23 @@
+{% extends "layout.njk" %}
+{% block title %}{{ 'ویرایش دوره' if course else 'دوره جدید' }} — myclass{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>{{ 'ویرایش دوره' if course else 'دوره جدید' }}</h1>
+  <form method="post" action="{{ '/courses/' + course.id if course else '/courses' }}">
+    {% if course %}<input type="hidden" name="_method" value="put">{% endif %}
+    <div class="grid2">
+      <div class="field"><label>عنوان</label><input name="title" value="{{ course.title if course else '' }}" required></div>
+      <div class="field"><label>کد</label><input name="code" value="{{ course.code if course else '' }}" required></div>
+      <div class="field"><label>دسته</label><input name="category" value="{{ course.category if course else '' }}"></div>
+      <div class="field"><label>سطح</label><input name="level" value="{{ course.level if course else '' }}"></div>
+      <div class="field"><label>شهریه پیش‌فرض (تومان)</label><input name="defaultFee" value="{{ course.default_fee if course else '0' }}"></div>
+      <div class="field"><label>مدت (ساعت)</label><input name="durationHours" value="{{ course.duration_hours if course else '' }}"></div>
+    </div>
+    <div class="field"><label>توضیحات</label><textarea name="description" rows="3">{{ course.description if course else '' }}</textarea></div>
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">ذخیره</button>
+      <a href="/courses" class="btn btn-ghost">بازگشت</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

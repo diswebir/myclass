@@ -1,0 +1,22 @@
+{% extends "layout.njk" %}
+{% block title %}پیش‌ثبت‌نام‌ها — myclass{% endblock %}
+{% block content %}
+<h1>پیش‌ثبت‌نام‌ها</h1>
+<table class="table">
+  <thead><tr><th>کد پیگیری</th><th>نام</th><th>موبایل</th><th>کلاس</th><th>وضعیت</th><th>تاریخ</th></tr></thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td><code>{{ r.tracking_code }}</code></td>
+      <td>{{ r.applicant_name }}</td>
+      <td>{{ r.phone | faNum }}</td>
+      <td>{{ r.class_id | faNum }}</td>
+      <td><span class="badge">{{ r.status }}</span></td>
+      <td>{{ r.created_at | faDateTime }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="empty">درخواستی یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

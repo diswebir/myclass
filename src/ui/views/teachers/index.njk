@@ -1,0 +1,25 @@
+{% extends "layout.njk" %}
+{% block title %}اساتید — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>اساتید</h1>
+  <a href="/teachers/new" class="btn btn-primary">استاد جدید</a>
+</div>
+<table class="table">
+  <thead><tr><th>کد</th><th>نام</th><th>موبایل</th><th>تخصص‌ها</th><th>وضعیت</th><th>تاریخ شروع</th></tr></thead>
+  <tbody>
+    {% for t in teachers %}
+    <tr>
+      <td><a href="/teachers/{{ t.id }}">{{ t.code }}</a></td>
+      <td>{{ t.first_name }} {{ t.last_name }}</td>
+      <td>{{ t.phone | faNum }}</td>
+      <td>{{ t.specialties }}</td>
+      <td>{% if t.status == 'active' %}<span class="badge ok">فعال</span>{% else %}<span class="badge">{{ t.status }}</span>{% endif %}</td>
+      <td>{{ t.started_at | faDate }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="empty">استادی یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

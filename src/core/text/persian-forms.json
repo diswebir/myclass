@@ -1,0 +1,320 @@
+{
+  "version": 1,
+  "letters": {
+    "1569": {
+      "isolated": 1569,
+      "final": 1569,
+      "initial": 1569,
+      "medial": 1569,
+      "dual": false
+    },
+    "1570": {
+      "isolated": 1570,
+      "final": 65154,
+      "initial": 1570,
+      "medial": 65154,
+      "dual": false
+    },
+    "1571": {
+      "isolated": 1571,
+      "final": 65156,
+      "initial": 1571,
+      "medial": 65156,
+      "dual": false
+    },
+    "1572": {
+      "isolated": 1572,
+      "final": 65158,
+      "initial": 1572,
+      "medial": 65158,
+      "dual": false
+    },
+    "1573": {
+      "isolated": 1573,
+      "final": 65160,
+      "initial": 1573,
+      "medial": 65160,
+      "dual": false
+    },
+    "1574": {
+      "isolated": 1574,
+      "final": 65162,
+      "initial": 65163,
+      "medial": 65164,
+      "dual": true
+    },
+    "1575": {
+      "isolated": 1575,
+      "final": 65166,
+      "initial": 1575,
+      "medial": 65166,
+      "dual": false
+    },
+    "1576": {
+      "isolated": 1576,
+      "final": 65168,
+      "initial": 65169,
+      "medial": 65170,
+      "dual": true
+    },
+    "1577": {
+      "isolated": 1577,
+      "final": 65172,
+      "initial": 1577,
+      "medial": 65172,
+      "dual": false
+    },
+    "1578": {
+      "isolated": 1578,
+      "final": 65174,
+      "initial": 65175,
+      "medial": 65176,
+      "dual": true
+    },
+    "1579": {
+      "isolated": 1579,
+      "final": 65178,
+      "initial": 65179,
+      "medial": 65180,
+      "dual": true
+    },
+    "1580": {
+      "isolated": 1580,
+      "final": 65182,
+      "initial": 65183,
+      "medial": 65184,
+      "dual": true
+    },
+    "1581": {
+      "isolated": 1581,
+      "final": 65186,
+      "initial": 65187,
+      "medial": 65188,
+      "dual": true
+    },
+    "1582": {
+      "isolated": 1582,
+      "final": 65190,
+      "initial": 65191,
+      "medial": 65192,
+      "dual": true
+    },
+    "1583": {
+      "isolated": 1583,
+      "final": 65194,
+      "initial": 1583,
+      "medial": 65194,
+      "dual": false
+    },
+    "1584": {
+      "isolated": 1584,
+      "final": 65196,
+      "initial": 1584,
+      "medial": 65196,
+      "dual": false
+    },
+    "1585": {
+      "isolated": 1585,
+      "final": 65198,
+      "initial": 1585,
+      "medial": 65198,
+      "dual": false
+    },
+    "1586": {
+      "isolated": 1586,
+      "final": 65200,
+      "initial": 1586,
+      "medial": 65200,
+      "dual": false
+    },
+    "1587": {
+      "isolated": 1587,
+      "final": 65202,
+      "initial": 65203,
+      "medial": 65204,
+      "dual": true
+    },
+    "1588": {
+      "isolated": 1588,
+      "final": 65206,
+      "initial": 65207,
+      "medial": 65208,
+      "dual": true
+    },
+    "1589": {
+      "isolated": 1589,
+      "final": 65210,
+      "initial": 65211,
+      "medial": 65212,
+      "dual": true
+    },
+    "1590": {
+      "isolated": 1590,
+      "final": 65214,
+      "initial": 65215,
+      "medial": 65216,
+      "dual": true
+    },
+    "1591": {
+      "isolated": 1591,
+      "final": 65218,
+      "initial": 65219,
+      "medial": 65220,
+      "dual": true
+    },
+    "1592": {
+      "isolated": 1592,
+      "final": 65222,
+      "initial": 65223,
+      "medial": 65224,
+      "dual": true
+    },
+    "1593": {
+      "isolated": 1593,
+      "final": 65226,
+      "initial": 65227,
+      "medial": 65228,
+      "dual": true
+    },
+    "1594": {
+      "isolated": 1594,
+      "final": 65230,
+      "initial": 65231,
+      "medial": 65232,
+      "dual": true
+    },
+    "1601": {
+      "isolated": 1601,
+      "final": 65234,
+      "initial": 65235,
+      "medial": 65236,
+      "dual": true
+    },
+    "1602": {
+      "isolated": 1602,
+      "final": 65238,
+      "initial": 65239,
+      "medial": 65240,
+      "dual": true
+    },
+    "1603": {
+      "isolated": 1603,
+      "final": 65242,
+      "initial": 65243,
+      "medial": 65244,
+      "dual": true
+    },
+    "1604": {
+      "isolated": 1604,
+      "final": 65246,
+      "initial": 65247,
+      "medial": 65248,
+      "dual": true
+    },
+    "1605": {
+      "isolated": 1605,
+      "final": 65250,
+      "initial": 65251,
+      "medial": 65252,
+      "dual": true
+    },
+    "1606": {
+      "isolated": 1606,
+      "final": 65254,
+      "initial": 65255,
+      "medial": 65256,
+      "dual": true
+    },
+    "1607": {
+      "isolated": 1607,
+      "final": 65258,
+      "initial": 65259,
+      "medial": 65260,
+      "dual": true
+    },
+    "1608": {
+      "isolated": 1608,
+      "final": 65262,
+      "initial": 1608,
+      "medial": 65262,
+      "dual": false
+    },
+    "1662": {
+      "isolated": 1662,
+      "final": 64343,
+      "initial": 64344,
+      "medial": 64345,
+      "dual": true
+    },
+    "1670": {
+      "isolated": 1670,
+      "final": 64379,
+      "initial": 64380,
+      "medial": 64381,
+      "dual": true
+    },
+    "1688": {
+      "isolated": 1688,
+      "final": 64395,
+      "initial": 1688,
+      "medial": 64395,
+      "dual": false
+    },
+    "1705": {
+      "isolated": 1705,
+      "final": 64399,
+      "initial": 64400,
+      "medial": 64401,
+      "dual": true
+    },
+    "1711": {
+      "isolated": 1711,
+      "final": 64403,
+      "initial": 64404,
+      "medial": 64405,
+      "dual": true
+    },
+    "1740": {
+      "isolated": 1740,
+      "final": 64509,
+      "initial": 64510,
+      "medial": 64511,
+      "dual": true
+    }
+  },
+  "lamAlef": {
+    "1570": {
+      "isolated": 65269,
+      "final": 65270
+    },
+    "1571": {
+      "isolated": 65271,
+      "final": 65272
+    },
+    "1573": {
+      "isolated": 65273,
+      "final": 65274
+    },
+    "1575": {
+      "isolated": 65275,
+      "final": 65276
+    }
+  },
+  "zwnj": 8204,
+  "marks": [
+    1611,
+    1612,
+    1613,
+    1614,
+    1615,
+    1616,
+    1617,
+    1618,
+    1648,
+    1619,
+    1620,
+    1621,
+    1622,
+    1600
+  ]
+}

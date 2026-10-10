@@ -1,0 +1,31 @@
+{% extends "layout.njk" %}
+{% block title %}{{ 'ویرایش استاد' if teacher else 'استاد جدید' }} — myclass{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>{{ 'ویرایش استاد' if teacher else 'استاد جدید' }}</h1>
+  <form method="post" action="{{ '/teachers/' + teacher.id if teacher else '/teachers' }}">
+    {% if teacher %}<input type="hidden" name="_method" value="put">{% endif %}
+    <div class="grid2">
+      <div class="field"><label>کد داخلی</label><input name="code" value="{{ teacher.code if teacher else '' }}" required></div>
+      <div class="field"><label>نام</label><input name="firstName" value="{{ teacher.first_name if teacher else '' }}" required></div>
+      <div class="field"><label>نام خانوادگی</label><input name="lastName" value="{{ teacher.last_name if teacher else '' }}" required></div>
+      <div class="field"><label>موبایل</label><input name="phone" value="{{ teacher.phone if teacher else '' }}" required></div>
+      <div class="field"><label>ایمیل</label><input type="email" name="email" value="{{ teacher.email if teacher else '' }}"></div>
+      <div class="field"><label>تاریخ开始 (شمسی)</label><input name="startedAt" value="{{ teacher.started_at | faDate if teacher else '' }}" placeholder="۱۴۰۳/۰۱/۰۱"></div>
+      <div class="field"><label>وضعیت</label>
+        <select name="status">
+          <option value="active" {{ 'selected' if not teacher or teacher.status == 'active' }}>فعال</option>
+          <option value="inactive" {{ 'selected' if teacher and teacher.status == 'inactive' }}>غیرفعال</option>
+          <option value="on_leave" {{ 'selected' if teacher and teacher.status == 'on_leave' }}>مرخصی</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>تخصص‌ها (با ویرگول جدا کنید)</label><input name="specialtiesText" value=""></div>
+    <div class="field"><label>یادداشت</label><textarea name="notes" rows="3">{{ teacher.notes if teacher else '' }}</textarea></div>
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">ذخیره</button>
+      <a href="/teachers" class="btn btn-ghost">بازگشت</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

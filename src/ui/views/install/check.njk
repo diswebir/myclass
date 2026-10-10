@@ -1,0 +1,23 @@
+{% extends "layout.njk" %}
+{% block title %}بررسی سازگاری — myclass{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>نتیجه بررسی سازگاری</h1>
+  <ul class="checklist">
+    {% for c in checks %}
+    <li class="{{ 'ok' if c.ok else 'fail' }}">
+      <strong>{{ c.label }}</strong> — {{ c.detail }}
+      <span class="badge">{{ 'OK' if c.ok else 'FAIL' }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  <form method="post" action="/install/run">
+    {% for k, v in values %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+    <input type="hidden" name="dbPassword" value="">
+    <div class="actions">
+      <a href="/install" class="btn btn-ghost">بازگشت</a>
+      <button type="submit" class="btn btn-primary" {{ 'disabled' if not (checks | selectattr('ok') | list | length == checks | length) }}>نصب</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

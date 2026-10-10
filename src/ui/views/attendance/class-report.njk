@@ -1,0 +1,37 @@
+{% extends "layout.njk" %}
+{% block title %}گزارش حضور کلاس — myclass{% endblock %}
+{% block content %}
+{% set labels = { 'present': 'حاضر', 'absent': 'غایب', 'late': 'تأخیر', 'excused': 'مرخصی', 'unset': '—' } %}
+<div class="page-head">
+  <h1>گزارش حضور کلاس</h1>
+  <a href="/classes" class="btn btn-ghost">بازگشت</a>
+</div>
+<div class="card">
+  {% if report.sessions.length and report.students.length %}
+  <table class="table">
+    <thead>
+      <tr><th>کد</th><th>نام</th><th>نام خانوادگی</th>
+        {% for s in report.sessions %}
+        <th>{{ s.session_date | faDate }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for st in report.students %}
+      <tr>
+        <td>{{ st.code }}</td>
+        <td>{{ st.first_name }}</td>
+        <td>{{ st.last_name }}</td>
+        {% for s in report.sessions %}
+        {% set mark = report.marks[s.id ~ ':' ~ st.student_id] %}
+        <td><span class="badge {{ 'ok' if mark == 'present' or mark == 'late' else ('fail' if mark == 'absent' else '') }}">{{ labels[mark] or '—' }}</span></td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">جلسه یا فراگیری برای گزارش وجود ندارد.</p>
+  {% endif %}
+</div>
+{% endblock %}
