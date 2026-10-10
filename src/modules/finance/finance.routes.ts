@@ -9,7 +9,7 @@ import { Policy } from '../../core/policy/policy';
 
 export function financeRoutes(ctx: AppContext): Router {
   const router = Router();
-  const service = new FinanceService(ctx.db);
+  const service = new FinanceService(ctx.db, ctx.config);
   const policy = new Policy(ctx.db);
 
   router.use(requireAuth);

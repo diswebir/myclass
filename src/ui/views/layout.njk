@@ -34,6 +34,9 @@
         {% if user.permissions.includes('*:*') or user.permissions.includes('certificates.*') %}
         <a href="/certificates" class="{{ 'active' if currentPath.startsWith('/certificates') }}">مدارک</a>
         {% endif %}
+        {% if user.permissions.includes('*:*') or user.permissions.includes('sms.*') %}
+        <a href="/sms/patterns" class="{{ 'active' if currentPath.startsWith('/sms') }}">پیامک‌ها</a>
+        {% endif %}
         {% if user.roles.includes('teacher') %}
         <a href="/panel/teacher" class="{{ 'active' if currentPath.startsWith('/panel/teacher') }}">پنل استاد</a>
         {% endif %}

@@ -154,6 +154,9 @@ export class InstallerService {
       await rbac.seedSystemRoles();
       const settings = new SettingsService(db, this.config);
       await settings.seedDefaults();
+      // 2b. seed — پترن‌ها و رویدادهای پیش‌فرض پیامک
+      const { SmsService } = await import('../sms/sms.service');
+      await new SmsService(db, this.config).seedDefaults();
       // 3. متدهای پرداخت پیش‌فرض
       const methods = [
         { name: 'نقدی', type: 'cash' },

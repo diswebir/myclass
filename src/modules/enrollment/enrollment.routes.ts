@@ -15,7 +15,7 @@ const enrollSchema = z.object({
 
 export function enrollmentRoutes(ctx: AppContext): Router {
   const router = Router();
-  const service = new EnrollmentService(ctx.db);
+  const service = new EnrollmentService(ctx.db, ctx.config);
 
   router.use(requireAuth);
 

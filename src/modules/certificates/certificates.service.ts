@@ -339,6 +339,16 @@ export class CertificatesService {
       entityId: certId,
       meta: { studentId: input.studentId, classId: input.classId, code, attendancePercent: check.attendancePercent },
     });
+    // هوک پیامک — best-effort
+    const { notifyCertificateIssued } = await import('../sms/hooks');
+    await notifyCertificateIssued(this.db, this.config, {
+      certificateId: certId,
+      studentId: input.studentId,
+      classId: input.classId,
+      code,
+      studentName: `${student.first_name} ${student.last_name}`,
+      classTitle: cls.title,
+    });
     return this.getById(certId);
   }
 

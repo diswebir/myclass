@@ -35,6 +35,7 @@ export const SETTING_DEFS: SettingDef[] = [
   { key: 'sms.ip_panel_api_key', category: 'sms', schema: z.string().max(255), defaultValue: '', isSecret: true, description: 'کلید API پنل IPPanel (رمزنگاری‌شده، ماسک در UI)' },
   { key: 'sms.ip_panel_base_url', category: 'sms', schema: z.string().url().max(255), defaultValue: 'https://edge.ippanel.com/v1', isSecret: false, description: 'آدرس پایه API' },
   { key: 'sms.default_sender', category: 'sms', schema: z.string().max(64).nullable(), defaultValue: null, isSecret: false, description: 'شماره/نام فرستنده پیش‌فرض' },
+  { key: 'sms.rate_limit_per_minute', category: 'sms', schema: z.number().int().min(1).max(500), defaultValue: 30, isSecret: false, description: 'سقف پردازش صف پیامک در دقیقه' },
 ];
 
 export const SETTING_BY_KEY = new Map(SETTING_DEFS.map((d) => [d.key, d]));

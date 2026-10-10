@@ -1,0 +1,47 @@
+{% extends "layout.njk" %}
+{% block title %}پترن‌های پیامک — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>پترن‌های پیامک</h1>
+  <div>
+    <a href="/sms/events" class="btn btn-ghost">رویدادها</a>
+    <a href="/sms/queue" class="btn btn-ghost">صف پیامک</a>
+  </div>
+</div>
+<div class="card">
+  <h2>پترن جدید</h2>
+  <form method="post" action="/sms/patterns" class="grid2">
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <div class="field"><label>نام</label><input name="name" required maxlength="191"></div>
+    <div class="field"><label>کد پترن (IPPanel)</label><input name="patternCode" required maxlength="64"></div>
+    <div class="field"><label>متغیرها (JSON — مثلاً: [{"name":"student_name","required":true}])</label><input name="variablesJson" placeholder='[{"name":"student_name","required":true}]'></div>
+    <div class="actions"><button type="submit" class="btn btn-primary">ایجاد پترن</button></div>
+  </form>
+</div>
+<div class="card">
+  <h2>ارسال آزمایشی</h2>
+  <form method="post" action="/sms/test-send" class="grid2">
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <div class="field"><label>شناسه پترن</label><input name="patternId" placeholder="شناسه پترن"></div>
+    <div class="field"><label>شماره گیرنده</label><input name="recipient" required placeholder="09120000000"></div>
+    <div class="actions"><button type="submit" class="btn btn-primary">ارسال آزمایشی</button></div>
+  </form>
+  <p class="muted">در حالت پیش‌فرض (SMS_LIVE_TESTS=0) ارسال با Fake Provider انجام می‌شود و پیامک واقعی ارسال نمی‌گردد.</p>
+</div>
+<table class="table">
+  <thead><tr><th>شناسه</th><th>نام</th><th>کد پترن</th><th>متغیرها</th><th>وضعیت</th></tr></thead>
+  <tbody>
+    {% for p in rows %}
+    <tr>
+      <td>{{ p.id | faNum }}</td>
+      <td>{{ p.name }}</td>
+      <td><code>{{ p.pattern_code }}</code></td>
+      <td><code>{{ p.variables }}</code></td>
+      <td><span class="badge {{ 'ok' if p.is_active else 'fail' }}">{{ 'فعال' if p.is_active else 'غیرفعال' }}</span></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="empty">پترن یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -38,6 +38,8 @@ export async function createTestDb(overrides: Record<string, string> = {}): Prom
   await rbac.seedSystemRoles();
   const settings = new SettingsService(db, config);
   await settings.seedDefaults();
+  const { SmsService } = await import('../../src/modules/sms/sms.service');
+  await new SmsService(db, config).seedDefaults();
   for (const m of [
     { name: 'نقدی', type: 'cash' },
     { name: 'کارت‌به‌کارت', type: 'card' },

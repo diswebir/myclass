@@ -1,0 +1,60 @@
+{% extends "layout.njk" %}
+{% block title %}رویدادهای پیامک — myclass{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>رویدادهای پیامک</h1>
+  <div>
+    <a href="/sms/patterns" class="btn btn-ghost">پترن‌ها</a>
+    <a href="/sms/queue" class="btn btn-ghost">صف پیامک</a>
+  </div>
+</div>
+<div class="card">
+  <h2>رویداد جدید</h2>
+  <form method="post" action="/sms/events" class="grid2">
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <div class="field"><label>کلید رویداد</label><input name="eventKey" required maxlength="64" placeholder="payment_approved"></div>
+    <div class="field"><label>نام</label><input name="name" required maxlength="191"></div>
+    <div class="field"><label>پترن</label>
+      <select name="patternId">
+        <option value="">—</option>
+        {% for p in patterns %}<option value="{{ p.id }}">{{ p.name }} ({{ p.pattern_code }})</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field"><label>مخاطب</label>
+      <select name="recipient">
+        <option value="student">فراگیر</option>
+        <option value="teacher">استاد</option>
+        <option value="class_students">همه فراگیران کلاس</option>
+        <option value="custom">شماره دستی</option>
+      </select>
+    </div>
+    <div class="field"><label>تأخیر (دقیقه)</label><input name="delayMinutes" value="0"></div>
+    <div class="field"><label>حداکثر تلاش مجدد</label><input name="retryMax" value="3"></div>
+    <div class="actions"><button type="submit" class="btn btn-primary">ایجاد رویداد</button></div>
+  </form>
+</div>
+<table class="table">
+  <thead><tr><th>کلید</th><th>نام</th><th>پترن</th><th>مخاطب</th><th>تأخیر</th><th>وضعیت</th><th>عملیات</th></tr></thead>
+  <tbody>
+    {% for e in rows %}
+    <tr>
+      <td><code>{{ e.event_key }}</code></td>
+      <td>{{ e.name }}</td>
+      <td>{{ e.pattern_name or '—' }}</td>
+      <td>{{ e.recipient }}</td>
+      <td>{{ e.delay_minutes | faNum }} دقیقه</td>
+      <td><span class="badge {{ 'ok' if e.enabled else 'fail' }}">{{ 'فعال' if e.enabled else 'غیرفعال' }}</span></td>
+      <td>
+        <form method="post" action="/sms/events/{{ e.id }}" class="inline-form">
+          <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+          <input type="hidden" name="enabled" value="{{ '0' if e.enabled else '1' }}">
+          <button type="submit" class="btn btn-sm btn-ghost">{{ 'غیرفعال‌سازی' if e.enabled else 'فعال‌سازی' }}</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="empty">رویدادی یافت نشد.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

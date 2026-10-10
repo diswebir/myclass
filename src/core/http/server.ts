@@ -27,6 +27,7 @@ import { attendanceRoutes } from '../../modules/attendance/attendance.routes';
 import { filesRoutes } from '../../modules/files/files.routes';
 import { financeRoutes } from '../../modules/finance/finance.routes';
 import { certificatesRoutes, certificateVerifyRoutes } from '../../modules/certificates/certificates.routes';
+import { smsRoutes, internalJobsRoutes } from '../../modules/sms/sms.routes';
 import { teacherPanelRoutes } from '../../modules/panels/teacher-panel.routes';
 import { studentPanelRoutes } from '../../modules/panels/student-panel.routes';
 import { isSecureCookies } from '../config/env';
@@ -170,7 +171,9 @@ export function createApp(ctx: AppContext): express.Express {
   app.use('/files', filesRoutes(ctx));
   app.use('/finance', financeRoutes(ctx));
   app.use('/certificates', certificatesRoutes(ctx));
+  app.use('/sms', smsRoutes(ctx));
   app.use('/', certificateVerifyRoutes(ctx));
+  app.use('/', internalJobsRoutes(ctx));
   app.use('/panel/teacher', teacherPanelRoutes(ctx));
   app.use('/panel/student', studentPanelRoutes(ctx));
   app.use('/', healthRoutes(ctx));

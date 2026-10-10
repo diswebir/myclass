@@ -7,6 +7,7 @@ import type { Kysely } from 'kysely';
 import type { Database } from '../../core/db/types';
 import { AppError } from '../../core/errors/AppError';
 import type { AuthUser } from '../../core/http/context';
+import type { Config } from '../../core/config/env';
 import { nowDb } from '../../core/db/time';
 import { AuditService } from '../audit/audit.service';
 import { EnrollmentService } from '../enrollment/enrollment.service';
@@ -19,9 +20,12 @@ export class FinanceService {
   readonly audit: AuditService;
   readonly enrollment: EnrollmentService;
 
-  constructor(private readonly db: Kysely<Database>) {
+  constructor(
+    private readonly db: Kysely<Database>,
+    private readonly config?: Config,
+  ) {
     this.audit = new AuditService(db);
-    this.enrollment = new EnrollmentService(db);
+    this.enrollment = new EnrollmentService(db, this.config);
   }
 
   // ---------- پرداخت ----------
@@ -101,6 +105,15 @@ export class FinanceService {
       entityId: res,
       meta: { studentId: input.studentId, amount, status, methodId: input.methodId },
     });
+    if (this.config && status === 'approved') {
+      const { notifyPaymentApproved } = await import('../sms/hooks');
+      await notifyPaymentApproved(this.db, this.config, {
+        paymentId: res,
+        studentId: input.studentId,
+        enrollmentId: input.enrollmentId ?? null,
+        amount,
+      });
+    }
     return { paymentId: res, status };
   }
 
@@ -126,6 +139,15 @@ export class FinanceService {
       entityId: paymentId,
       meta: { amount: String(pay.amount) },
     });
+    if (this.config) {
+      const { notifyPaymentApproved } = await import('../sms/hooks');
+      await notifyPaymentApproved(this.db, this.config, {
+        paymentId,
+        studentId: Number(pay.student_id),
+        enrollmentId: pay.enrollment_id ? Number(pay.enrollment_id) : null,
+        amount: String(pay.amount),
+      });
+    }
   }
 
   /** رد پرداخت در انتظار — با علت + audit. */

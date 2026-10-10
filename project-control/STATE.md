@@ -1,7 +1,7 @@
 # STATE.md — کنترل وضعیت پروژه
 
 > این فایل در پایان هر نشست کاری به‌روز می‌شود.
-> آخرین به‌روزرسانی: 2026-10-10 — پایان فاز ۵ (مدارک/PDF/QR) — ۲۰۱ تست سبز
+> آخرین به‌روزرسانی: 2026-10-10 — پایان فاز ۶ (پیامک/IPPanel) — ۲۲۰ تست سبز
 
 ## تاریخچه نشست‌ها
 
@@ -80,19 +80,32 @@
 - ۱۰ تست جدید (phase5.test.ts): صدور+PDF+فونت+QR، verify عمومی/نامعتبر، حضور ناکافی، تسویه‌نشده→پرداخت→صدور، تکراری ۴۰۹، لغو+دوباره ۴۰۹، دسته‌ای+dryRun، پنل فراگیر، CRUD قالب+شرط ۱۰۰٪، RBAC ۴۰۳.
 - REQ-P5-01..04 → VERIFIED. تست‌ها: **۲۰۱ موفق**. typecheck + build سبز.
 
+
+### 2026-10-10 — Session 8 (فاز ۶ — پیامک/IPPanel)
+
+- SmsProvider interface + FakeSmsProvider (outbox داخل حافظه، failNext برای تست backoff) + IPanelSmsProvider adapter (wire format «تأییدنشده» — blocker B2 — ippanel.com خارج از allowlist — در یک فایل ایزوله، per spec §3).
+- Gate REQ-P6-05: مگر SMS_LIVE_TESTS=1، provider همیشه Fake است (هیچ تماس شبکه‌ای در تست/کران).
+- کلید API: تنظیمات sms.ip_panel_api_key (isSecret — رمزنگاری‌شده با ENCRYPTION_KEY، ماسک در UI) + fallback به env؛ هرگز در لاگ.
+- صف DB: enqueue با dedupe (event+entity+recipient)، delay_minutes، شرط (gte/lte/eq)، نگاشت متغیر + پیش‌فرض + الزامی، rate limit (پیش‌فرض ۳۰/دقیقه)، backoff wasserfall (base*2^n سقف ۶۰ دقیقه)، retry_max → failed.
+- پردازش: cron dist/jobs/run.js (smoke تست شد) + endpoint داخلی POST /internal/jobs/run با Bearer SMS_CRON_TOKEN (CSRF-exempt).
+- پترن/رویداد: CRUD + seedDefaults (۴ پترن + ۴ رویداد) — installer و test helper هر دو seed می‌کنند.
+- هوک‌های دامنه (best-effort): enrollment_created، payment_approved (create+approve)، certificate_issued.
+- ارسال آزمایشی مدیر (sms.test_send.run) + viewهای صف/پترن/رویداد + nav «پیامک‌ها».
+- ۱۹ تست جدید (phase6.test.ts). REQ-P6-01..05 → VERIFIED (P6-01 با caveat B2). تست‌ها: **۲۲۰ موفق**. typecheck + build + cron smoke سبز.
+
 ## وضعیت فعلی
 
-- فاز: **۵ — مدارک/PDF/QR — کامل شد ✅ (۲۰۱ تست) → شروع فاز ۶ (پیامک/IPPanel)**
-- آخرین نیازمندی VERIFIED: REQ-P5-04
-- در حال انجام: فاز ۶ — REQ-P6-01.. (SmsProvider + IPPanel adapter، پترن/رویداد، صف DB + cron، تست‌ارسال)
-- تست‌ها: ۲۰۱ موفق / ۰ ناموفق — `npm test` + `npm run typecheck` + `npm run build` سبز؛ boot smoke (install + full mode) سبز.
+- فاز: **۶ — پیامک/IPPanel — کامل شد ✅ (۲۲۰ تست) → شروع فاز ۷ (داشبورد/backup/ZIP نهایی)**
+- آخرین نیازمندی VERIFIED: REQ-P6-05 (P6-01 با caveat B2 — wire format IPPanel تأییدنشده)
+- در حال انجام: فاز ۷ — REQ-P7-01.. (داشبورد KPI + ۷ نمودار، backup/restore، ماژول‌ها، ۹ راهنمای فارسی، سناریوی پذیرش §۸، ZIP نهایی)
+- تست‌ها: ۲۲۰ موفق / ۰ ناموفق — `npm test` + `npm run typecheck` + `npm run build` سبز؛ boot smoke (install + full mode) سبز.
 
 ## نتایج تست
 
 | suite | نتیجه |
 |---|---|
 | unit | ۷۸ موفق |
-| integration | ۱۲۳ موفق (install incl. sqlite e2e, auth, rbac, settings, migration, security, audit, phase2, phase3, phase4, phase5) |
+| integration | ۱۴۲ موفق (install incl. sqlite e2e, auth, rbac, settings, migration, security, audit, phase2, phase3, phase4, phase5, phase6) |
 | typecheck / build | سبز |
 | boot smoke (install mode, virgin DB) | سبز — /install 200، /healthz 200، installer failure graceful |
 | boot smoke (full mode, sqlite) | سبز — migrate-cli + login/logout + dashboard + panels + attendance |

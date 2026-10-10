@@ -93,11 +93,11 @@
 
 | ID | نیازمندی | معیار پذیرش | وضعیت |
 |---|---|---|---|
-| REQ-P6-01 | رابط SmsProvider + Adapter IPPanel (per مستندات رسمی) + Fake Provider | تست‌های با Fake | NOT_STARTED |
-| REQ-P6-02 | کلید API فقط سمت سرور، رمزنگاری‌شده در DB (کلید از env)، ماسک UI، هرگز در لاگ | تست‌های امنیتی | NOT_STARTED |
-| REQ-P6-03 | پترن‌ها و رویدادها: فعال/غیرفعال، نگاشت متغیر، منبع استخراج، پیش‌فرض، شرط، مخاطب، تأخیر، retry | تست‌های نگاشت متغیر | NOT_STARTED |
-| REQ-P6-04 | صف DB: dedup (رویداد+موجودیت+مخاطب)، rate limit، backoff، پردازش مرحله‌ای، cron `dist/jobs/run.js` + endpoint داخلی با توکن، ارسال آزمایشی | تست‌های صف با Fake | NOT_STARTED |
-| REQ-P6-05 | تست‌ها هرگز پیامک واقعی نمی‌فرستند مگر `SMS_LIVE_TESTS=1` | تست gate | NOT_STARTED |
+| REQ-P6-01 | رابط SmsProvider + Adapter IPPanel (per مستندات رسمی) + Fake Provider | تست‌های با Fake | VERIFIED (Adapter + Fake + UI — بخش وابسته به API (wire format) «تأییدنشده» per spec §3 — blocker B2) |
+| REQ-P6-02 | کلید API فقط سمت سرور، رمزنگاری‌شده در DB (کلید از env)، ماسک UI، هرگز در لاگ | تست‌های امنیتی | VERIFIED |
+| REQ-P6-03 | پترن‌ها و رویدادها: فعال/غیرفعال، نگاشت متغیر، منبع استخراج، پیش‌فرض، شرط، مخاطب، تأخیر، retry | تست‌های نگاشت متغیر | VERIFIED |
+| REQ-P6-04 | صف DB: dedup (رویداد+موجودیت+مخاطب)، rate limit، backoff، پردازش مرحله‌ای، cron `dist/jobs/run.js` + endpoint داخلی با توکن، ارسال آزمایشی | تست‌های صف با Fake | VERIFIED |
+| REQ-P6-05 | تست‌ها هرگز پیامک واقعی نمی‌فرستند مگر `SMS_LIVE_TESTS=1` | تست gate | VERIFIED |
 
 ## فاز ۷ — داشبورد، پشتیبان، ماژول‌ها، مستندات، ZIP
 

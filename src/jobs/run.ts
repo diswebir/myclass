@@ -8,6 +8,7 @@ import { createDatabase } from '../core/db/database';
 import { logger } from '../core/logger/logger';
 import { SessionService } from '../modules/sessions/session.service';
 import { purgeExpiredRateLimits } from '../core/http/middleware/rateLimit';
+import { SmsService } from '../modules/sms/sms.service';
 
 async function main(): Promise<void> {
   loadDotEnv();
@@ -19,8 +20,10 @@ async function main(): Promise<void> {
     const purgedSessions = await sessions.purgeExpired();
     // پاکسازی rate limitهای منقضی
     const purgedRate = await purgeExpiredRateLimits(db);
-    // پردازش صف پیامک در فاز ۶ پیاده‌سازی می‌شود (SmsQueueService.processPending)
-    logger.info('cron اجرا شد', { purgedSessions, purgedRate });
+    // پردازش صف پیامک (rate limit + backoff — با Fake Provider مگر SMS_LIVE_TESTS=1)
+    const sms = new SmsService(db, config);
+    const smsResult = await sms.processPending();
+    logger.info('cron اجرا شد', { purgedSessions, purgedRate, sms: smsResult });
   } finally {
     await db.destroy();
   }

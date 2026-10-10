@@ -3,6 +3,7 @@ import type { Kysely } from 'kysely';
 import type { Database } from '../../core/db/types';
 import { AppError } from '../../core/errors/AppError';
 import type { AuthUser } from '../../core/http/context';
+import type { Config } from '../../core/config/env';
 import { nowDb } from '../../core/db/time';
 import { normalizePhone } from '../../core/security/normalize';
 import { parseMoneyInput, addMoney, subMoney } from '../../core/security/money';
@@ -11,7 +12,10 @@ import { AuditService } from '../audit/audit.service';
 export class EnrollmentService {
   readonly audit: AuditService;
 
-  constructor(private readonly db: Kysely<Database>) {
+  constructor(
+    private readonly db: Kysely<Database>,
+    private readonly config?: Config,
+  ) {
     this.audit = new AuditService(db);
   }
 
@@ -125,6 +129,11 @@ export class EnrollmentService {
       entityId: id,
       meta: { classId: input.classId, studentId: input.studentId, fee: parsedFee },
     });
+    // هوک پیامک — best-effort
+    if (this.config) {
+      const { notifyEnrollmentCreated } = await import('../sms/hooks');
+      await notifyEnrollmentCreated(this.db, this.config, { enrollmentId: id, classId: input.classId, studentId: input.studentId });
+    }
     return id;
   }
 
