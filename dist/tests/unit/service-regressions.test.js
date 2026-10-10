@@ -19,10 +19,13 @@ const fake_db_1 = require("./fake-db");
 const asDb = (x) => x;
 // ---------- Migrator: the named lock must be taken and released on ONE connection ----------
 function migrationsDir(files) {
-    const dir = node_fs_1.default.mkdtempSync(node_path_1.default.join(node_os_1.default.tmpdir(), 'myclass-mig-'));
+    // Migrator reads <root>/<engine>; the fake database reports the MySQL dialect.
+    const root = node_fs_1.default.mkdtempSync(node_path_1.default.join(node_os_1.default.tmpdir(), 'myclass-mig-'));
+    const dir = node_path_1.default.join(root, 'mysql');
+    node_fs_1.default.mkdirSync(dir);
     for (const [name, body] of Object.entries(files))
         node_fs_1.default.writeFileSync(node_path_1.default.join(dir, name), body);
-    return dir;
+    return root;
 }
 (0, node_test_1.default)('migrator: GET_LOCK, every statement and RELEASE_LOCK run on the same pooled connection', async () => {
     const dir = migrationsDir({ '001_a.sql': 'CREATE TABLE a (id INT);\n-- @@\nCREATE TABLE a2 (id INT);\n', '002_b.sql': 'CREATE TABLE b (id INT);\n' });

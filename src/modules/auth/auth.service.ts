@@ -54,10 +54,11 @@ export class AuthService {
   }
 
   private async countFailures(column: 'identifier_hash' | 'ip_hash', hash: string): Promise<number> {
+    const since = new Date(Date.now() - this.windowMinutes * 60 * 1000);
     const rows = await this.db.query<{ n: number }>(
       `SELECT COUNT(*) AS n FROM login_attempts
-        WHERE ${column} = ? AND success = 0 AND attempted_at >= (UTC_TIMESTAMP(3) - INTERVAL ? MINUTE)`,
-      [hash, this.windowMinutes],
+        WHERE ${column} = ? AND success = 0 AND attempted_at >= ?`,
+      [hash, since],
     );
     return Number(rows[0]?.n ?? 0);
   }
@@ -112,7 +113,7 @@ export class AuthService {
       throw new AppError(401, 'INVALID_CREDENTIALS', GENERIC_LOGIN_ERROR);
     }
 
-    await this.db.execute('UPDATE users SET failed_login_count = 0, last_login_at = UTC_TIMESTAMP(3) WHERE id = ?', [user.id]);
+    await this.db.execute('UPDATE users SET failed_login_count = 0, last_login_at = ? WHERE id = ?', [new Date(), user.id]);
     const token = await this.createSession(user.id, input.ip, input.userAgent);
     await this.audit.record({ action: 'auth.login_success', actorUserId: user.id, entityType: 'user', entityId: user.id, ip: input.ip });
     return token;
@@ -120,7 +121,7 @@ export class AuthService {
 
   async createSession(userId: number, ip: string | null, userAgent: string | null): Promise<string> {
     const token = randomToken(32);
-    // Expiry is computed here (UTC instant) rather than with INTERVAL ? in a prepared statement.
+    // Expiry and all timestamps are computed in JS as UTC instants: the same code runs on MySQL and SQLite.
     const expiresAt = new Date(Date.now() + this.options.sessionTtlHours * 3600 * 1000);
     await this.db.execute(
       `INSERT INTO sessions (user_id, token_hash, ip_address, user_agent, expires_at)
@@ -148,7 +149,7 @@ export class AuthService {
     if (new Date(row.expires_at).getTime() <= Date.now()) return null;
     if (Date.now() - new Date(row.last_seen_at).getTime() > this.idleMinutes * 60 * 1000) return null;
     if (Date.now() - new Date(row.last_seen_at).getTime() > LAST_SEEN_THROTTLE_MS) {
-      await this.db.execute('UPDATE sessions SET last_seen_at = UTC_TIMESTAMP(3) WHERE id = ?', [row.session_id]);
+      await this.db.execute('UPDATE sessions SET last_seen_at = ? WHERE id = ?', [new Date(), row.session_id]);
     }
     const user: AuthUser = {
       id: row.id,
@@ -164,16 +165,16 @@ export class AuthService {
   }
 
   async logout(token: string, actorUserId: number): Promise<void> {
-    await this.db.execute('UPDATE sessions SET revoked_at = UTC_TIMESTAMP(3) WHERE token_hash = ? AND revoked_at IS NULL', [sha256Hex(token)]);
+    await this.db.execute('UPDATE sessions SET revoked_at = ? WHERE token_hash = ? AND revoked_at IS NULL', [new Date(), sha256Hex(token)]);
     await this.audit.record({ action: 'auth.logout', actorUserId, entityType: 'user', entityId: actorUserId });
   }
 
   /** Revokes every active session of a user (optionally keeping one, e.g. the current session). */
   async revokeUserSessions(userId: number, keepSessionId: number | null = null): Promise<number> {
     const res = await this.db.execute(
-      `UPDATE sessions SET revoked_at = UTC_TIMESTAMP(3)
+      `UPDATE sessions SET revoked_at = ?
         WHERE user_id = ? AND revoked_at IS NULL AND (? IS NULL OR id <> ?)`,
-      [userId, keepSessionId, keepSessionId],
+      [new Date(), userId, keepSessionId, keepSessionId],
     );
     return res.affectedRows;
   }
@@ -202,8 +203,8 @@ export class AuthService {
     if (password.length > MAX_PASSWORD_LENGTH) throw errors.badRequest('رمز عبور بیش از حد طولانی است.', { password: 'رمز عبور بیش از حد طولانی است.' });
     const hash = await hashPassword(password);
     await this.db.execute(
-      'UPDATE users SET password_hash = ?, must_change_password = ?, password_changed_at = UTC_TIMESTAMP(3) WHERE id = ?',
-      [hash, mustChange ? 1 : 0, userId],
+      'UPDATE users SET password_hash = ?, must_change_password = ?, password_changed_at = ? WHERE id = ?',
+      [hash, mustChange ? 1 : 0, new Date(), userId],
     );
   }
 }

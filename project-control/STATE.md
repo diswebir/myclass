@@ -1,10 +1,10 @@
 # STATE — current status, evidence and next steps
 
-_Last updated: 2026-10-09. Branch `arena/a2a4ec6f-myclass`._
+_Last updated: 2026-10-10. Branch `arena/a2a4ec6f-myclass`._
 
 ## Summary
 
-Foundation phase is implemented and tested at the unit level. A release ZIP was built and verified to start from a clean extraction. **Database-backed behaviour is NOT verified**: no MySQL/MariaDB server is reachable from the sandbox. Business modules (students, classes, sessions, enrolment, attendance, finance, certificates, SMS, files, backup UI) are **not started**. The honest per-requirement status is in `REQUIREMENTS.md`.
+Foundation phase is implemented and tested at the unit level. A release ZIP was built and verified to start from a clean extraction. The database layer now supports **SQLite (verified here: integration tests, live install and HTTP matrices)** and **MySQL/MariaDB (implemented, NOT verified: no server is reachable from the sandbox)**. The administrator chooses the engine on the installer page. Business modules (students, classes, sessions, enrolment, attendance, finance, certificates, SMS, files, backup UI) are **not started**. The honest per-requirement status is in `REQUIREMENTS.md`.
 
 ## Verification evidence (this session)
 
@@ -12,8 +12,8 @@ Foundation phase is implemented and tested at the unit level. A release ZIP was 
 |---|---|---|
 | TypeScript strict type-check | `npm run check` | pass |
 | Build | `npm run build` | pass |
-| Unit tests | `npm test` (build + `node --test dist/tests/unit/*.test.js`) | **53 / 53 pass, 0 fail** (see EVIDENCE.md, review round 2) |
-| DB integration tests | `npm run test:integration` | **skipped** (no `TEST_DB_*`; no DB available). Test is written: migrations, installer, RBAC escalation, last-super-admin lockout, role change and session revocation, settings, audit, dashboard counts. **Not executed.** |
+| Unit tests | `npm test` (build + `node --test dist/tests/unit/*.test.js`) | **54 / 54 pass, 0 fail** (EVIDENCE.md §9) |
+| DB integration tests (SQLite, no server) | `npm run test:integration` | **23 / 23 pass**: shared flow (install, RBAC, lockout, sessions, settings, audit, dashboard), SQLite behaviour (dates, LIKE escaping, constraints, rollback, durability), installer refusal for an unreachable MySQL. MySQL run requires `TEST_DB_*`: **not executed**. |
 | SQL syntax (static) | `node-sql-parser` MySQL grammar on `migrations/001_foundation.sql` | 8 / 8 statements parse (static only; not run on a server) |
 | Live preview (no DB) | `node app.js` on port 3123 | `/install` 200 with RTL Persian checks; DB-failure message shows no host; `/login` and `/admin` → 302 `/install`; `/health` 503 `{"status":"error"}`; `/assets/app.css` 200 `text/css`; `/package.json` not served (302 to installer) |
 | Release ZIP | `scripts/make-release.sh` | `release/myclass-0.1.0.zip` 3.4 MB; extracted to a clean folder and started; `/install` 200; `/assets/app.css` 200 |
@@ -27,12 +27,14 @@ Foundation phase is implemented and tested at the unit level. A release ZIP was 
 3. Unit tests for Jalali, Persian digits and phones, money, security helpers, settings/config/migrations, and HTTP gate. ✔ 38/38
 4. Admin actions: users, roles, settings, audit, health; migration action gated by `system.migrate` and audited. ✔ (not executed against DB)
 5. Documentation (Persian): install on cPanel, backup/restore/update, roles, architecture; README. ✔
-6. Release packaging: ZIP with runtime deps, `dist/`, migrations, schema.sql, docs, `.env.example`. ✔
+6. Release packaging: ZIP with runtime deps, `dist/`, per-engine migrations, `schema-mysql.sql` and `schema-sqlite.sql`, docs, `.env.example`. ✔
+8. SQLite as an installable database option (round 3, EVIDENCE.md §8–10). ✔ on SQLite; MySQL unverified.
 7. Remaining phases: see below.
 
 ## Known gaps and risks (must be addressed before any production claim)
 
-- **DB never executed.** The installer, migrations, RBAC writes, sessions, audit inserts and dashboard counts are all unexecuted SQL. Run `npm run test:integration` on a disposable MySQL/MariaDB as the first next step. Review round 2 (EVIDENCE.md) changed several SQL paths, so this matters more now.
+- **MySQL path unverified.** The SQL that the MySQL driver runs was converted by hand for the SQLite support and has not run against a server. Run `TEST_DB_* npm run test:integration` and the live matrix with `DB_DRIVER=mysql` on a disposable database as the first next step.
+- **SQLite limits:** one Node process per database file; the whole database lives in memory and is rewritten on every write (about 1.2 ms per write at 0.45 MB). Engine cannot be switched after install.
 - Login throttling is keyed on username and IP, so it can be used to lock a known username for 15 minutes (deliberate trade-off; revisit with CAPTCHA or admin unlock).
 - Installer token-failure counter is in memory (resets on restart).
 - `login_attempts` and `audit_logs` have no retention policy.

@@ -27,17 +27,18 @@ class RbacService {
      *   admin customisations survive upgrades. super_admin always receives every permission.
      */
     async syncCatalog() {
+        const d = this.db.dialect;
         for (const p of permissions_1.PERMISSIONS) {
             await this.db.execute(`INSERT INTO permissions (code, module, description_fa) VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE module = VALUES(module), description_fa = VALUES(description_fa)`, [p.code, p.module, p.description]);
+         ${d.upsert(['code'], [d.incoming('module'), d.incoming('description_fa')])}`, [p.code, p.module, p.description]);
         }
         for (const role of permissions_1.SYSTEM_ROLES) {
             await this.db.execute(`INSERT INTO roles (slug, name_fa, description, is_system, is_active) VALUES (?, ?, ?, 1, 1)
-         ON DUPLICATE KEY UPDATE is_system = 1`, [role.slug, role.nameFa, role.description]);
+         ${d.upsert(['slug'], ['is_system = 1'])}`, [role.slug, role.nameFa, role.description]);
             const [roleRow] = await this.db.query('SELECT id FROM roles WHERE slug = ?', [role.slug]);
             const perms = role.slug === permissions_1.SUPER_ADMIN_ROLE ? permissions_1.PERMISSIONS.map((p) => p.code) : role.permissions;
             for (const code of perms) {
-                await this.db.execute(`INSERT IGNORE INTO role_permissions (role_id, permission_id)
+                await this.db.execute(`${d.insertIgnore} INTO role_permissions (role_id, permission_id)
            SELECT ?, id FROM permissions WHERE code = ?`, [roleRow.id, code]);
             }
         }

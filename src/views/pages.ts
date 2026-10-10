@@ -28,6 +28,13 @@ export function loginBody(o: { csrf: string; error?: string; username?: string; 
 }
 
 export function installBody(o: { csrf: string; checks: CheckResult[]; errors: Record<string, string>; values: Record<string, string>; formError?: string; canInstall: boolean }): Raw {
+  const selectedDriver = o.values.driver === 'mysql' ? 'mysql' : 'sqlite';
+  const driverOption = (value: 'sqlite' | 'mysql', label: string, hint: string) => html`<label class="radio-option"><input type="radio" name="driver" value="${value}"${selectedDriver === value ? raw(' checked') : raw('')}> <span><strong>${label}</strong><span class="muted"> — ${hint}</span></span></label>`;
+  const driverField = html`<fieldset class="field-full driver-choice"><legend>نوع پایگاه داده</legend>
+        ${driverOption('sqlite', 'SQLite (پیشنهادی برای میزبانی ساده)', 'بدون نیاز به سرور پایگاه داده؛ فایل در پوشه storage ذخیره می‌شود.')}
+        ${driverOption('mysql', 'MySQL / MariaDB', 'نیازمند پایگاه داده MySQL و تنظیم DB_NAME، DB_USER، DB_PASSWORD در cPanel.')}
+        ${o.errors.driver ? html`<small class="error">${o.errors.driver}</small>` : raw('')}
+      </fieldset>`;
   const rows = o.checks.map(
     (c) => html`<li class="check-row check-${c.level}"><span class="check-dot" aria-hidden="true"></span><div><strong>${c.labelFa}</strong><div class="muted">${c.messageFa}</div></div></li>`,
   );
@@ -46,6 +53,7 @@ export function installBody(o: { csrf: string; checks: CheckResult[]; errors: Re
       ${o.formError ? alertBox('error', o.formError) : raw('')}
       <form method="post" action="/install" class="form-grid" novalidate>
         <input type="hidden" name="_csrf" value="${o.csrf}">
+        ${driverField}
         ${field({ name: 'token', label: 'توکن نصب', type: 'password', required: true, dir: 'ltr', error: o.errors.token, full: true, autocomplete: 'off' })}
         ${field({ name: 'instituteName', label: 'نام رسمی مؤسسه', value: o.values.instituteName ?? '', required: true, error: o.errors.instituteName })}
         ${field({ name: 'fullName', label: 'نام و نام خانوادگی مدیر', value: o.values.fullName ?? '', required: true, error: o.errors.fullName })}

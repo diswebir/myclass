@@ -79,7 +79,8 @@ export class UsersService {
       // Persian/Arabic digits are folded so searching ۰۹۱۲ finds 0912 (phones are stored ASCII).
       const term = toEnglishDigits(normalizeText(filter.q)).replace(/[\s-]/g, '');
       const like = `%${term.replace(/[%_\\]/g, '\\$&')}%`;
-      where.push('(u.username LIKE ? OR u.full_name LIKE ? OR u.phone LIKE ? OR u.email LIKE ?)');
+      const esc = this.db.dialect.likeEscape;
+      where.push(`(u.username LIKE ? ${esc} OR u.full_name LIKE ? ${esc} OR u.phone LIKE ? ${esc} OR u.email LIKE ? ${esc})`);
       params.push(like, like, like, like);
     }
     if (filter.status === 'active' || filter.status === 'disabled') {
@@ -150,7 +151,7 @@ export class UsersService {
   private async countActiveSuperAdminsLocked(q: Queryable): Promise<number> {
     const rows = await q.query<{ id: number }>(
       `SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id
-        WHERE r.slug = ? AND u.status = 'active' FOR UPDATE`,
+        WHERE r.slug = ? AND u.status = 'active'${this.db.dialect.forUpdate}`,
       [SUPER_ADMIN_ROLE],
     );
     return rows.length;
@@ -186,10 +187,11 @@ export class UsersService {
   private mapDuplicate(err: unknown): Error {
     const code = (err as { code?: string }).code;
     if (code === 'ER_DUP_ENTRY') {
+      // MySQL names the index (uq_users_username); SQLite names the column (users.username). Accept both.
       const msg = String((err as { message?: string }).message ?? '');
-      if (msg.includes('uq_users_username')) return errors.conflict('این نام کاربری قبلاً ثبت شده است.');
-      if (msg.includes('uq_users_phone')) return errors.conflict('این شماره همراه قبلاً ثبت شده است.');
-      if (msg.includes('uq_users_email')) return errors.conflict('این ایمیل قبلاً ثبت شده است.');
+      if (/uq_users_username|users\.username/.test(msg)) return errors.conflict('این نام کاربری قبلاً ثبت شده است.');
+      if (/uq_users_phone|users\.phone/.test(msg)) return errors.conflict('این شماره همراه قبلاً ثبت شده است.');
+      if (/uq_users_email|users\.email/.test(msg)) return errors.conflict('این ایمیل قبلاً ثبت شده است.');
       return errors.conflict('اطلاعات تکراری است.');
     }
     return err instanceof Error ? err : new Error('unknown error');

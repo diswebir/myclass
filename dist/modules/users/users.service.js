@@ -52,7 +52,8 @@ class UsersService {
             // Persian/Arabic digits are folded so searching ۰۹۱۲ finds 0912 (phones are stored ASCII).
             const term = (0, persian_1.toEnglishDigits)((0, persian_1.normalizeText)(filter.q)).replace(/[\s-]/g, '');
             const like = `%${term.replace(/[%_\\]/g, '\\$&')}%`;
-            where.push('(u.username LIKE ? OR u.full_name LIKE ? OR u.phone LIKE ? OR u.email LIKE ?)');
+            const esc = this.db.dialect.likeEscape;
+            where.push(`(u.username LIKE ? ${esc} OR u.full_name LIKE ? ${esc} OR u.phone LIKE ? ${esc} OR u.email LIKE ? ${esc})`);
             params.push(like, like, like, like);
         }
         if (filter.status === 'active' || filter.status === 'disabled') {
@@ -112,7 +113,7 @@ class UsersService {
      */
     async countActiveSuperAdminsLocked(q) {
         const rows = await q.query(`SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id
-        WHERE r.slug = ? AND u.status = 'active' FOR UPDATE`, [permissions_1.SUPER_ADMIN_ROLE]);
+        WHERE r.slug = ? AND u.status = 'active'${this.db.dialect.forUpdate}`, [permissions_1.SUPER_ADMIN_ROLE]);
         return rows.length;
     }
     async create(actor, input) {
@@ -144,12 +145,13 @@ class UsersService {
     mapDuplicate(err) {
         const code = err.code;
         if (code === 'ER_DUP_ENTRY') {
+            // MySQL names the index (uq_users_username); SQLite names the column (users.username). Accept both.
             const msg = String(err.message ?? '');
-            if (msg.includes('uq_users_username'))
+            if (/uq_users_username|users\.username/.test(msg))
                 return errors_1.errors.conflict('این نام کاربری قبلاً ثبت شده است.');
-            if (msg.includes('uq_users_phone'))
+            if (/uq_users_phone|users\.phone/.test(msg))
                 return errors_1.errors.conflict('این شماره همراه قبلاً ثبت شده است.');
-            if (msg.includes('uq_users_email'))
+            if (/uq_users_email|users\.email/.test(msg))
                 return errors_1.errors.conflict('این ایمیل قبلاً ثبت شده است.');
             return errors_1.errors.conflict('اطلاعات تکراری است.');
         }

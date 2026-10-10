@@ -15,7 +15,7 @@ export function installRoutes(s: AppServices): Router {
     const checks = await s.install.checks();
     await renderPage(s, req, res, {
       title: 'نصب',
-      body: installBody({ csrf: req.csrfToken!, checks, errors: {}, values: {}, canInstall: true }),
+      body: installBody({ csrf: req.csrfToken!, checks, errors: {}, values: { driver: s.install.defaultDriver() }, canInstall: true }),
     });
   });
 
@@ -24,10 +24,11 @@ export function installRoutes(s: AppServices): Router {
       return renderPage(s, req, res, { title: 'صفحه پیدا نشد', status: 404, body: errorBody(404, 'صفحه پیدا نشد.') });
     }
     const b = bodyOf(req);
-    const values = { instituteName: b.instituteName ?? '', fullName: b.fullName ?? '', username: b.username ?? '', email: b.email ?? '' };
+    const values = { driver: b.driver ?? '', instituteName: b.instituteName ?? '', fullName: b.fullName ?? '', username: b.username ?? '', email: b.email ?? '' };
     try {
       await s.install.install(
         {
+          driver: b.driver === 'mysql' || b.driver === 'sqlite' ? b.driver : undefined,
           token: b.token ?? '',
           fullName: b.fullName ?? '',
           username: b.username ?? '',

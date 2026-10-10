@@ -1,108 +1,83 @@
-import mysql from 'mysql2/promise';
-import type { AppConfig } from '../config/env';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import type { Dialect, Driver, DriverName, ExecResult, Queryable, SqlValue } from './types';
 
-/** mysql2 marks connection-level failures with fatal: true; ordinary SQL errors keep the connection usable. */
-function isFatal(err: unknown): boolean {
-  return Boolean((err as { fatal?: boolean } | null)?.fatal);
-}
+export type { Dialect, Driver, DriverName, ExecResult, Queryable, SqlValue } from './types';
 
-export type SqlValue = string | number | bigint | boolean | Date | null;
-
-export interface Queryable {
-  query<T = Record<string, unknown>>(sql: string, params?: SqlValue[]): Promise<T[]>;
-  execute(sql: string, params?: SqlValue[]): Promise<mysql.ResultSetHeader>;
+/** Raised when a query runs before an engine has been chosen and connected (fresh install). */
+export class DbNotConfiguredError extends Error {
+  readonly code = 'DB_NOT_CONFIGURED';
+  constructor() {
+    super('پایگاه داده هنوز انتخاب یا متصل نشده است.');
+    this.name = 'DbNotConfiguredError';
+  }
 }
 
 /**
- * Thin data-access wrapper over mysql2 (pure JavaScript driver, no native build).
- * All application SQL MUST use `?` placeholders; string concatenation of user input is forbidden.
+ * Engine-independent facade used by every service. It forwards to the attached driver and keeps
+ * nested calls inside a transaction or withConnection on the SAME connection. This matters for SQLite:
+ * its single queued connection would otherwise wait on itself. All application SQL MUST use `?` placeholders.
  */
 export class Database implements Queryable {
-  private readonly pool: mysql.Pool;
+  private driver: Driver | null = null;
+  private readonly scope = new AsyncLocalStorage<Queryable>();
 
-  constructor(cfg: AppConfig['db']) {
-    this.pool = mysql.createPool({
-      host: cfg.host,
-      port: cfg.port,
-      database: cfg.name,
-      user: cfg.user,
-      password: cfg.password,
-      waitForConnections: true,
-      connectionLimit: cfg.connectionLimit,
-      charset: 'utf8mb4',
-      timezone: 'Z', // DATETIME values are stored and read as UTC
-      dateStrings: false,
-      namedPlaceholders: false,
-    });
+  /** Attaches a connected driver. The previous driver, if any, is closed first. */
+  async attach(driver: Driver): Promise<void> {
+    const previous = this.driver;
+    this.driver = driver;
+    if (previous && previous !== driver) await previous.close().catch(() => undefined);
+  }
+
+  get isConnected(): boolean {
+    return this.driver !== null;
+  }
+
+  get driverName(): DriverName | null {
+    return this.driver?.name ?? null;
+  }
+
+  get dialect(): Dialect {
+    return this.requireDriver().dialect;
+  }
+
+  private requireDriver(): Driver {
+    if (!this.driver) throw new DbNotConfiguredError();
+    return this.driver;
   }
 
   async query<T = Record<string, unknown>>(sql: string, params: SqlValue[] = []): Promise<T[]> {
-    const [rows] = await this.pool.query(sql, params);
-    return rows as T[];
+    const scoped = this.scope.getStore();
+    if (scoped) return scoped.query<T>(sql, params);
+    return this.requireDriver().query<T>(sql, params);
   }
 
-  async execute(sql: string, params: SqlValue[] = []): Promise<mysql.ResultSetHeader> {
-    const [res] = await this.pool.execute(sql, params);
-    return res as mysql.ResultSetHeader;
+  async execute(sql: string, params: SqlValue[] = []): Promise<ExecResult> {
+    const scoped = this.scope.getStore();
+    if (scoped) return scoped.execute(sql, params);
+    return this.requireDriver().execute(sql, params);
   }
 
-  /**
-   * Runs `fn` on ONE pooled connection. Required for session-scoped state such as GET_LOCK/RELEASE_LOCK.
-   * If any statement fails, the connection is destroyed instead of returned to the pool, so session
-   * state (like a named lock) cannot leak into later requests.
-   */
+  /** Runs `fn` on ONE connection. Session-scoped state such as a named lock stays on that connection. */
   async withConnection<T>(fn: (q: Queryable) => Promise<T>): Promise<T> {
-    const conn = await this.pool.getConnection();
-    let broken = false;
-    const q: Queryable = {
-      query: async <R>(sql: string, params: SqlValue[] = []) => {
-        try {
-          const [rows] = await conn.query(sql, params);
-          return rows as R[];
-        } catch (err) {
-          if (isFatal(err)) broken = true;
-          throw err;
-        }
-      },
-      execute: async (sql: string, params: SqlValue[] = []) => {
-        try {
-          const [res] = await conn.execute(sql, params);
-          return res as mysql.ResultSetHeader;
-        } catch (err) {
-          if (isFatal(err)) broken = true;
-          throw err;
-        }
-      },
-    };
-    try {
-      return await fn(q);
-    } finally {
-      if (broken) conn.destroy();
-      else conn.release();
-    }
+    const scoped = this.scope.getStore();
+    if (scoped) return fn(scoped);
+    return this.requireDriver().withConnection(async (q) => this.scope.run(q, () => fn(q)));
   }
 
-  /** Runs `fn` inside a transaction; rolls back on any thrown error. */
+  /** Runs `fn` inside a transaction; rolls back on any thrown error. Nested calls join the outer transaction. */
   async transaction<T>(fn: (tx: Queryable) => Promise<T>): Promise<T> {
-    return this.withConnection(async (q) => {
-      // The transaction runs on the same pinned connection.
-      await q.query('START TRANSACTION');
-      try {
-        const result = await fn(q);
-        await q.query('COMMIT');
-        return result;
-      } catch (err) {
-        await q.query('ROLLBACK').catch(() => undefined);
-        throw err;
-      }
-    });
+    const scoped = this.scope.getStore();
+    if (scoped) return fn(scoped);
+    return this.requireDriver().transaction(async (tx) => this.scope.run(tx, () => fn(tx)));
   }
 
   async ping(): Promise<void> {
-    await this.pool.query('SELECT 1');
+    await this.requireDriver().ping();
   }
 
   async close(): Promise<void> {
-    await this.pool.end();
+    const driver = this.driver;
+    this.driver = null;
+    if (driver) await driver.close();
   }
 }

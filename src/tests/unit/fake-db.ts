@@ -10,6 +10,8 @@ export interface RecordedCall {
   params: unknown[];
 }
 
+import { mysqlDialect } from '../../db/dialects';
+
 export type Responder = (sql: string, params: unknown[]) => unknown[] | { affectedRows?: number; insertId?: number } | undefined;
 
 export function fakeDb(respond: Responder = () => []) {
@@ -33,6 +35,8 @@ export function fakeDb(respond: Responder = () => []) {
     calls,
     events,
     ...makeQueryable(0),
+    dialect: mysqlDialect,
+    driverName: 'mysql' as const,
     ping: async () => undefined,
     withConnection: async <T>(fn: (q: ReturnType<typeof makeQueryable>) => Promise<T>): Promise<T> => {
       const conn = nextConn++;

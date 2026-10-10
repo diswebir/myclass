@@ -76,8 +76,9 @@ class SettingsService {
         if (!check.ok)
             throw errors_1.errors.badRequest(check.message, { [key]: check.message });
         const before = (await this.loadAll()).get(key);
+        const d = this.db.dialect;
         await this.db.execute(`INSERT INTO settings (setting_key, value_json, updated_by) VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE value_json = VALUES(value_json), updated_by = VALUES(updated_by)`, [key, JSON.stringify(check.value), actor.id]);
+       ${d.upsert(['setting_key'], [d.incoming('value_json'), d.incoming('updated_by')])}`, [key, JSON.stringify(check.value), actor.id]);
         this.cache = null;
         await this.audit.record({
             action: 'settings.updated',

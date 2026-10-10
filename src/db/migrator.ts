@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Database, Queryable } from './database';
+import type { Database } from './database';
+import type { Queryable } from './types';
 
 export interface MigrationFile {
   version: string; // e.g. "001"
@@ -49,21 +50,18 @@ export interface MigrationStatus {
 const LOCK_NAME = 'myclass_migrations';
 
 export class Migrator {
+  /** @param root the migrations directory; the engine's own subfolder (mysql/ or sqlite/) is used. */
   constructor(
     private readonly db: Database,
-    private readonly dir: string,
+    private readonly root: string,
   ) {}
 
+  private get dir(): string {
+    return path.join(this.root, this.db.dialect.name);
+  }
+
   private async ensureTable(): Promise<void> {
-    await this.db.execute(
-      `CREATE TABLE IF NOT EXISTS schema_migrations (
-        version CHAR(3) NOT NULL PRIMARY KEY,
-        name VARCHAR(120) NOT NULL,
-        checksum CHAR(64) NOT NULL,
-        applied_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-        execution_ms INT UNSIGNED NOT NULL DEFAULT 0
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
-    );
+    await this.db.execute(this.db.dialect.migrationsTableDdl);
   }
 
   async status(): Promise<MigrationStatus> {
@@ -94,14 +92,19 @@ export class Migrator {
 
   /**
    * Applies all pending migrations. Refuses to run if an applied migration file was edited.
-   * The named lock, the status read and every statement run on ONE pooled connection: GET_LOCK is
+   * The named lock (MySQL), the status read and every statement run on ONE connection: GET_LOCK is
    * session-scoped, so releasing it on a different connection would leave the lock held.
    */
   async migrate(): Promise<{ applied: string[] }> {
     await this.ensureTable();
+    // MySQL needs an explicit named lock across processes. SQLite is one file per process and its driver
+    // already serialises statements, so no lock is taken there.
+    const useLock = this.db.dialect.name === 'mysql';
     return this.db.withConnection(async (q) => {
-      const lock = await q.query<{ got: number | null }>('SELECT GET_LOCK(?, 10) AS got', [LOCK_NAME]);
-      if (!lock[0] || lock[0].got !== 1) throw new Error('اجرای migration در حال انجام است. کمی بعد دوباره تلاش کنید.');
+      if (useLock) {
+        const lock = await q.query<{ got: number | null }>('SELECT GET_LOCK(?, 10) AS got', [LOCK_NAME]);
+        if (!lock[0] || lock[0].got !== 1) throw new Error('اجرای migration در حال انجام است. کمی بعد دوباره تلاش کنید.');
+      }
       try {
         const status = await this.statusOn(q);
         if (status.modified.length > 0) {
@@ -116,7 +119,7 @@ export class Migrator {
         }
         return { applied };
       } finally {
-        await q.query('SELECT RELEASE_LOCK(?)', [LOCK_NAME]);
+        if (useLock) await q.query('SELECT RELEASE_LOCK(?)', [LOCK_NAME]);
       }
     });
   }

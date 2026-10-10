@@ -18,9 +18,12 @@ const asDb = (x: unknown) => x as unknown as Database;
 // ---------- Migrator: the named lock must be taken and released on ONE connection ----------
 
 function migrationsDir(files: Record<string, string>): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'myclass-mig-'));
+  // Migrator reads <root>/<engine>; the fake database reports the MySQL dialect.
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'myclass-mig-'));
+  const dir = path.join(root, 'mysql');
+  fs.mkdirSync(dir);
   for (const [name, body] of Object.entries(files)) fs.writeFileSync(path.join(dir, name), body);
-  return dir;
+  return root;
 }
 
 test('migrator: GET_LOCK, every statement and RELEASE_LOCK run on the same pooled connection', async () => {

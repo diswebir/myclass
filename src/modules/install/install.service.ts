@@ -2,8 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { AppConfig } from '../../config/env';
 import type { Database } from '../../db/database';
+import { resolveDriverChoice, type DriverChoice } from '../../db/connect';
 import { Migrator } from '../../db/migrator';
-import { errors } from '../../lib/errors';
+import { AppError, errors } from '../../lib/errors';
 import { safeEqual } from '../../lib/crypto';
 import { normalizeText, normalizeUsername } from '../../lib/persian';
 import { MAX_PASSWORD_LENGTH } from '../auth/auth.service';
@@ -21,6 +22,8 @@ export interface CheckResult {
 }
 
 export interface InstallInput {
+  /** Database engine chosen by the administrator. Defaults to the engine already attached. */
+  driver?: DriverChoice;
   token: string;
   fullName: string;
   username: string;
@@ -34,6 +37,7 @@ const MIN_TOKEN_LENGTH = 24;
 const USERNAME_RE = /^[a-z0-9][a-z0-9_.-]{2,63}$/;
 /** Settings key written in the same transaction as the first admin; proves the install completed. */
 export const INSTALL_MARKER = 'system.installed_at';
+export const DRIVER_CHOICES: readonly DriverChoice[] = ['sqlite', 'mysql'];
 
 /**
  * Web installer. It is available only while storage/install.lock is absent.
@@ -51,11 +55,22 @@ export class InstallService {
     private readonly users: UsersService,
     private readonly audit: AuditService,
     private readonly migrationsDir: string,
+    /** Attaches the chosen engine and persists the choice (storage/db-config.json). */
+    private readonly connect: (choice: DriverChoice, persist: boolean) => Promise<void>,
     private readonly onInstalled: () => void,
   ) {}
 
   isInstalled(): boolean {
     return fs.existsSync(this.cfg.installLockFile);
+  }
+
+  /** Engine preselected on the installer form: the saved or env choice, MySQL if DB_NAME/DB_USER exist, else SQLite. */
+  defaultDriver(): DriverChoice {
+    return resolveDriverChoice(this.cfg) ?? (this.cfg.db.name && this.cfg.db.user ? 'mysql' : 'sqlite');
+  }
+
+  mysqlEnvConfigured(): boolean {
+    return Boolean(this.cfg.db.name && this.cfg.db.user);
   }
 
   async checks(): Promise<CheckResult[]> {
@@ -69,24 +84,37 @@ export class InstallService {
       messageFa: `نسخه ${process.versions.node} (حداقل مورد نیاز: 18.18)`,
     });
     results.push(this.storageCheck());
-    const envOk = Boolean(this.cfg.db.name && this.cfg.db.user);
+    // Database checks are warnings, not errors: SQLite needs no setup, and MySQL is only needed if chosen below.
+    const envOk = this.mysqlEnvConfigured();
     results.push({
-      id: 'db_env',
-      labelFa: 'متغیرهای اتصال پایگاه داده',
+      id: 'db_mysql_env',
+      labelFa: 'تنظیمات MySQL (DB_NAME، DB_USER)',
       ok: envOk,
-      level: envOk ? 'ok' : 'error',
-      messageFa: envOk ? 'تنظیم شده است.' : 'DB_NAME و DB_USER باید در تنظیمات محیطی برنامه تعریف شوند.',
+      level: envOk ? 'ok' : 'warning',
+      messageFa: envOk
+        ? 'برای استفاده از MySQL تعریف شده است.'
+        : 'فقط در صورت انتخاب MySQL لازم است. برای SQLite نیازی به این تنظیمات نیست.',
     });
-    try {
-      await this.db.ping();
-      results.push({ id: 'db_connect', labelFa: 'اتصال به پایگاه داده', ok: true, level: 'ok', messageFa: 'اتصال برقرار است.' });
-    } catch {
+    if (this.db.isConnected) {
+      try {
+        await this.db.ping();
+        results.push({ id: 'db_connect', labelFa: 'اتصال به پایگاه داده', ok: true, level: 'ok', messageFa: `اتصال برقرار است (${this.db.driverName}).` });
+      } catch {
+        results.push({
+          id: 'db_connect',
+          labelFa: 'اتصال به پایگاه داده',
+          ok: false,
+          level: 'warning',
+          messageFa: 'اتصال به پایگاه داده برقرار نشد. تنظیمات اتصال را بررسی کنید.',
+        });
+      }
+    } else {
       results.push({
         id: 'db_connect',
         labelFa: 'اتصال به پایگاه داده',
         ok: false,
-        level: 'error',
-        messageFa: 'اتصال برقرار نشد. مقادیر DB_HOST، DB_NAME، DB_USER و DB_PASSWORD را بررسی کنید.',
+        level: 'warning',
+        messageFa: 'هنوز پایگاه داده‌ای انتخاب نشده است. در فرم نصب یکی از گزینه‌ها را انتخاب کنید.',
       });
     }
     const tokenOk = this.cfg.installToken.length >= MIN_TOKEN_LENGTH;
@@ -148,6 +176,9 @@ export class InstallService {
 
   private async runInstall(input: InstallInput, ip: string | null): Promise<void> {
     const fe: Record<string, string> = {};
+    const driver = input.driver ?? this.db.driverName ?? undefined;
+    if (!driver || !DRIVER_CHOICES.includes(driver)) fe.driver = 'یکی از گزینه‌های SQLite یا MySQL را انتخاب کنید.';
+    else if (driver === 'mysql' && !this.mysqlEnvConfigured()) fe.driver = 'برای MySQL باید DB_NAME و DB_USER در تنظیمات محیطی تعریف شوند.';
     if (normalizeText(input.fullName).length < 2) fe.fullName = 'نام مدیر را وارد کنید.';
     if (!USERNAME_RE.test(normalizeUsername(input.username))) fe.username = 'نام کاربری نامعتبر است (حروف انگلیسی، عدد، نقطه، خط تیره، زیرخط).';
     if (input.password.length < 10) fe.password = 'رمز عبور باید حداقل ۱۰ نویسه باشد.';
@@ -155,6 +186,20 @@ export class InstallService {
     if (input.password !== input.passwordConfirm) fe.passwordConfirm = 'تکرار رمز عبور با رمز عبور یکسان نیست.';
     if (normalizeText(input.instituteName).length < 2) fe.instituteName = 'نام رسمی مؤسسه را وارد کنید.';
     if (Object.keys(fe).length) throw errors.badRequest('لطفاً خطاهای فرم را برطرف کنید.', fe);
+
+    // Attach the chosen engine and persist the choice. A retry after a failed attempt may switch engines.
+    try {
+      await this.connect(driver as DriverChoice, true);
+    } catch {
+      // Details (host, path) stay in the server log; the response only names the engine and what to check.
+      const label = driver === 'mysql' ? 'MySQL' : 'SQLite';
+      throw new AppError(
+        503,
+        'DB_UNAVAILABLE',
+        `اتصال به ${label} برقرار نشد. ${driver === 'mysql' ? 'مقادیر DB_HOST، DB_NAME، DB_USER و DB_PASSWORD را بررسی کنید.' : 'مسیر و مجوز پوشه storage را بررسی کنید.'}`,
+        { driver: `اتصال به ${label} برقرار نشد.` },
+      );
+    }
 
     await new Migrator(this.db, this.migrationsDir).migrate();
     await this.rbac.syncCatalog();
@@ -176,7 +221,7 @@ export class InstallService {
         });
         await tx.execute(
           `INSERT INTO settings (setting_key, value_json, updated_by) VALUES ('institute.name_official', ?, ?)
-           ON DUPLICATE KEY UPDATE value_json = VALUES(value_json)`,
+           ${this.db.dialect.upsert(['setting_key'], [this.db.dialect.incoming('value_json')])}`,
           [JSON.stringify(normalizeText(input.instituteName)), id],
         );
         await tx.execute(

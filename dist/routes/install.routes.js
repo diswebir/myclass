@@ -15,7 +15,7 @@ function installRoutes(s) {
         const checks = await s.install.checks();
         await (0, render_1.renderPage)(s, req, res, {
             title: 'نصب',
-            body: (0, pages_1.installBody)({ csrf: req.csrfToken, checks, errors: {}, values: {}, canInstall: true }),
+            body: (0, pages_1.installBody)({ csrf: req.csrfToken, checks, errors: {}, values: { driver: s.install.defaultDriver() }, canInstall: true }),
         });
     });
     r.post('/install', async (req, res) => {
@@ -23,9 +23,10 @@ function installRoutes(s) {
             return (0, render_1.renderPage)(s, req, res, { title: 'صفحه پیدا نشد', status: 404, body: (0, pages_2.errorBody)(404, 'صفحه پیدا نشد.') });
         }
         const b = (0, render_1.bodyOf)(req);
-        const values = { instituteName: b.instituteName ?? '', fullName: b.fullName ?? '', username: b.username ?? '', email: b.email ?? '' };
+        const values = { driver: b.driver ?? '', instituteName: b.instituteName ?? '', fullName: b.fullName ?? '', username: b.username ?? '', email: b.email ?? '' };
         try {
             await s.install.install({
+                driver: b.driver === 'mysql' || b.driver === 'sqlite' ? b.driver : undefined,
                 token: b.token ?? '',
                 fullName: b.fullName ?? '',
                 username: b.username ?? '',

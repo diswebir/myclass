@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fakeDb = fakeDb;
+const dialects_1 = require("../../db/dialects");
 function fakeDb(respond = () => []) {
     const calls = [];
     const events = [];
@@ -20,6 +21,8 @@ function fakeDb(respond = () => []) {
         calls,
         events,
         ...makeQueryable(0),
+        dialect: dialects_1.mysqlDialect,
+        driverName: 'mysql',
         ping: async () => undefined,
         withConnection: async (fn) => {
             const conn = nextConn++;

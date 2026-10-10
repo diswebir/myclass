@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Live HTTP checks against a running myclass instance.
-# Usage: scripts/e2e-http.sh <base_url> <mode: pre-install|post-install>
+# Usage: [E2E_DB_DOWN=1] scripts/e2e-http.sh <base_url> <mode: pre-install|post-install>
 # Prints one line per check: PASS/FAIL, method, path, status, expectation. Exits non-zero on any FAIL.
 set -u
 BASE="$1"; MODE="$2"
@@ -52,13 +52,19 @@ if [ "$MODE" = "post-install" ]; then
   check "CSP forbids unsafe-inline" "$(echo "$H" | grep -ci 'unsafe-inline')" 0
   check "X-Powered-By hidden" "$(echo "$H" | grep -ci 'x-powered-by')" 0
   check "X-Content-Type-Options nosniff" "$(echo "$H" | grep -ci 'x-content-type-options: nosniff')" 1
-  LEAK="$(curl -s -m 10 -b "$JAR" -X POST -d "_csrf=$CSRF&username=a&password=b" "$BASE/login" | grep -ciE 'at [A-Za-z.]+ \(|ECONNREFUSED|ER_ACCESS|stack|mysql')"
-  check "failed login (DB down) leaks no driver or stack text" "$LEAK" 0
+  # Leak scan: stack frames and driver error codes must never reach the browser (CSS class names are ignored).
+  LEAK="$(curl -s -m 10 -b "$JAR" -X POST -d "_csrf=$CSRF&username=a&password=b" "$BASE/login" | grep -ciE 'at [A-Za-z.]+ \(|ECONNREFUSED|ER_ACCESS|SQLITE_|stack trace|sqlite3?|mysql')"
+  check "failed login leaks no driver or stack text" "$LEAK" 0
   check "login page has no inline style element (CSP)" "$(curl -s -m 10 "$BASE/login" | grep -c '<style')" 0
   check "brand colour carried as data-brand" "$(curl -s -m 10 "$BASE/login" | grep -c 'data-brand="#')" "[1-9][0-9]*"
   LONGPW="$(printf 'a%.0s' $(seq 1 300))"
   check "over-long password rejected (401, not truncated)" "$(code -b "$JAR" -X POST --data-urlencode "_csrf=$CSRF" --data-urlencode "username=admin" --data-urlencode "password=$LONGPW" "$BASE/login")" 401
-  check "failed login (DB down) -> 503 Persian page" "$(code -b "$JAR" -X POST -d "_csrf=$CSRF&username=a&password=b" "$BASE/login")" 503
+  # Database reachable: a wrong password is a normal 401. Set E2E_DB_DOWN=1 when the database is deliberately stopped.
+  if [ "${E2E_DB_DOWN:-0}" = "1" ]; then
+    check "failed login (DB down) -> 503 Persian page" "$(code -b "$JAR" -X POST -d "_csrf=$CSRF&username=a&password=b" "$BASE/login")" 503
+  else
+    check "failed login (DB up) -> 401 generic" "$(code -b "$JAR" -X POST -d "_csrf=$CSRF&username=a&password=b" "$BASE/login")" 401
+  fi
 fi
 
 rm -f "$JAR"

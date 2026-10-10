@@ -32,6 +32,10 @@ const boolish = z
 const envSchema = z.object({
   NODE_ENV: z.string().default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+  /** Engine chosen by the administrator; the installer normally stores this in storage/db-config.json. */
+  DB_DRIVER: z.enum(['mysql', 'sqlite', '']).default(''),
+  /** SQLite database file. Relative paths resolve from the application root. */
+  SQLITE_PATH: z.string().default(''),
   DB_HOST: z.string().default('localhost'),
   DB_PORT: z.coerce.number().int().min(1).max(65535).default(3306),
   DB_NAME: z.string().default(''),
@@ -54,6 +58,10 @@ export interface AppConfig {
   installLockFile: string;
   migrationsDir: string;
   db: { host: string; port: number; name: string; user: string; password: string; connectionLimit: number };
+  /** Engine chosen by env (DB_DRIVER) or '' when the environment does not choose one. */
+  dbDriverEnv: '' | 'mysql' | 'sqlite';
+  sqlitePath: string;
+  dbConfigFile: string;
   installToken: string;
   sessionTtlHours: number;
   cookieSecure: boolean;
@@ -77,6 +85,9 @@ export function loadConfig(appRoot: string, env: NodeJS.ProcessEnv = process.env
     storageDir,
     installLockFile: path.join(storageDir, 'install.lock'),
     migrationsDir: path.join(appRoot, 'migrations'),
+    dbDriverEnv: e.DB_DRIVER,
+    sqlitePath: e.SQLITE_PATH ? path.resolve(appRoot, e.SQLITE_PATH) : path.join(storageDir, 'app.sqlite'),
+    dbConfigFile: path.join(storageDir, 'db-config.json'),
     db: {
       host: e.DB_HOST,
       port: e.DB_PORT,

@@ -1,4 +1,4 @@
-import type { Queryable } from '../../db/database';
+import type { Database } from '../../db/database';
 import { PERMISSIONS, SYSTEM_ROLES, SUPER_ADMIN_ROLE } from '../../rbac/permissions';
 
 /**
@@ -6,7 +6,7 @@ import { PERMISSIONS, SYSTEM_ROLES, SUPER_ADMIN_ROLE } from '../../rbac/permissi
  * a role change or permission change takes effect immediately (no stale session claims).
  */
 export class RbacService {
-  constructor(private readonly db: Queryable) {}
+  constructor(private readonly db: Database) {}
 
   async permissionsForUser(userId: number): Promise<Set<string>> {
     const rows = await this.db.query<{ code: string }>(
@@ -28,24 +28,25 @@ export class RbacService {
    *   admin customisations survive upgrades. super_admin always receives every permission.
    */
   async syncCatalog(): Promise<void> {
+    const d = this.db.dialect;
     for (const p of PERMISSIONS) {
       await this.db.execute(
         `INSERT INTO permissions (code, module, description_fa) VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE module = VALUES(module), description_fa = VALUES(description_fa)`,
+         ${d.upsert(['code'], [d.incoming('module'), d.incoming('description_fa')])}`,
         [p.code, p.module, p.description],
       );
     }
     for (const role of SYSTEM_ROLES) {
       await this.db.execute(
         `INSERT INTO roles (slug, name_fa, description, is_system, is_active) VALUES (?, ?, ?, 1, 1)
-         ON DUPLICATE KEY UPDATE is_system = 1`,
+         ${d.upsert(['slug'], ['is_system = 1'])}`,
         [role.slug, role.nameFa, role.description],
       );
       const [roleRow] = await this.db.query<{ id: number }>('SELECT id FROM roles WHERE slug = ?', [role.slug]);
       const perms = role.slug === SUPER_ADMIN_ROLE ? PERMISSIONS.map((p) => p.code) : role.permissions;
       for (const code of perms) {
         await this.db.execute(
-          `INSERT IGNORE INTO role_permissions (role_id, permission_id)
+          `${d.insertIgnore} INTO role_permissions (role_id, permission_id)
            SELECT ?, id FROM permissions WHERE code = ?`,
           [roleRow.id, code],
         );

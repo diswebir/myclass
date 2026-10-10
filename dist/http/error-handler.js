@@ -7,12 +7,16 @@ const errors_1 = require("../lib/errors");
 const sanitize_1 = require("../lib/sanitize");
 const render_1 = require("../routes/render");
 const pages_1 = require("../views/pages");
-/** MySQL/driver error codes that mean the database is unreachable or misconfigured (not an app bug). */
+/** MySQL, SQLite and driver error codes that mean the database is unreachable or misconfigured (not an app bug). */
 const DB_UNAVAILABLE_CODES = new Set([
     'ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT', 'EHOSTUNREACH', 'ENOTFOUND', 'EPIPE',
     'PROTOCOL_CONNECTION_LOST', 'PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR', 'PROTOCOL_SEQUENCE_TIMEOUT',
     'ER_ACCESS_DENIED_ERROR', 'ER_BAD_DB_ERROR', 'ER_CON_COUNT_ERROR', 'ER_TOO_MANY_USER_CONNECTIONS',
     'ER_USER_LIMIT_REACHED',
+    // SQLite: the file cannot be opened or is locked / corrupt (sql.js reports these as SQLITE_* codes).
+    'SQLITE_CANTOPEN', 'SQLITE_BUSY', 'SQLITE_IOERR', 'SQLITE_READONLY', 'SQLITE_CORRUPT', 'SQLITE_NOTADB',
+    // No engine has been chosen yet (fresh install before the installer ran).
+    'DB_NOT_CONFIGURED',
 ]);
 /** True when an error means the database cannot be used right now (exported for tests). */
 function isDbUnavailable(err) {

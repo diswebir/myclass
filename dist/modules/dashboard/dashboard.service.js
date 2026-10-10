@@ -8,13 +8,15 @@ class DashboardService {
         this.db = db;
     }
     async stats() {
+        const now = new Date();
+        const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         const [row] = await this.db.query(`SELECT
          (SELECT COUNT(*) FROM users) AS usersTotal,
          (SELECT COUNT(*) FROM users WHERE status = 'active') AS usersActive,
          (SELECT COUNT(*) FROM roles WHERE is_active = 1) AS rolesActive,
-         (SELECT COUNT(*) FROM sessions WHERE revoked_at IS NULL AND expires_at > UTC_TIMESTAMP(3)) AS activeSessions,
-         (SELECT COUNT(*) FROM audit_logs WHERE occurred_at >= UTC_TIMESTAMP(3) - INTERVAL 1 DAY) AS auditLast24h,
-         (SELECT COUNT(*) FROM audit_logs WHERE action = 'auth.login_failed' AND occurred_at >= UTC_TIMESTAMP(3) - INTERVAL 1 DAY) AS failedLoginsLast24h`);
+         (SELECT COUNT(*) FROM sessions WHERE revoked_at IS NULL AND expires_at > ?) AS activeSessions,
+         (SELECT COUNT(*) FROM audit_logs WHERE occurred_at >= ?) AS auditLast24h,
+         (SELECT COUNT(*) FROM audit_logs WHERE action = 'auth.login_failed' AND occurred_at >= ?) AS failedLoginsLast24h`, [now, dayAgo, dayAgo]);
         return {
             usersTotal: Number(row?.usersTotal ?? 0),
             usersActive: Number(row?.usersActive ?? 0),

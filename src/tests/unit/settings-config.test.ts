@@ -72,12 +72,23 @@ test('config: .env loader never overrides host-provided variables', () => {
 });
 
 test('migrations: files are discovered in order with stable checksums and statements', () => {
-  const migrations = loadMigrations(path.join(root, 'migrations'));
+  const migrations = loadMigrations(path.join(root, 'migrations', 'mysql'));
   assert.ok(migrations.length >= 1);
   assert.equal(migrations[0].version, '001');
   assert.equal(migrations[0].statements.length, 8, 'foundation migration has 8 statements');
   for (const s of migrations[0].statements) assert.match(s, /^CREATE TABLE/);
-  assert.equal(loadMigrations(path.join(root, 'migrations'))[0].checksum, migrations[0].checksum);
+  assert.equal(loadMigrations(path.join(root, 'migrations', 'mysql'))[0].checksum, migrations[0].checksum);
+});
+
+test('migrations: MySQL and SQLite foundation schemas define the same tables and versions', () => {
+  const tablesOf = (engine: string) =>
+    loadMigrations(path.join(root, 'migrations', engine))
+      .flatMap((m) => m.statements)
+      .flatMap((s) => [...s.matchAll(/CREATE TABLE IF NOT EXISTS (\w+)/g)].map((m) => m[1]))
+      .sort();
+  assert.deepEqual(tablesOf('sqlite'), tablesOf('mysql'));
+  const versions = (engine: string) => loadMigrations(path.join(root, 'migrations', engine)).map((m) => m.version);
+  assert.deepEqual(versions('sqlite'), versions('mysql'));
 });
 
 test('migrations: duplicate versions are rejected', () => {

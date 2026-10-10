@@ -16,13 +16,13 @@
 ```bash
 npm install
 npm run check              # بررسی تایپ TypeScript
-npm test                   # build + تست‌های واحد (38 تست)
-npm run test:integration   # تست یکپارچه‌سازی پایگاه داده؛ فقط با TEST_DB_NAME و TEST_DB_USER
-npm start                  # اجرای محلی (نیاز به DB_* و INSTALL_TOKEN؛ نمونه در .env.example)
+npm test                   # build + تست‌های واحد (54 تست)
+npm run test:integration   # تست یکپارچه‌سازی؛ بدون TEST_DB_* روی SQLite موقت، با TEST_DB_NAME و TEST_DB_USER روی MySQL
+npm start                  # اجرای محلی (نیاز به INSTALL_TOKEN؛ نمونه در .env.example)
 ./scripts/make-release.sh  # ساخت release/myclass-<version>.zip آماده آپلود روی هاست
 ```
 
-> `npm run test:integration` جداول را حذف و دوباره می‌سازد. فقط روی یک پایگاه داده **خالی و آزمایشی** اجرا کنید.
+> `npm run test:integration` با TEST_DB_* جداول را حذف و دوباره می‌سازد. فقط روی یک پایگاه داده **خالی و آزمایشی** اجرا کنید. بدون TEST_DB_* فایل موقت SQLite ساخته و پس از تست حذف می‌شود.
 
 ## اصول
 - هیچ رمز، کلید API یا اطلاعات هاست در مخزن نیست؛ `.env` در `.gitignore` است.

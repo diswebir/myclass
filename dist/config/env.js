@@ -40,6 +40,10 @@ const boolish = zod_1.z
 const envSchema = zod_1.z.object({
     NODE_ENV: zod_1.z.string().default('development'),
     PORT: zod_1.z.coerce.number().int().min(1).max(65535).default(3000),
+    /** Engine chosen by the administrator; the installer normally stores this in storage/db-config.json. */
+    DB_DRIVER: zod_1.z.enum(['mysql', 'sqlite', '']).default(''),
+    /** SQLite database file. Relative paths resolve from the application root. */
+    SQLITE_PATH: zod_1.z.string().default(''),
     DB_HOST: zod_1.z.string().default('localhost'),
     DB_PORT: zod_1.z.coerce.number().int().min(1).max(65535).default(3306),
     DB_NAME: zod_1.z.string().default(''),
@@ -69,6 +73,9 @@ function loadConfig(appRoot, env = process.env) {
         storageDir,
         installLockFile: node_path_1.default.join(storageDir, 'install.lock'),
         migrationsDir: node_path_1.default.join(appRoot, 'migrations'),
+        dbDriverEnv: e.DB_DRIVER,
+        sqlitePath: e.SQLITE_PATH ? node_path_1.default.resolve(appRoot, e.SQLITE_PATH) : node_path_1.default.join(storageDir, 'app.sqlite'),
+        dbConfigFile: node_path_1.default.join(storageDir, 'db-config.json'),
         db: {
             host: e.DB_HOST,
             port: e.DB_PORT,

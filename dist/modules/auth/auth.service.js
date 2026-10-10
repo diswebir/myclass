@@ -28,8 +28,9 @@ class AuthService {
         return this.options.sessionIdleMinutes ?? 120;
     }
     async countFailures(column, hash) {
+        const since = new Date(Date.now() - this.windowMinutes * 60 * 1000);
         const rows = await this.db.query(`SELECT COUNT(*) AS n FROM login_attempts
-        WHERE ${column} = ? AND success = 0 AND attempted_at >= (UTC_TIMESTAMP(3) - INTERVAL ? MINUTE)`, [hash, this.windowMinutes]);
+        WHERE ${column} = ? AND success = 0 AND attempted_at >= ?`, [hash, since]);
         return Number(rows[0]?.n ?? 0);
     }
     async login(input) {
@@ -72,14 +73,14 @@ class AuthService {
             });
             throw new errors_1.AppError(401, 'INVALID_CREDENTIALS', GENERIC_LOGIN_ERROR);
         }
-        await this.db.execute('UPDATE users SET failed_login_count = 0, last_login_at = UTC_TIMESTAMP(3) WHERE id = ?', [user.id]);
+        await this.db.execute('UPDATE users SET failed_login_count = 0, last_login_at = ? WHERE id = ?', [new Date(), user.id]);
         const token = await this.createSession(user.id, input.ip, input.userAgent);
         await this.audit.record({ action: 'auth.login_success', actorUserId: user.id, entityType: 'user', entityId: user.id, ip: input.ip });
         return token;
     }
     async createSession(userId, ip, userAgent) {
         const token = (0, crypto_1.randomToken)(32);
-        // Expiry is computed here (UTC instant) rather than with INTERVAL ? in a prepared statement.
+        // Expiry and all timestamps are computed in JS as UTC instants: the same code runs on MySQL and SQLite.
         const expiresAt = new Date(Date.now() + this.options.sessionTtlHours * 3600 * 1000);
         await this.db.execute(`INSERT INTO sessions (user_id, token_hash, ip_address, user_agent, expires_at)
        VALUES (?, ?, ?, ?, ?)`, [userId, (0, crypto_1.sha256Hex)(token), ip ? ip.slice(0, 45) : null, userAgent ? userAgent.slice(0, 255) : null, expiresAt]);
@@ -104,7 +105,7 @@ class AuthService {
         if (Date.now() - new Date(row.last_seen_at).getTime() > this.idleMinutes * 60 * 1000)
             return null;
         if (Date.now() - new Date(row.last_seen_at).getTime() > LAST_SEEN_THROTTLE_MS) {
-            await this.db.execute('UPDATE sessions SET last_seen_at = UTC_TIMESTAMP(3) WHERE id = ?', [row.session_id]);
+            await this.db.execute('UPDATE sessions SET last_seen_at = ? WHERE id = ?', [new Date(), row.session_id]);
         }
         const user = {
             id: row.id,
@@ -119,13 +120,13 @@ class AuthService {
         return { sessionId: row.session_id, user };
     }
     async logout(token, actorUserId) {
-        await this.db.execute('UPDATE sessions SET revoked_at = UTC_TIMESTAMP(3) WHERE token_hash = ? AND revoked_at IS NULL', [(0, crypto_1.sha256Hex)(token)]);
+        await this.db.execute('UPDATE sessions SET revoked_at = ? WHERE token_hash = ? AND revoked_at IS NULL', [new Date(), (0, crypto_1.sha256Hex)(token)]);
         await this.audit.record({ action: 'auth.logout', actorUserId, entityType: 'user', entityId: actorUserId });
     }
     /** Revokes every active session of a user (optionally keeping one, e.g. the current session). */
     async revokeUserSessions(userId, keepSessionId = null) {
-        const res = await this.db.execute(`UPDATE sessions SET revoked_at = UTC_TIMESTAMP(3)
-        WHERE user_id = ? AND revoked_at IS NULL AND (? IS NULL OR id <> ?)`, [userId, keepSessionId, keepSessionId]);
+        const res = await this.db.execute(`UPDATE sessions SET revoked_at = ?
+        WHERE user_id = ? AND revoked_at IS NULL AND (? IS NULL OR id <> ?)`, [new Date(), userId, keepSessionId, keepSessionId]);
         return res.affectedRows;
     }
     async changeOwnPassword(input) {
@@ -144,7 +145,7 @@ class AuthService {
         if (password.length > exports.MAX_PASSWORD_LENGTH)
             throw errors_1.errors.badRequest('رمز عبور بیش از حد طولانی است.', { password: 'رمز عبور بیش از حد طولانی است.' });
         const hash = await (0, crypto_1.hashPassword)(password);
-        await this.db.execute('UPDATE users SET password_hash = ?, must_change_password = ?, password_changed_at = UTC_TIMESTAMP(3) WHERE id = ?', [hash, mustChange ? 1 : 0, userId]);
+        await this.db.execute('UPDATE users SET password_hash = ?, must_change_password = ?, password_changed_at = ? WHERE id = ?', [hash, mustChange ? 1 : 0, new Date(), userId]);
     }
 }
 exports.AuthService = AuthService;

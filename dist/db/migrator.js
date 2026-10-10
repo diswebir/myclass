@@ -41,19 +41,17 @@ function loadMigrations(dir) {
 const LOCK_NAME = 'myclass_migrations';
 class Migrator {
     db;
-    dir;
-    constructor(db, dir) {
+    root;
+    /** @param root the migrations directory; the engine's own subfolder (mysql/ or sqlite/) is used. */
+    constructor(db, root) {
         this.db = db;
-        this.dir = dir;
+        this.root = root;
+    }
+    get dir() {
+        return node_path_1.default.join(this.root, this.db.dialect.name);
     }
     async ensureTable() {
-        await this.db.execute(`CREATE TABLE IF NOT EXISTS schema_migrations (
-        version CHAR(3) NOT NULL PRIMARY KEY,
-        name VARCHAR(120) NOT NULL,
-        checksum CHAR(64) NOT NULL,
-        applied_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-        execution_ms INT UNSIGNED NOT NULL DEFAULT 0
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+        await this.db.execute(this.db.dialect.migrationsTableDdl);
     }
     async status() {
         await this.ensureTable();
@@ -79,15 +77,20 @@ class Migrator {
     }
     /**
      * Applies all pending migrations. Refuses to run if an applied migration file was edited.
-     * The named lock, the status read and every statement run on ONE pooled connection: GET_LOCK is
+     * The named lock (MySQL), the status read and every statement run on ONE connection: GET_LOCK is
      * session-scoped, so releasing it on a different connection would leave the lock held.
      */
     async migrate() {
         await this.ensureTable();
+        // MySQL needs an explicit named lock across processes. SQLite is one file per process and its driver
+        // already serialises statements, so no lock is taken there.
+        const useLock = this.db.dialect.name === 'mysql';
         return this.db.withConnection(async (q) => {
-            const lock = await q.query('SELECT GET_LOCK(?, 10) AS got', [LOCK_NAME]);
-            if (!lock[0] || lock[0].got !== 1)
-                throw new Error('اجرای migration در حال انجام است. کمی بعد دوباره تلاش کنید.');
+            if (useLock) {
+                const lock = await q.query('SELECT GET_LOCK(?, 10) AS got', [LOCK_NAME]);
+                if (!lock[0] || lock[0].got !== 1)
+                    throw new Error('اجرای migration در حال انجام است. کمی بعد دوباره تلاش کنید.');
+            }
             try {
                 const status = await this.statusOn(q);
                 if (status.modified.length > 0) {
@@ -104,7 +107,8 @@ class Migrator {
                 return { applied };
             }
             finally {
-                await q.query('SELECT RELEASE_LOCK(?)', [LOCK_NAME]);
+                if (useLock)
+                    await q.query('SELECT RELEASE_LOCK(?)', [LOCK_NAME]);
             }
         });
     }

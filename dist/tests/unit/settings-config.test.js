@@ -66,13 +66,22 @@ const root = node_path_1.default.resolve(__dirname, '..', '..', '..');
     node_fs_1.default.rmSync(dir, { recursive: true, force: true });
 });
 (0, node_test_1.default)('migrations: files are discovered in order with stable checksums and statements', () => {
-    const migrations = (0, migrator_1.loadMigrations)(node_path_1.default.join(root, 'migrations'));
+    const migrations = (0, migrator_1.loadMigrations)(node_path_1.default.join(root, 'migrations', 'mysql'));
     strict_1.default.ok(migrations.length >= 1);
     strict_1.default.equal(migrations[0].version, '001');
     strict_1.default.equal(migrations[0].statements.length, 8, 'foundation migration has 8 statements');
     for (const s of migrations[0].statements)
         strict_1.default.match(s, /^CREATE TABLE/);
-    strict_1.default.equal((0, migrator_1.loadMigrations)(node_path_1.default.join(root, 'migrations'))[0].checksum, migrations[0].checksum);
+    strict_1.default.equal((0, migrator_1.loadMigrations)(node_path_1.default.join(root, 'migrations', 'mysql'))[0].checksum, migrations[0].checksum);
+});
+(0, node_test_1.default)('migrations: MySQL and SQLite foundation schemas define the same tables and versions', () => {
+    const tablesOf = (engine) => (0, migrator_1.loadMigrations)(node_path_1.default.join(root, 'migrations', engine))
+        .flatMap((m) => m.statements)
+        .flatMap((s) => [...s.matchAll(/CREATE TABLE IF NOT EXISTS (\w+)/g)].map((m) => m[1]))
+        .sort();
+    strict_1.default.deepEqual(tablesOf('sqlite'), tablesOf('mysql'));
+    const versions = (engine) => (0, migrator_1.loadMigrations)(node_path_1.default.join(root, 'migrations', engine)).map((m) => m.version);
+    strict_1.default.deepEqual(versions('sqlite'), versions('mysql'));
 });
 (0, node_test_1.default)('migrations: duplicate versions are rejected', () => {
     const dir = node_fs_1.default.mkdtempSync(node_path_1.default.join(node_os_1.default.tmpdir(), 'mig-'));

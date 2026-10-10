@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds a host-uploadable release: compiled dist/, runtime-only node_modules (pure JS),
-# migrations, a standalone schema.sql, and a ZIP. Requires Node.js and npm on the build machine only.
+# migrations, standalone schema-mysql.sql / schema-sqlite.sql, and a ZIP. Requires Node.js and npm on the build machine only.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -14,7 +14,10 @@ cp app.js package.json package-lock.json .env.example README.md "$STAGE/"
 cp -r migrations public docs "$STAGE/"
 mkdir -p "$STAGE/dist" && cp -r dist/. "$STAGE/dist/" && rm -rf "$STAGE/dist/tests"
 mkdir -p "$STAGE/database"
-{ echo "-- myclass ${VERSION}: standalone schema (same statements as the web installer applies, in order)"; cat migrations/*.sql; } > "$STAGE/database/schema.sql"
+# One standalone schema per engine, containing exactly the statements the web installer applies, in order.
+for engine in mysql sqlite; do
+  { echo "-- myclass ${VERSION}: standalone ${engine} schema (same statements as the web installer applies, in order)"; cat "migrations/${engine}"/*.sql; } > "$STAGE/database/schema-${engine}.sql"
+done
 (cd "$STAGE" && npm ci --omit=dev --ignore-scripts --no-audit --no-fund >/dev/null)
 (cd release && python3 - "$NAME" <<'PY'
 import os, sys, zipfile

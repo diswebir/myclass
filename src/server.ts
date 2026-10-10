@@ -7,8 +7,9 @@ import { APP_VERSION } from './version';
  * Entry point. Works both locally (`npm start`) and under cPanel "Setup Node.js App" (Phusion Passenger),
  * which sets PORT and runs the startup file `app.js` at the application root.
  */
-export function start(appRoot: string = path.resolve(__dirname, '..')): void {
+export async function start(appRoot: string = path.resolve(__dirname, '..')): Promise<void> {
   const runtime = bootstrap(appRoot);
+  await runtime.ready;
   const app = createApp(runtime.services, runtime.publicDir);
   const host = process.env.HOST || '0.0.0.0';
   const server = app.listen(runtime.cfg.port, host, () => {
@@ -24,11 +25,9 @@ export function start(appRoot: string = path.resolve(__dirname, '..')): void {
 }
 
 if (require.main === module) {
-  try {
-    start();
-  } catch (err) {
+  start().catch((err: unknown) => {
     const message = err instanceof Error ? err.message : 'unknown';
     console.error(JSON.stringify({ level: 'fatal', message: message.slice(0, 300) }));
     process.exit(1);
-  }
+  });
 }

@@ -1,9 +1,9 @@
 /**
  * Database-backed integration tests.
- * Requires a DISPOSABLE MySQL/MariaDB database. Set TEST_DB_HOST, TEST_DB_NAME, TEST_DB_USER, TEST_DB_PASSWORD.
- * Tests are skipped (not passed) when these variables are absent. NEVER point them at production data:
- * the suite drops and recreates its tables.
- * Run: npm run test:integration
+ * - Without TEST_DB_* the suite runs on SQLite in a temporary directory (no server needed).
+ * - With TEST_DB_NAME and TEST_DB_USER set it runs on MySQL/MariaDB instead.
+ * The MySQL target must be a DISPOSABLE database: the suite drops and recreates its tables.
+ * NEVER point TEST_DB_* at production data. Run: npm run test:integration
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -17,26 +17,30 @@ import { SUPER_ADMIN_ROLE } from '../../rbac/permissions';
 
 const root = path.resolve(__dirname, '..', '..', '..');
 const env = process.env;
-const enabled = Boolean(env.TEST_DB_NAME && env.TEST_DB_USER);
-const skip = enabled ? false : 'TEST_DB_* not set; database integration tests not executed';
+const driver: 'mysql' | 'sqlite' = env.TEST_DB_NAME && env.TEST_DB_USER ? 'mysql' : 'sqlite';
 
 const ADMIN_PW = 'Admin-Password-123';
 const TOKEN = 'install-token-for-tests-0123456789abcdef';
 
-test('database flow: install, RBAC, anti-escalation, lock-out protection, audit', { skip }, async (t) => {
+test(`database flow on ${driver}: install, RBAC, anti-escalation, lock-out protection, audit`, async (t) => {
   const storage = fs.mkdtempSync(path.join(os.tmpdir(), 'myclass-it-'));
   const rt = bootstrap(root, {
     ...env,
     NODE_ENV: 'test',
+    DB_DRIVER: driver,
     DB_HOST: env.TEST_DB_HOST ?? 'localhost',
     DB_PORT: env.TEST_DB_PORT ?? '3306',
-    DB_NAME: env.TEST_DB_NAME!,
-    DB_USER: env.TEST_DB_USER!,
+    DB_NAME: env.TEST_DB_NAME ?? '',
+    DB_USER: env.TEST_DB_USER ?? '',
     DB_PASSWORD: env.TEST_DB_PASSWORD ?? '',
+    SQLITE_PATH: path.join(storage, 'test.sqlite'),
     INSTALL_TOKEN: TOKEN,
     STORAGE_DIR: storage,
   } as NodeJS.ProcessEnv);
+  await rt.ready;
   const s = rt.services;
+  // DB_DRIVER selects the engine for this run; the installer below persists that choice.
+  assert.equal(s.db.driverName, driver);
 
   await t.test('drop and recreate tables for a clean run', async () => {
     const tables = ['login_attempts', 'audit_logs', 'sessions', 'role_permissions', 'users', 'roles', 'permissions', 'settings', 'schema_migrations'];

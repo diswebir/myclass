@@ -38,6 +38,13 @@ function loginBody(o) {
   </section>`;
 }
 function installBody(o) {
+    const selectedDriver = o.values.driver === 'mysql' ? 'mysql' : 'sqlite';
+    const driverOption = (value, label, hint) => (0, html_1.html) `<label class="radio-option"><input type="radio" name="driver" value="${value}"${selectedDriver === value ? (0, html_1.raw)(' checked') : (0, html_1.raw)('')}> <span><strong>${label}</strong><span class="muted"> — ${hint}</span></span></label>`;
+    const driverField = (0, html_1.html) `<fieldset class="field-full driver-choice"><legend>نوع پایگاه داده</legend>
+        ${driverOption('sqlite', 'SQLite (پیشنهادی برای میزبانی ساده)', 'بدون نیاز به سرور پایگاه داده؛ فایل در پوشه storage ذخیره می‌شود.')}
+        ${driverOption('mysql', 'MySQL / MariaDB', 'نیازمند پایگاه داده MySQL و تنظیم DB_NAME، DB_USER، DB_PASSWORD در cPanel.')}
+        ${o.errors.driver ? (0, html_1.html) `<small class="error">${o.errors.driver}</small>` : (0, html_1.raw)('')}
+      </fieldset>`;
     const rows = o.checks.map((c) => (0, html_1.html) `<li class="check-row check-${c.level}"><span class="check-dot" aria-hidden="true"></span><div><strong>${c.labelFa}</strong><div class="muted">${c.messageFa}</div></div></li>`);
     const blocked = o.checks.some((c) => c.level === 'error');
     return (0, html_1.html) `<section class="install">
@@ -54,6 +61,7 @@ function installBody(o) {
       ${o.formError ? (0, ui_1.alertBox)('error', o.formError) : (0, html_1.raw)('')}
       <form method="post" action="/install" class="form-grid" novalidate>
         <input type="hidden" name="_csrf" value="${o.csrf}">
+        ${driverField}
         ${(0, ui_1.field)({ name: 'token', label: 'توکن نصب', type: 'password', required: true, dir: 'ltr', error: o.errors.token, full: true, autocomplete: 'off' })}
         ${(0, ui_1.field)({ name: 'instituteName', label: 'نام رسمی مؤسسه', value: o.values.instituteName ?? '', required: true, error: o.errors.instituteName })}
         ${(0, ui_1.field)({ name: 'fullName', label: 'نام و نام خانوادگی مدیر', value: o.values.fullName ?? '', required: true, error: o.errors.fullName })}

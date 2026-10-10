@@ -186,3 +186,44 @@ Scope: line-by-line review of auth, users, roles, RBAC, installer, migrator, DB 
 - `login_attempts` and `audit_logs` have no retention policy yet.
 - `GET /admin/system/health` calls `CREATE TABLE IF NOT EXISTS` (via the migrator status). A read-only DB user would see that page fail.
 - Migrations: MySQL commits DDL implicitly, so a failed migration can leave partial schema. Mitigated by the pre-migration backup instruction, not by code.
+
+---
+
+# Round 3 — SQLite as an installable database option
+
+Scope: the administrator now chooses **SQLite** or **MySQL/MariaDB** on the web installer. Both use pure JavaScript (no native module, no SSH). SQLite runs through `sql.js` (WebAssembly). MySQL behaviour is unchanged for existing installs (same migration file content, so the stored checksum still matches).
+
+## 8. What changed
+- `src/db/types.ts`, `src/db/dialects.ts`: one `Dialect` object per engine for the SQL that differs (`INSERT IGNORE`/`INSERT OR IGNORE`, upsert, `FOR UPDATE`, LIKE escape, transaction start, migrations table DDL).
+- `src/db/mysql-driver.ts`: the former MySQL code, unchanged in behaviour (pool, pinned connections, transactions).
+- `src/db/sqlite-driver.ts`: sql.js driver. All operations go through one queue. After each write the database image is exported and written atomically (temp file + rename) with foreign keys re-enabled. Constraint errors are mapped to the MySQL codes (`ER_DUP_ENTRY`, `ER_ROW_IS_REFERENCED_2`) that services already handle.
+- `src/db/database.ts`: facade used by all services. Nested calls inside a transaction join it (`AsyncLocalStorage`); without this, the single SQLite connection would wait on itself. `DB_NOT_CONFIGURED` before an engine is chosen (mapped to 503).
+- `src/db/connect.ts`: choice priority: `storage/db-config.json` > `DB_DRIVER` > MySQL if `DB_NAME`+`DB_USER` are set (existing installs keep working) > none (fresh install shows the choice).
+- `migrations/mysql/001_foundation.sql` (moved; content byte-identical to the previously committed file) and `migrations/sqlite/001_foundation.sql` (new; `updated_at` maintained by triggers; enums as CHECK constraints).
+- Services converted: auth, dashboard, install, rbac, settings, users, audit (no `UTC_TIMESTAMP`/`INTERVAL` in SQL any more; timestamps are bound from JS as UTC `Date`s).
+- Installer: engine radio (preselected to MySQL only if `DB_NAME`/`DB_USER` exist, otherwise SQLite). The choice is saved only after a successful ping, and never with credentials. A MySQL failure gives 503 `DB_UNAVAILABLE` and leaves no saved choice.
+- `scripts/make-release.sh`: emits `database/schema-mysql.sql` and `database/schema-sqlite.sql`.
+- `scripts/e2e-http.sh`: "DB down" checks now run only with `E2E_DB_DOWN=1`. The leak scan no longer matches CSS class names (`form-stack`); it had produced a false FAIL.
+
+## 9. Test runs (this round)
+| Check | Command | Result |
+|---|---|---|
+| Type check | `npm run check` | pass |
+| Unit | `npm test` | **54 / 54 pass** |
+| Integration on SQLite (no server) | `npm run test:integration` | **23 / 23 pass**: shared flow (11, install, RBAC, anti-escalation, last-super-admin, sessions, settings, audit, dashboard), `sqlite-behaviour` (10: dates as UTC `Date`, LIKE `_`/`%` literal, duplicate → 409 message, RESTRICT FK, rollback, nested transaction join, settings upsert, dashboard counts, durability after reopen with FKs on), installer refused for unreachable MySQL (503, nothing saved) |
+| Live pre-install | `scripts/e2e-http.sh <url> pre-install` | **10 / 10** |
+| Live install over HTTP | `POST /install` with `driver=sqlite` + CSRF | 303 → `/login?msg=installed`; `storage/db-config.json` = `{"driver":"sqlite"}`; `app.sqlite` created |
+| Live post-install | `scripts/e2e-http.sh <url> post-install` | **48 / 48** |
+| Live admin session | login, `/admin`, `/admin/users?q=%`, `/admin/audit`, `/health` | 303 → `/admin`; dashboard 200 with real counts; audit shows `system.installed` and `auth.login_success`; `/health` `{"status":"ok"}` |
+| Release package | `scripts/make-release.sh` | `schema-mysql.sql` and `schema-sqlite.sql` present; `migrations/{mysql,sqlite}` present; `sql.js` included |
+| Write cost (scratch, not in repo) | 2,000 inserts into a 0.45 MB database | 1.24 ms per write; reads 0.03 ms each. Each write rewrites the whole file, so the cost grows with database size. |
+
+Stale root-level `migrations/001_foundation.sql` was removed (`git rm`); the release contains only the per-engine copies.
+
+## 10. Not verified (still open)
+- **MySQL/MariaDB path after this change:** no server in the sandbox. Code compiles and the SQL was converted by hand, but nothing ran against MySQL. Run `TEST_DB_HOST/NAME/USER/PASSWORD=… npm run test:integration` and the live matrix with `DB_DRIVER=mysql` on a disposable database before any MySQL claim.
+- **Browser checks:** not run (the installer radio and its styling were checked only as HTML).
+- **Multi-process SQLite:** not supported. One Node process per database file; sql.js does not coordinate writes between processes. Passenger should run a single worker for the app.
+- **SQLite size:** the whole database is in memory and rewritten on every write (see §9). Suitable for small and medium institutes; MySQL is the recommended choice for large data sets.
+- **No engine switch after install:** the choice is fixed in `storage/db-config.json`. Moving data between engines is not implemented.
+- **SQLite restore:** the file-copy procedure in `BACKUP_RESTORE_FA.md` is documented but not executed.
