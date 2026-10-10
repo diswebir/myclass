@@ -1,0 +1,44 @@
+<div style="max-width: 600px; margin: 3rem auto; background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; text-align: center;">
+  <% if (!certificate) { %>
+    <div style="color: #b91c1c; margin-bottom: 1.5rem;">
+      <h2 style="margin-bottom: 0.5rem;">گواهینامه یافت نشد</h2>
+      <p style="color: #64748b;">کد رهگیری مدرک وارد شده در پایگاه اطلاعاتی مؤسسه ثبت نشده است.</p>
+    </div>
+  <% } else { %>
+    <div style="margin-bottom: 2rem;">
+      <% if (certificate.isValid) { %>
+        <span class="badge badge-green" style="font-size: 1.1rem; padding: 0.5rem 1.25rem;">✓ گواهینامه معتبر و رسمی می‌باشد</span>
+      <% } else { %>
+        <span class="badge badge-red" style="font-size: 1.1rem; padding: 0.5rem 1.25rem;">✗ گواهینامه باطل شده است</span>
+        <p style="color: #b91c1c; margin-top: 0.75rem;">علت ابطال: <%= certificate.revokeReason %></p>
+      <% } %>
+    </div>
+
+    <table style="text-align: right; margin-bottom: 2rem;">
+      <tr>
+        <th>نام دارنده مدرک:</th>
+        <td><strong><%= certificate.recipientName %></strong></td>
+      </tr>
+      <tr>
+        <th>عنوان دوره آموزشی:</th>
+        <td><%= certificate.courseTitle %></td>
+      </tr>
+      <tr>
+        <th>شماره یکتای مدرک:</th>
+        <td><code><%= certificate.certificateCode %></code></td>
+      </tr>
+      <tr>
+        <th>تاریخ صدور:</th>
+        <td><%= certificate.issueDateJalali %></td>
+      </tr>
+      <tr>
+        <th>وضعیت گواهی:</th>
+        <td><%= certificate.isValid ? 'تأییدشده' : 'باطل‌شده' %></td>
+      </tr>
+    </table>
+
+    <div style="border-top: 1px solid #e2e8f0; padding-top: 1.5rem; color: #64748b; font-size: 0.85rem;">
+      این صفحه صرفاً جهت بررسی صحت گواهینامه‌های رسمی صادرشده توسط مؤسسه آموزشی ایجاد شده است.
+    </div>
+  <% } %>
+</div>

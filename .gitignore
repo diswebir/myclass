@@ -1,0 +1,12 @@
+node_modules/
+dist/
+storage/installed.lock
+storage/*.sqlite*
+storage/*.wal
+storage/*.shm
+storage/db-config.json
+storage/backups/*.sql
+storage/uploads/*
+!storage/uploads/.gitkeep
+.DS_Store
+*.log

@@ -1,0 +1,23 @@
+<div style="max-width: 500px; margin: 3rem auto; background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
+  <h2 style="color: #1e3a8a; margin-bottom: 1.5rem; text-align: center;">پیگیری وضعیت پیش‌ثبت‌نام</h2>
+
+  <form method="GET" action="/preregister/status">
+    <div class="form-group">
+      <label for="trackingCode">کد پیگیری</label>
+      <input type="text" id="trackingCode" name="trackingCode" required placeholder="مثال: PR-ABC123" value="<%= typeof trackingCode !== 'undefined' ? trackingCode : '' %>">
+    </div>
+    <button type="submit" class="btn btn-primary" style="width: 100%;">استعلام وضعیت</button>
+  </form>
+
+  <% if (typeof result !== 'undefined' && result) { %>
+    <div class="card" style="margin-top: 2rem; background: #f8fafc;">
+      <h3 style="margin-bottom: 1rem; color: #1e3a8a;">نتیجه بررسی:</h3>
+      <p><strong>متقاضی:</strong> <%= result.full_name %></p>
+      <p><strong>کلاس:</strong> <%= result.class_title %></p>
+      <p><strong>وضعیت درخواست:</strong> <span class="badge <%= getStatusBadge(result.status).class %>"><%= getStatusBadge(result.status).label %></span></p>
+      <% if (result.reject_reason) { %>
+        <p style="color: #b91c1c; margin-top: 0.5rem;"><strong>توضیحات:</strong> <%= result.reject_reason %></p>
+      <% } %>
+    </div>
+  <% } %>
+</div>

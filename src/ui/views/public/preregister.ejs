@@ -1,0 +1,31 @@
+<div style="max-width: 550px; margin: 3rem auto; background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
+  <h2 style="color: #1e3a8a; margin-bottom: 0.5rem; text-align: center;">پیش‌ثبت‌نام در دوره آموزشی</h2>
+  <h4 style="color: #475569; margin-bottom: 1.5rem; text-align: center;"><%= cls.title %></h4>
+
+  <div class="card" style="background: #f8fafc; margin-bottom: 1.5rem;">
+    <p><strong>شهریه دوره:</strong> <%= formatCurrency(cls.tuition_fee) %></p>
+    <p><strong>روزهای برگزاری:</strong> <%= cls.schedule_days %> (<%= cls.start_time %> تا <%= cls.end_time %>)</p>
+    <p><strong>محل برگزاری:</strong> <%= cls.location %></p>
+  </div>
+
+  <form method="POST" action="/preregister/<%= cls.id %>">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="form-group">
+      <label for="fullName">نام و نام‌خانوادگی کامل</label>
+      <input type="text" id="fullName" name="fullName" required placeholder="مثال: سهراب سپهری">
+    </div>
+
+    <div class="form-group">
+      <label for="mobile">شماره همراه</label>
+      <input type="text" id="mobile" name="mobile" required placeholder="۰۹۱۲۳۴۵۶۷۸۹">
+    </div>
+
+    <div class="form-group">
+      <label for="email">آدرس ایمیل (اختیاری)</label>
+      <input type="email" id="email" name="email" placeholder="student@example.com">
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">ثبت نهایی درخواست پیش‌ثبت‌نام</button>
+  </form>
+</div>
