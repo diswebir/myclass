@@ -1,11 +1,11 @@
-<div style="max-width: 650px; margin: 3rem auto; background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
+<div style="max-width: 700px; margin: 3rem auto; background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
   <div style="text-align: center; margin-bottom: 2rem;">
     <h2 style="color: #1e3a8a;">راه‌اندازی سامانه مدیریت مؤسسه (cPanel)</h2>
-    <p style="color: #64748b;">نصب و آماده‌سازی جداول دیتابیس بدون نیاز به SSH</p>
+    <p style="color: #64748b;">نصب و آماده‌سازی جداول دیتابیس بدون نیاز به SSH با انتخاب پایگاه داده دلخواه</p>
   </div>
 
   <div class="card" style="margin-bottom: 2rem; background: #f8fafc;">
-    <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: #334155;">بررسی پیش‌نیازهای هاست:</h3>
+    <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: #334155;">بررسی وضعیت سرور و پیش‌نیازها:</h3>
     <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem;">
       <li>
         <% if (env.nodeValid) { %>
@@ -16,16 +16,9 @@
       </li>
       <li>
         <% if (env.storageWritable) { %>
-          <span class="badge badge-green">✓ تأیید</span> دسترسی نوشتن پوشه storage
+          <span class="badge badge-green">✓ تأیید</span> دسترسی نوشتن پوشه storage (ذخیره فایل‌ها و پایگاه داده SQLite)
         <% } else { %>
           <span class="badge badge-red">✗ خطا</span> دسترسی نوشتن برای پوشه storage مجاز نیست.
-        <% } %>
-      </li>
-      <li>
-        <% if (env.dbConnected) { %>
-          <span class="badge badge-green">✓ تأیید</span> اتصال به پایگاه داده
-        <% } else { %>
-          <span class="badge badge-red">✗ خطا</span> <%= env.dbError || 'عدم اتصال به دیتابیس' %>
         <% } %>
       </li>
     </ul>
@@ -33,6 +26,51 @@
 
   <form method="POST" action="/install">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <!-- انتخاب نوع پایگاه داده -->
+    <div class="card" style="margin-bottom: 2rem; border: 2px solid #38bdf8; background: #f0f9ff;">
+      <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: #0369a1;">انتخاب نوع پایگاه داده (Database Engine)</h3>
+
+      <div style="display: flex; gap: 1.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: bold;">
+          <input type="radio" name="dbDialect" value="sqlite" id="dialectSqlite" checked onchange="toggleDbFields()">
+          SQLite (توصیه‌شده و بدون نیاز به ساخت دیتابیس در cPanel)
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: bold;">
+          <input type="radio" name="dbDialect" value="mysql" id="dialectMysql" onchange="toggleDbFields()">
+          MySQL / MariaDB (دیتابیس استاندارد cPanel)
+        </label>
+      </div>
+
+      <div id="sqliteInfo" style="color: #0369a1; font-size: 0.9rem; padding: 0.75rem; background: #e0f2fe; border-radius: 8px;">
+        💡 پایگاه داده به صورت امن و سریع در فایل <code>storage/database.sqlite</code> خارج از مسیر دسترسی عمومی ذخیره خواهد شد. نیازی به ورود به phpMyAdmin یا ساخت کاربر دیتابیس در cPanel نیست!
+      </div>
+
+      <div id="mysqlFields" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed #bae6fd;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label for="mysqlHost">میزبان (Host)</label>
+            <input type="text" id="mysqlHost" name="mysqlHost" value="localhost">
+          </div>
+          <div class="form-group">
+            <label for="mysqlPort">پورت (Port)</label>
+            <input type="number" id="mysqlPort" name="mysqlPort" value="3306">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="mysqlDatabase">نام پایگاه داده (Database Name)</label>
+          <input type="text" id="mysqlDatabase" name="mysqlDatabase" placeholder="مثال: cpaneluser_academydb">
+        </div>
+        <div class="form-group">
+          <label for="mysqlUser">نام کاربری دیتابیس (Username)</label>
+          <input type="text" id="mysqlUser" name="mysqlUser" placeholder="مثال: cpaneluser_dbuser">
+        </div>
+        <div class="form-group">
+          <label for="mysqlPassword">رمز عبور دیتابیس (Password)</label>
+          <input type="password" id="mysqlPassword" name="mysqlPassword" placeholder="••••••••">
+        </div>
+      </div>
+    </div>
 
     <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: #1e3a8a;">اطلاعات مدیر اصلی و مؤسسه:</h3>
 
@@ -47,7 +85,7 @@
     </div>
 
     <div class="form-group">
-      <label for="mobile">شماره همراه مدیر (نام کاربری جهت ورود)</label>
+      <label for="mobile">شماره همراه مدیر (نام کاربری ورود)</label>
       <input type="text" id="mobile" name="mobile" required placeholder="۰۹۱۲۳۴۵۶۷۸۹">
     </div>
 
@@ -61,8 +99,28 @@
       <input type="password" id="password" name="password" required minlength="8">
     </div>
 
-    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem; font-size: 1.05rem; padding: 0.9rem;">
       تأیید و اجرای فرآیند نصب سامانه
     </button>
   </form>
 </div>
+
+<script>
+  function toggleDbFields() {
+    const isMysql = document.getElementById('dialectMysql').checked;
+    const mysqlFields = document.getElementById('mysqlFields');
+    const sqliteInfo = document.getElementById('sqliteInfo');
+
+    if (isMysql) {
+      mysqlFields.style.display = 'block';
+      sqliteInfo.style.display = 'none';
+      document.getElementById('mysqlDatabase').required = true;
+      document.getElementById('mysqlUser').required = true;
+    } else {
+      mysqlFields.style.display = 'none';
+      sqliteInfo.style.display = 'block';
+      document.getElementById('mysqlDatabase').required = false;
+      document.getElementById('mysqlUser').required = false;
+    }
+  }
+</script>

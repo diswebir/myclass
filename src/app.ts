@@ -166,13 +166,32 @@ export function createApp() {
 
   app.post('/install', async (req, res, next) => {
     try {
-      const { institutionName, fullName, mobile, email, password } = req.body;
+      const {
+        institutionName,
+        fullName,
+        mobile,
+        email,
+        password,
+        dbDialect,
+        mysqlHost,
+        mysqlPort,
+        mysqlDatabase,
+        mysqlUser,
+        mysqlPassword
+      } = req.body;
+
       const result = await installerService.runInstall({
         institutionName,
         fullName,
         mobile,
         email,
-        password
+        password,
+        dbDialect: dbDialect === 'mysql' ? 'mysql' : 'sqlite',
+        mysqlHost,
+        mysqlPort: mysqlPort ? Number(mysqlPort) : undefined,
+        mysqlDatabase,
+        mysqlUser,
+        mysqlPassword
       });
       res.render('public/login', { success: result.message, title: 'ورود به سامانه' });
     } catch (err) {

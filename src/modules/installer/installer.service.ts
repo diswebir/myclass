@@ -2,11 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import { Kysely } from 'kysely';
 import { DatabaseSchema } from '../../core/types';
-import { config } from '../../core/config';
+import { config, saveEffectiveDbConfig, getEffectiveDbConfig, DbConfig } from '../../core/config';
 import { logger } from '../../core/logger';
 import { hashPassword, normalizeMobile } from '../../core/security';
 import { runMigrations } from '../../core/migrator';
 import { ConflictError, ValidationError } from '../../core/errors';
+import { reconnectDb, testDbConnection } from '../../core/db';
 
 export interface EnvCheckResult {
   nodeVersion: string;
@@ -15,6 +16,7 @@ export interface EnvCheckResult {
   publicWritable: boolean;
   dbConnected: boolean;
   dbError?: string;
+  currentDialect: 'mysql' | 'sqlite';
   isAlreadyInstalled: boolean;
 }
 
@@ -70,20 +72,17 @@ export class InstallerService {
 
     let dbConnected = false;
     let dbError: string | undefined;
+    const currentConfig = getEffectiveDbConfig();
+
     try {
-      // Simple probe
-      await this.db.selectFrom('system_settings').select('key').limit(1).execute();
-      dbConnected = true;
-    } catch (err: any) {
-      // If table doesn't exist yet, we can check basic connection with raw probe
-      try {
-        const { sql } = require('kysely');
-        await sql`SELECT 1`.execute(this.db);
-        dbConnected = true;
-      } catch (innerErr: any) {
-        dbConnected = false;
-        dbError = innerErr.message || 'عدم امکان اتصال به پایگاه داده';
+      const testRes = await testDbConnection(currentConfig);
+      dbConnected = testRes.success;
+      if (!testRes.success) {
+        dbError = testRes.error;
       }
+    } catch (err: any) {
+      dbConnected = false;
+      dbError = err.message || 'خطا در اتصال به پایگاه داده';
     }
 
     return {
@@ -93,6 +92,7 @@ export class InstallerService {
       publicWritable,
       dbConnected,
       dbError,
+      currentDialect: currentConfig.dialect,
       isAlreadyInstalled: await this.isInstalled()
     };
   }
@@ -103,15 +103,78 @@ export class InstallerService {
     email?: string;
     password: string;
     institutionName?: string;
-  }): Promise<{ message: string }> {
+    dbDialect?: 'mysql' | 'sqlite';
+    mysqlHost?: string;
+    mysqlPort?: number;
+    mysqlDatabase?: string;
+    mysqlUser?: string;
+    mysqlPassword?: string;
+    sqlitePath?: string;
+  }): Promise<{ message: string; dialectUsed: string }> {
     if (await this.isInstalled()) {
       throw new ConflictError('سامانه قبلاً نصب شده است و دسترسی مجدد به نصب مسدود است.');
     }
 
-    // 1. Run migrations and default seeds
-    await runMigrations(this.db);
+    // 1. Determine and configure database choice (MySQL vs SQLite)
+    const dialect = adminData.dbDialect || (adminData.mysqlDatabase ? 'mysql' : 'sqlite');
+    let dbConfigToSave: DbConfig;
 
-    // 2. Validate input
+    if (dialect === 'mysql') {
+      const host = adminData.mysqlHost || config.DB_HOST || 'localhost';
+      const port = Number(adminData.mysqlPort || config.DB_PORT || 3306);
+      const database = adminData.mysqlDatabase || config.DB_NAME;
+      const user = adminData.mysqlUser || config.DB_USER;
+      const password = adminData.mysqlPassword !== undefined ? adminData.mysqlPassword : config.DB_PASSWORD;
+
+      if (!database || !user) {
+        throw new ValidationError('برای نصب با پایگاه داده MySQL، وارد کردن نام دیتابیس و نام کاربری الزامی است.');
+      }
+
+      dbConfigToSave = {
+        dialect: 'mysql',
+        mysql: { host, port, database, user, password }
+      };
+
+      // Test connection before applying
+      const testRes = await testDbConnection(dbConfigToSave);
+      if (!testRes.success) {
+        throw new ValidationError(`عدم امکان برقراری ارتباط با MySQL: ${testRes.error}`);
+      }
+    } else {
+      // SQLite
+      const sqliteFile = adminData.sqlitePath || (process.env.NODE_ENV === 'test' ? ':memory:' : path.join(config.STORAGE_DIR, 'database.sqlite'));
+      if (sqliteFile !== ':memory:') {
+        fs.mkdirSync(path.dirname(sqliteFile), { recursive: true });
+      }
+
+      dbConfigToSave = {
+        dialect: 'sqlite',
+        sqlitePath: sqliteFile
+      };
+    }
+
+    // Save choice to storage/db-config.json
+    if (process.env.NODE_ENV !== 'test' || adminData.sqlitePath) {
+      saveEffectiveDbConfig(dbConfigToSave);
+    }
+
+    // Determine if we need to reconnect db
+    const currentConfig = getEffectiveDbConfig();
+    const isTest = process.env.NODE_ENV === 'test';
+    let activeDb = this.db;
+
+    if (!isTest && currentConfig.dialect !== dialect) {
+      activeDb = await reconnectDb(dbConfigToSave);
+      this.db = activeDb;
+    } else if (isTest && adminData.sqlitePath) {
+      activeDb = await reconnectDb(dbConfigToSave);
+      this.db = activeDb;
+    }
+
+    // 2. Run migrations and default seeds on active database
+    await runMigrations(activeDb);
+
+    // 3. Validate user input
     const normalizedMobile = normalizeMobile(adminData.mobile);
     if (!normalizedMobile || normalizedMobile.length !== 11) {
       throw new ValidationError('شماره موبایل وارد شده نامعتبر است (الگوی صحیح: ۰۹۱۲۳۴۵۶۷۸۹).');
@@ -121,8 +184,8 @@ export class InstallerService {
       throw new ValidationError('رمز عبور باید حداقل ۸ کاراکتر باشد.');
     }
 
-    // 3. Find super_admin role
-    const adminRole = await this.db
+    // 4. Find super_admin role
+    const adminRole = await activeDb
       .selectFrom('roles')
       .where('name', '=', 'super_admin')
       .selectAll()
@@ -132,21 +195,21 @@ export class InstallerService {
       throw new Error('نقش مدیر اصلی سامانه در دیتابیس یافت نشد.');
     }
 
-    // 4. Create primary admin
+    // 5. Create primary admin
     const passwordHash = await hashPassword(adminData.password);
     const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-    const existingUser = await this.db
+    const existingUser = await activeDb
       .selectFrom('users')
       .where('mobile', '=', normalizedMobile)
       .select('id')
       .executeTakeFirst();
 
     if (!existingUser) {
-      await this.db.insertInto('users').values({
-        full_name: adminData.fullName,
+      await activeDb.insertInto('users').values({
+        full_name: adminData.fullName.trim(),
         mobile: normalizedMobile,
-        email: adminData.email || null,
+        email: adminData.email ? adminData.email.trim().toLowerCase() : null,
         password_hash: passwordHash,
         role_id: adminRole.id!,
         status: 'active',
@@ -158,20 +221,20 @@ export class InstallerService {
       }).execute();
     }
 
-    // 5. Update institution name if provided
+    // 6. Update institution name if provided
     if (adminData.institutionName) {
-      await this.db
+      await activeDb
         .updateTable('system_settings')
         .set({
-          value_json: JSON.stringify(adminData.institutionName),
+          value_json: JSON.stringify(adminData.institutionName.trim()),
           updated_at: now
         })
         .where('key', '=', 'institution_name')
         .execute();
     }
 
-    // 6. Mark installed in system_settings
-    await this.db
+    // 7. Mark installed in system_settings
+    await activeDb
       .updateTable('system_settings')
       .set({
         value_json: JSON.stringify(true),
@@ -180,18 +243,21 @@ export class InstallerService {
       .where('key', '=', 'installed')
       .execute();
 
-    // 7. Write lock file
+    // 8. Write lock file
     try {
       fs.mkdirSync(path.dirname(this.lockFilePath), { recursive: true });
       fs.writeFileSync(
         this.lockFilePath,
-        `INSTALLED_AT=${now}\nADMIN_MOBILE=${normalizedMobile}\nNODE_ENV=${config.NODE_ENV}\n`
+        `INSTALLED_AT=${now}\nADMIN_MOBILE=${normalizedMobile}\nDB_DIALECT=${dialect}\nNODE_ENV=${config.NODE_ENV}\n`
       );
     } catch (err) {
       logger.error('Failed to create lock file in storage', err);
     }
 
-    logger.info(`Installation completed successfully for admin: ${normalizedMobile}`);
-    return { message: 'نصب با موفقیت انجام شد. اکنون می‌توانید با حساب مدیر وارد شوید.' };
+    logger.info(`Installation completed successfully for admin: ${normalizedMobile} (Dialect: ${dialect})`);
+    return {
+      message: `سامانه با موفقیت روی پایگاه داده (${dialect.toUpperCase()}) نصب شد. اکنون می‌توانید با حساب مدیر وارد شوید.`,
+      dialectUsed: dialect
+    };
   }
 }

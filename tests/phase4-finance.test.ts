@@ -22,6 +22,7 @@ describe('Phase 4: Finance, Tuition, Installments, Card-to-Card Receipts & Repor
 
   let financeStaffUser: AuthUser;
   let studentUser: AuthUser;
+  let classId: number;
   let enrollmentId: number;
   let installment1Id: number;
   let installment2Id: number;
@@ -77,7 +78,7 @@ describe('Phase 4: Finance, Tuition, Installments, Card-to-Card Receipts & Repor
       level: 'مقدماتی'
     });
 
-    const classId = await coursesService.createClass({
+    classId = await coursesService.createClass({
       courseId: course,
       title: 'کلاس حسابداری ویژه بازار کار',
       code: 'CLS-FIN-101',
@@ -260,7 +261,7 @@ describe('Phase 4: Finance, Tuition, Installments, Card-to-Card Receipts & Repor
 
       const unpaidEnrollmentId = await enrollmentService.enrollStudent({
         studentId: unpaidStudent.studentId,
-        classId: 1,
+        classId,
         tuitionAgreed: 5000000
       });
 
