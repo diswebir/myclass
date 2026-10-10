@@ -253,13 +253,13 @@ export class ClassesService {
     return Number(row.c);
   }
 
-  /** تغییر وضعیت — با کنترل (running نیاز به ثبت‌نام فعال دارد). */
+  /** تغییر وضعیت — با کنترل (running نیاز به سبت‌نام فعال دارد). */
   async setStatus(actor: AuthUser, classId: number, status: string) {
     const cls = await this.getById(classId);
     if (status === 'open' || status === 'running') {
       const count = await this.enrolledCount(classId);
       if (status === 'running' && count === 0) {
-        throw AppError.badRequest('کلاس ثبت‌نام فعالی ندارد؛ نمی‌توان «در حال برگزاری» کرد.');
+        throw AppError.badRequest('کلاس سبت‌نام فعالی ندارد؛ نمی‌توان «در حال برگزاری» کرد.');
       }
     }
     await this.db.updateTable('classes').set({ status, updated_at: nowDb() }).where('id', '=', classId).execute();
@@ -283,7 +283,7 @@ export class ClassesService {
       .limit(1)
       .executeTakeFirst();
     if (active) {
-      throw AppError.conflict('کلاس ثبت‌نام فعال دارد؛ ابتدا ثبت‌نام‌ها را لغو کنید.');
+      throw AppError.conflict('کلاس سبت‌نام فعال دارد؛ ابتدا سبت‌نام‌ها را لغو کنید.');
     }
     await this.db.updateTable('classes').set({ deleted_at: nowDb(), status: 'cancelled', updated_at: nowDb() }).where('id', '=', id).execute();
     await this.audit.log({

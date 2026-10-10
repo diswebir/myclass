@@ -83,7 +83,7 @@ export class AuthService {
       throw AppError.unauthorized('نام کاربری یا رمز عبور نادرست است.');
     }
 
-    // ورود موفق — بازنشانی تلاش‌های ناموفق + ثبت آخرین ورود
+    // ورود موفق — بازنشانی تلاش‌های ناموفق + سبت آخرین ورود
     await this.db
       .updateTable('users')
       .set({

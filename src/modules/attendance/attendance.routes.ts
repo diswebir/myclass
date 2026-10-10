@@ -1,4 +1,4 @@
-/** Routes — attendance: ثبت/اصلاح، فهرست جلسه، گزارش فراگیر/کلاس، هشدار غیبت. */
+/** Routes — attendance: سبت/اصلاح، فهرست جلسه، گزارش فراگیر/کلاس، هشدار غیبت. */
 import { Router } from 'express';
 import type { AppContext } from '../../core/http/context';
 import { AttendanceService } from './attendance.service';

@@ -39,7 +39,7 @@
         <td>{{ s.class_title }} ({{ s.class_code }})</td>
         <td>{{ s.topic or '—' }}</td>
         <td>{{ s.start_time or '—' }}</td>
-        <td><a href="/panel/teacher/mark/{{ s.id }}" class="btn btn-sm btn-primary">ثبت حضور</a></td>
+        <td><a href="/panel/teacher/mark/{{ s.id }}" class="btn btn-sm btn-primary">سبت حضور</a></td>
       </tr>
       {% else %}
       <tr><td colspan="5" class="empty">جلسه‌ی پیشِ رو یافت نشد.</td></tr>
@@ -64,7 +64,7 @@
               <span class="badge {{ 'ok' if sp.percent != null and sp.percent >= 70 else '' }}">{{ sp.date | faDate }}: {{ sp.percent | faNum }}٪</span>
             {% endfor %}
           {% else %}
-            <span class="empty">جلسه‌ای ثبت نشده است.</span>
+            <span class="empty">جلسه‌ای سبت نشده است.</span>
           {% endif %}
         </td>
       </tr>

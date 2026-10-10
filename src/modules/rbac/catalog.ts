@@ -72,26 +72,26 @@ export const PERMISSIONS: PermissionDef[] = [
   { module: 'sessions', resource: 'sessions', action: 'update', description: 'ویرایش جلسه' },
   { module: 'sessions', resource: 'sessions', action: 'delete', description: 'حذف جلسه' },
   // preregistration
-  { module: 'prereg', resource: 'prereg', action: 'list', description: 'فهرست پیش‌ثبت‌نام‌ها' },
-  { module: 'prereg', resource: 'prereg', action: 'review', description: 'بررسی پیش‌ثبت‌نام' },
-  { module: 'prereg', resource: 'prereg', action: 'update', description: 'ویرایش پیش‌ثبت‌نام' },
-  { module: 'prereg', resource: 'prereg', action: 'convert', description: 'تبدیل به ثبت‌نام' },
+  { module: 'prereg', resource: 'prereg', action: 'list', description: 'فهرست پیش‌سبت‌نام‌ها' },
+  { module: 'prereg', resource: 'prereg', action: 'review', description: 'بررسی پیش‌سبت‌نام' },
+  { module: 'prereg', resource: 'prereg', action: 'update', description: 'ویرایش پیش‌سبت‌نام' },
+  { module: 'prereg', resource: 'prereg', action: 'convert', description: 'تبدیل به سبت‌نام' },
   // enrollment
-  { module: 'enrollment', resource: 'enrollment', action: 'list', description: 'فهرست ثبت‌نام‌ها' },
-  { module: 'enrollment', resource: 'enrollment', action: 'view_all', description: 'مشاهده همه ثبت‌نام‌ها' },
-  { module: 'enrollment', resource: 'enrollment', action: 'create', description: 'ثبت‌نام' },
-  { module: 'enrollment', resource: 'enrollment', action: 'update', description: 'ویرایش ثبت‌نام' },
-  { module: 'enrollment', resource: 'enrollment', action: 'cancel', description: 'لغو ثبت‌نام' },
+  { module: 'enrollment', resource: 'enrollment', action: 'list', description: 'فهرست سبت‌نام‌ها' },
+  { module: 'enrollment', resource: 'enrollment', action: 'view_all', description: 'مشاهده همه سبت‌نام‌ها' },
+  { module: 'enrollment', resource: 'enrollment', action: 'create', description: 'سبت‌نام' },
+  { module: 'enrollment', resource: 'enrollment', action: 'update', description: 'ویرایش سبت‌نام' },
+  { module: 'enrollment', resource: 'enrollment', action: 'cancel', description: 'لغو سبت‌نام' },
   // attendance
   { module: 'attendance', resource: 'attendance', action: 'view', description: 'مشاهده حضور' },
   { module: 'attendance', resource: 'attendance', action: 'view_all', description: 'مشاهده همه حضورها' },
-  { module: 'attendance', resource: 'attendance', action: 'mark', description: 'ثبت حضور' },
+  { module: 'attendance', resource: 'attendance', action: 'mark', description: 'سبت حضور' },
   { module: 'attendance', resource: 'attendance', action: 'correct', description: 'اصلاح حضور' },
   { module: 'attendance', resource: 'attendance', action: 'report', description: 'گزارش حضور' },
   // finance
   { module: 'finance', resource: 'finance', action: 'view_all', description: 'مشاهده همه مالی' },
   { module: 'finance', resource: 'payments', action: 'view_all', description: 'مشاهده همه پرداخت‌ها' },
-  { module: 'finance', resource: 'payments', action: 'create', description: 'ثبت پرداخت' },
+  { module: 'finance', resource: 'payments', action: 'create', description: 'سبت پرداخت' },
   { module: 'finance', resource: 'payments', action: 'approve', description: 'تأیید پرداخت' },
   { module: 'finance', resource: 'payments', action: 'reject', description: 'رد پرداخت' },
   { module: 'finance', resource: 'payments', action: 'reverse', description: 'برگشت پرداخت' },
@@ -162,7 +162,7 @@ export const SYSTEM_ROLES: RoleDef[] = [
   {
     slug: 'academic',
     name: 'مسئول آموزش',
-    description: 'اساتید، فراگیران، دوره‌ها، کلاس‌ها، جلسات، پیش‌ثبت‌نام، ثبت‌نام، حضور، مدارک',
+    description: 'اساتید، فراگیران، دوره‌ها، کلاس‌ها، جلسات، پیش‌سبت‌نام، سبت‌نام، حضور، مدارک',
     isSystem: true,
     permissions: [
       'teachers.*', 'students.*', 'courses.*', 'classes.*', 'sessions.*',
@@ -173,7 +173,7 @@ export const SYSTEM_ROLES: RoleDef[] = [
   {
     slug: 'teacher',
     name: 'استاد',
-    description: 'کلاس‌های خود، جلسات، ثبت و اصلاح حضور، مشاهده فراگیران کلاس‌های خود (از پنل استاد — نه فهرست کامل فراگیران)',
+    description: 'کلاس‌های خود، جلسات، سبت و اصلاح حضور، مشاهده فراگیران کلاس‌های خود (از پنل استاد — نه فهرست کامل فراگیران)',
     isSystem: true,
     permissions: [
       'classes.list', 'sessions.list', 'sessions.update',

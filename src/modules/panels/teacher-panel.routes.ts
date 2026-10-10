@@ -66,7 +66,7 @@ export function teacherPanelRoutes(ctx: AppContext): Router {
     }
   });
 
-  /** صفحه ثبت حضور جلسه — فقط استاد همان کلاس (یا license). */
+  /** صفحه سبت حضور جلسه — فقط استاد همان کلاس (یا license). */
   router.get('/mark/:sessionId', async (req, res, next) => {
     try {
       const user = getAuthUser(req);

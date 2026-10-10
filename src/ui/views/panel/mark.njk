@@ -1,9 +1,9 @@
 {% extends "layout.njk" %}
-{% block title %}ثبت حضور — myclass{% endblock %}
+{% block title %}سبت حضور — myclass{% endblock %}
 {% block content %}
-{% set labels = { 'present': 'حاضر', 'absent': 'غایب', 'late': 'تأخیر', 'excused': 'مرخصی', 'unset': 'ثبت‌نشده' } %}
+{% set labels = { 'present': 'حاضر', 'absent': 'غایب', 'late': 'تأخیر', 'excused': 'مرخصی', 'unset': 'سبت‌نشده' } %}
 <div class="page-head">
-  <h1>ثبت حضور</h1>
+  <h1>سبت حضور</h1>
   <a href="/panel/teacher" class="btn btn-ghost">بازگشت به پنل</a>
 </div>
 <div class="card">
@@ -33,13 +33,13 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="4" class="empty">فراگیری در این کلاس ثبت‌نام فعال ندارد.</td></tr>
+        <tr><td colspan="4" class="empty">فراگیری در این کلاس سبت‌نام فعال ندارد.</td></tr>
         {% endfor %}
       </tbody>
     </table>
     {% if roster.length %}
     <div class="actions">
-      <button type="submit" class="btn btn-primary">ثبت حضور</button>
+      <button type="submit" class="btn btn-primary">سبت حضور</button>
     </div>
     {% endif %}
   </form>

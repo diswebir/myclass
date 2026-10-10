@@ -15,7 +15,7 @@ describe('audit log', () => {
     await t.cleanup();
   });
 
-  it('ورود موفق در audit ثبت می‌شود', async () => {
+  it('ورود موفق در audit سبت می‌شود', async () => {
     await request(t.app)
       .post('/auth/login')
       .type('form')
@@ -24,7 +24,7 @@ describe('audit log', () => {
     expect(rows.length).toBeGreaterThan(0);
   });
 
-  it('تغییر تنظیمات در audit ثبت می‌شود (بدون مقدار secret)', async () => {
+  it('تغییر تنظیمات در audit سبت می‌شود (بدون مقدار secret)', async () => {
     const agent = await loginAgent(t.app);
     const page = await agent.get('/');
     const csrf = (page.text.match(/name="_csrf" value="([^"]+)"/) || [])[1];

@@ -12,7 +12,7 @@
 
 ## چرا SQLite در sandbox?
 
-- sandbox هیچ سرور MySQL/MariaDB ندارد (apt مسدود، docker موجود نیست) — این یک محدودیت واقعی محیط است (ثبت در STATE.md — B1).
+- sandbox هیچ سرور MySQL/MariaDB ندارد (apt مسدود، docker موجود نیست) — این یک محدودیت واقعی محیط است (سبت در STATE.md — B1).
 - لایه داده با **Kysely** (dialect-agnostic) نوشته می‌شود؛ repositoryها SQL قابل‌حمل می‌سازند (Kysely schema builder در migrationها).
 - `node:sqlite` (ماژول داخلی Node 22) یک SQLite واقعی است — تست‌ها SQL واقعی اجرا می‌کنند، نه mock.
 
@@ -20,7 +20,7 @@
 
 - migrationها با Kysely schema builder (قابل حمل بین MySQL و SQLite) — همان فایل‌ها در هر دو DB اجرا می‌شوند.
 - تست‌های integration gegen SQLite در sandbox **اجرا می‌شوند** و نتیجه گزارش می‌شود.
-- تست gegen MySQL/MariaDB واقعی **روی هاست cPanel** قابل اجرا هستند (`TEST_DB_DSN=mysql://... npm run test:integration`) — در sandbox «اجرا‌نشده» ثبت می‌شود (نه «موفق»).
+- تست gegen MySQL/MariaDB واقعی **روی هاست cPanel** قابل اجرا هستند (`TEST_DB_DSN=mysql://... npm run test:integration`) — در sandbox «اجرا‌نشده» سبت می‌شود (نه «موفق»).
 - هر claim «VERIFIED» در REQUIREMENTS.md فقط برای تست‌هایی است که واقعاً اجرا شده‌اند.
 
 ## تست‌ها

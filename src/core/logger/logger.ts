@@ -1,5 +1,5 @@
 /**
- * Logger — سطوح error/warn/info. **هیچ secret (password، API key، token) ثبت نمی‌شود.**
+ * Logger — سطوح error/warn/info. **هیچ secret (password، API key، token) سبت نمی‌شود.**
  * با masking برای مقادیر حساس.
  */
 type Level = 'error' | 'warn' | 'info';

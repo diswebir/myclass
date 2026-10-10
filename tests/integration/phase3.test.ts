@@ -127,7 +127,7 @@ const PNG_1PX = Buffer.from(
   'hex',
 );
 
-/** ساختار: کلاس + استاد + جلسه + ۲ فراگیر + ثبت‌نام‌ها */
+/** ساختار: کلاس + استاد + جلسه + ۲ فراگیر + سبت‌نام‌ها */
 async function seedClassroom(t: TestApp) {
   const classId = await seedClass(t, 'CL-1');
   const teacherId = await seedTeacher(t, 'T-1', '09120000001');
@@ -147,7 +147,7 @@ describe('فاز ۳ — attendance (REQ-P3-01)', () => {
   beforeEach(async () => { t = await createTestApp(); });
   afterEach(async () => { await t.cleanup(); });
 
-  it('ثبت حضور با API + ذخیره در DB', async () => {
+  it('سبت حضور با API + ذخیره در DB', async () => {
     const { sessionId, student1, student2 } = await seedClassroom(t);
     const agent = await loginAgent(t.app);
     const res = await postAs(agent, `/attendance/mark/${sessionId}`, {
@@ -166,7 +166,7 @@ describe('فاز ۳ — attendance (REQ-P3-01)', () => {
     expect(s2?.note).toBe('مریض');
   });
 
-  it('ثبت حضور فراگیر غیرعضو کلاس → 400', async () => {
+  it('سبت حضور فراگیر غیرعضو کلاس → 400', async () => {
     const { sessionId } = await seedClassroom(t);
     const outsider = await seedStudent(t, 'ST-X', '09120000099');
     const agent = await loginAgent(t.app);
@@ -343,13 +343,13 @@ describe('فاز ۳ — پنل استاد (REQ-P3-02)', () => {
     expect(denied.status).toBe(403);
   });
 
-  it('صفحه ثبت حضور — 200 برای استاد کلاس، 403 برای استاد دیگر', async () => {
+  it('صفحه سبت حضور — 200 برای استاد کلاس، 403 برای استاد دیگر', async () => {
     const { sessionId, teacherId, student1 } = await seedClassroom(t);
     await makeTeacherUser(t, 'teacher_a', teacherId);
     const agent = await loginAgent(t.app, 'teacher_a', 'Teacher123');
     const page = await agent.get(`/panel/teacher/mark/${sessionId}`).set('Accept', 'text/html');
     expect(page.status).toBe(200);
-    expect(page.text).toContain('ثبت حضور');
+    expect(page.text).toContain('سبت حضور');
     expect(page.text).toContain('ST-1');
     // استاد دیگر
     const otherTeacher = await seedTeacher(t, 'T-2', '09120000002');
@@ -360,7 +360,7 @@ describe('فاز ۳ — پنل استاد (REQ-P3-02)', () => {
     expect(student1).toBeGreaterThan(0);
   });
 
-  it('ثبت حضور با فرم HTML (urlencoded) → redirect + رکورد', async () => {
+  it('سبت حضور با فرم HTML (urlencoded) → redirect + رکورد', async () => {
     const { sessionId, teacherId, student1, student2 } = await seedClassroom(t);
     await makeTeacherUser(t, 'teacher_a', teacherId);
     const agent = await loginAgent(t.app, 'teacher_a', 'Teacher123');
@@ -522,7 +522,7 @@ describe('فاز ۳ — پنل فراگیر (REQ-P3-03)', () => {
     expect(audits.length).toBe(1);
   });
 
-  it('رسید برای ثبت‌نام دیگری → 403', async () => {
+  it('رسید برای سبت‌نام دیگری → 403', async () => {
     const { classId, student1, student2 } = await seedClassroom(t);
     const otherEnrollment = await t.db
       .selectFrom('enrollments')

@@ -155,7 +155,7 @@ export async function up(db: Kysely<any>, ctx: MigrateCtx): Promise<void> {
     .addColumn('created_at', 'datetime', (c) => c.notNull())
     .addColumn('updated_at', 'datetime', (c) => c.notNull())
     .execute();
-  // یک ثبت‌نام فعال برای هر (کلاس، فراگیر) — قید یکتا per spec §۶-ب
+  // یک سبت‌نام فعال برای هر (کلاس، فراگیر) — قید یکتا per spec §۶-ب
   await db.schema
     .createIndex('enrollments_class_student_uq')
     .ifNotExists()

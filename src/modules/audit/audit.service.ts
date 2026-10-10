@@ -1,4 +1,4 @@
-/** سرویس audit log — ثبت رویدادهای حساس (per spec §۶-پ). بدون ثبت secret. */
+/** سرویس audit log — سبت رویدادهای حساس (per spec §۶-پ). بدون سبت secret. */
 import type { Kysely } from 'kysely';
 import type { Database } from '../../core/db/types';
 import { nowDb } from '../../core/db/time';
@@ -53,8 +53,8 @@ export class AuditService {
         })
         .execute();
     } catch (err) {
-      // لاگ ممیزی هرگز نباید باعث شکست عملیات شود — در لاگ خطا ثبت می‌شود
-      console.error('[audit] ثبت لاگ ممیزی ناموفق بود:', (err as Error).message);
+      // لاگ ممیزی هرگز نباید باعث شکست عملیات شود — در لاگ خطا سبت می‌شود
+      console.error('[audit] سبت لاگ ممیزی ناموفق بود:', (err as Error).message);
     }
   }
 

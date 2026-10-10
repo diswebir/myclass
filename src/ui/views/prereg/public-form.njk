@@ -1,8 +1,8 @@
 {% extends "layout.njk" %}
-{% block title %}پیش‌ثبت‌نام — {{ cls.title }}{% endblock %}
+{% block title %}پیش‌سبت‌نام — {{ cls.title }}{% endblock %}
 {% block content %}
 <div class="card">
-  <h1>پیش‌ثبت‌نام — {{ cls.title }}</h1>
+  <h1>پیش‌سبت‌نام — {{ cls.title }}</h1>
   <p>کد کلاس: <code>{{ cls.code }}</code> — شهریه: {{ cls.fee | faMoney }}</p>
   <form method="post" action="/prereg/public/{{ cls.code }}">
     <input type="text" name="website" value="" style="display:none" tabindex="-1" autocomplete="off">
@@ -24,7 +24,7 @@
       </div>
       {% endfor %}
     {% endif %}
-    <button type="submit" class="btn btn-primary btn-block">ثبت پیش‌ثبت‌نام</button>
+    <button type="submit" class="btn btn-primary btn-block">سبت پیش‌سبت‌نام</button>
   </form>
 </div>
 {% endblock %}

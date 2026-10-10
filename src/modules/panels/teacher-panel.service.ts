@@ -1,4 +1,4 @@
-/** پنل استاد — کلاس‌های خود، فهرست فراگیران (فیلدهای مجاز)، ثبت حضور، گزارش خود، ویرایش پروفایل (REQ-P3-02). */
+/** پنل استاد — کلاس‌های خود، فهرست فراگیران (فیلدهای مجاز)، سبت حضور، گزارش خود، ویرایش پروفایل (REQ-P3-02). */
 import type { Kysely } from 'kysely';
 import type { Database } from '../../core/db/types';
 import { AppError } from '../../core/errors/AppError';

@@ -157,7 +157,7 @@ export class StudentsService {
       .limit(1)
       .executeTakeFirst();
     if (active) {
-      throw AppError.conflict('فراگیر در کلاس‌های فعال ثبت‌نام دارد؛ ابتدا ثبت‌نام‌ها را لغو کنید.');
+      throw AppError.conflict('فراگیر در کلاس‌های فعال سبت‌نام دارد؛ ابتدا سبت‌نام‌ها را لغو کنید.');
     }
     await this.db.updateTable('students').set({ deleted_at: nowDb(), status: 'inactive', updated_at: nowDb() }).where('id', '=', id).execute();
     await this.audit.log({

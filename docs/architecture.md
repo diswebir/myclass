@@ -81,8 +81,8 @@ ERD کامل در `docs/erd.md`. نکات کلیدی:
 
 ## ۷. logging و errors
 
-- Logger با levels (error/warn/info) — بدون ثبت secret (password، API key، token).
-- `AppError` با کد وضعیت + پیام فارسی کاربرپسند؛ error handler جزئیات داخلی را فقط در log ثبت می‌کند (نه در پاسخ).
+- Logger با levels (error/warn/info) — بدون سبت secret (password، API key، token).
+- `AppError` با کد وضعیت + پیام فارسی کاربرپسند؛ error handler جزئیات داخلی را فقط در log سبت می‌کند (نه در پاسخ).
 - audit log برای عملیات حساس (per spec §۶-پ).
 
 ## ۸.ellido decisiones videre

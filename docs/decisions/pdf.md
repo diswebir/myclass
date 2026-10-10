@@ -21,7 +21,7 @@
 2. **شکل‌دهی پیش از رندر (گزینه «الف» spec):** pdf-lib شکل‌دهی (GSUB) ندارد؛ derfor ein Wörterbuch der Form (4-form model: isolated/final/initial/medial + ligature «لا») — با **HarfBuzz** (harfbuzzjs، wasm — فقط ابزار build) تولید و تأیید شد: `src/core/text/persian-forms.json`.
 3. **اعتبارسنجی:** شکل‌دهنده runtime (`src/core/text/shape.ts`) با ۲۳/۲۳ نمونه در برابر HarfBuzz (calt خاموش) **تطابق کامل** دارد — `tests/fixtures/shaping-cases.json`.
 4. **Bidi:** متن مختلط (فارسی + کد/عدد لاتین) با `bidi-js` (UAX#9) به ترتیب دیداری تبدیل می‌شود.
-5. **فونت‌ها (variant):** ۱۶ مورد تفاوت glyph بین HarfBuzz و کد standard (duplicate glyphs در فونت) ثبت شد — رندر معادل است؛ در جدول نهایی از کدِ cmap فونت استفاده شده (renders exact glyph).
+5. **فونت‌ها (variant):** ۱۶ مورد تفاوت glyph بین HarfBuzz و کد standard (duplicate glyphs در فونت) سبت شد — رندر معادل است؛ در جدول نهایی از کدِ cmap فونت استفاده شده (renders exact glyph).
 6. **ساختار PDF تأیید شد:** ۱ صفحه، FontFile2 (فونت embed/subset)، نام Vazirmatn، content stream با Tj، و cmap فونت embed شده شامل glyphهای کلیدی (FEB3, FEFC, FEDF, FBFF, 06F4, 004D). فایل نمونه: `spike-output/certificate-sample.pdf` (167.9 KB).
 
 ## خط لوله نهایی (per PDF)
@@ -31,7 +31,7 @@ normalize (ارقام/فاصله) → shapeLogical (جدول فرم‌ها) → 
 → pdf-lib drawText (رسم چپ‌به‌راست رشته دیداری) + QR (qrcode → PNG → embedPng)
 ```
 
-## محدودیت‌های ثبت‌شده (honest)
+## محدودیت‌های سبت‌شده (honest)
 
 - **harakat** (اعراب) حذف می‌شوند — pdf-lib Positionierung GPOS ندارد.
 - **calt variants** فونت (مثلاً یِ «long» قبل از ر) بازتولید نمی‌شوند؛ فرم استاندارد رندر می‌شود (ظاهری معادل).

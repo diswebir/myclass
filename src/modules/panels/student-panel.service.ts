@@ -98,7 +98,7 @@ export class StudentPanelService {
     return this.attendance.studentReport(studentId);
   }
 
-  /** مالی فراگیر — مانده هر ثبت‌نام + پرداخت‌ها. */
+  /** مالی فراگیر — مانده هر سبت‌نام + پرداخت‌ها. */
   async myFinance(userId: number) {
     const studentId = await this.studentIdOf(userId);
     const enrollments = await this.db
@@ -134,21 +134,21 @@ export class StudentPanelService {
     idempotencyKey: string;
   }) {
     const studentId = await this.studentIdOf(userId);
-    // مالکیت ثبت‌نام
+    // مالکیت سبت‌نام
     const enr = await this.db
       .selectFrom('enrollments')
       .select('id')
       .where('id', '=', opts.enrollmentId)
       .where('student_id', '=', studentId)
       .executeTakeFirst();
-    if (!enr) throw AppError.forbidden('این ثبت‌نام متعلق به شما نیست.');
+    if (!enr) throw AppError.forbidden('این سبت‌نام متعلق به شما نیست.');
     // ضدتکرار — idempotency
     const dup = await this.db
       .selectFrom('card_receipts')
       .select('id')
       .where('idempotency_key', '=', opts.idempotencyKey)
       .executeTakeFirst();
-    if (dup) throw AppError.conflict('این رسید قبلاً ثبت شده است.');
+    if (dup) throw AppError.conflict('این رسید قبلاً سبت شده است.');
     const file = await this.files.upload({
       buffer: opts.buffer,
       originalName: opts.originalName,

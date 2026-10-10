@@ -1,4 +1,4 @@
-/** Routes — enrollment: ثبت‌نام، تبدیل، لغو. */
+/** Routes — enrollment: سبت‌نام، تبدیل، لغو. */
 import { Router } from 'express';
 import { z } from 'zod';
 import type { AppContext } from '../../core/http/context';
@@ -60,7 +60,7 @@ export function enrollmentRoutes(ctx: AppContext): Router {
     }
   });
 
-  // تبدیل پیش‌ثبت‌نام
+  // تبدیل پیش‌سبت‌نام
   router.post('/convert/:preregId', requirePermission('prereg', 'prereg', 'convert'), async (req, res, next) => {
     try {
       const result = await service.convertPrereg(getAuthUser(req), Number(req.params.preregId));

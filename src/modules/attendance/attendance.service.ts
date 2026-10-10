@@ -1,4 +1,4 @@
-/** سرویس attendance — جلسه‌محور، ۵ وضعیت، ثبت سریع، یکتایی (جلسه، فراگیر)، اصلاح با audit، گزارش، درصد، هشدار غیبت (REQ-P3-01). */
+/** سرویس attendance — جلسه‌محور، ۵ وضعیت، سبت سریع، یکتایی (جلسه، فراگیر)، اصلاح با audit، گزارش، درصد، هشدار غیبت (REQ-P3-01). */
 import type { Kysely } from 'kysely';
 import type { Database } from '../../core/db/types';
 import { AppError } from '../../core/errors/AppError';
@@ -26,11 +26,11 @@ export class AttendanceService {
     return session;
   }
 
-  /** ثبت/اصلاح حضور — upsert per (session_id, student_id) — اصلاح با audit. */
+  /** سبت/اصلاح حضور — upsert per (session_id, student_id) — اصلاح با audit. */
   async markSession(actor: AuthUser, sessionId: number, entries: Array<{ studentId: number; status: AttendanceStatus; note?: string }>) {
     const session = await this.getSession(sessionId);
     const classId = Number(session.class_id);
-    //Membership: همه studentIdها باید در کلاس ثبت‌نام فعال داشته باشند
+    //Membership: همه studentIdها باید در کلاس سبت‌نام فعال داشته باشند
     const ids = entries.map((e) => e.studentId);
     const enrolled = await this.db
       .selectFrom('enrollments')
@@ -42,7 +42,7 @@ export class AttendanceService {
     const enrolledIds = new Set(enrolled.map((r) => Number(r.student_id)));
     const notEnrolled = ids.filter((id) => !enrolledIds.has(id));
     if (notEnrolled.length) {
-      throw AppError.badRequest(`این فراگیران در کلاس ثبت‌نام فعال ندارند: ${notEnrolled.join(', ')}`);
+      throw AppError.badRequest(`این فراگیران در کلاس سبت‌نام فعال ندارند: ${notEnrolled.join(', ')}`);
     }
     let marked = 0;
     let corrected = 0;
@@ -134,7 +134,7 @@ export class AttendanceService {
       .execute();
   }
 
-  /** فهرست فراگیران کلاس برای ثبت سریع (status فعلی جلسه — اگر وجود داشته باشد unset). */
+  /** فهرست فراگیران کلاس برای سبت سریع (status فعلی جلسه — اگر وجود داشته باشد unset). */
   async classSessionRoster(classId: number, sessionId: number) {
     const session = await this.getSession(sessionId);
     if (Number(session.class_id) !== classId) {

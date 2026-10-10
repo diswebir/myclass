@@ -11,7 +11,7 @@ async function freshDb(): Promise<Kysely<any>> {
 }
 
 describe('migration', () => {
-  it('همه migrationها اجرا می‌شوند و در جدول migrations ثبت می‌شوند', async () => {
+  it('همه migrationها اجرا می‌شوند و در جدول migrations سبت می‌شوند', async () => {
     const db = await freshDb();
     try {
       const res = await migrateToLatest(db);
@@ -61,7 +61,7 @@ describe('migration', () => {
     }
   });
 
-  it('قید یکتا — enrollments: یک ثبت‌نام برای هر (class, student)', async () => {
+  it('قید یکتا — enrollments: یک سبت‌نام برای هر (class, student)', async () => {
     const db = await freshDb();
     try {
       await migrateToLatest(db);

@@ -1,14 +1,14 @@
 {% extends "layout.njk" %}
-{% block title %}پیگیری پیش‌ثبت‌نام{% endblock %}
+{% block title %}پیگیری پیش‌سبت‌نام{% endblock %}
 {% block content %}
 <div class="card">
-  <h1>پیگیری پیش‌ثبت‌نام</h1>
+  <h1>پیگیری پیش‌سبت‌نام</h1>
   <table class="table">
     <tr><th>کد پیگیری</th><td><code>{{ row.tracking_code }}</code></td></tr>
     <tr><th>نام</th><td>{{ row.applicant_name }}</td></tr>
     <tr><th>وضعیت</th><td><span class="badge">{{ row.status }}</span></td></tr>
     {% if row.review_note %}<tr><th>توضیح</th><td>{{ row.review_note }}</td></tr>{% endif %}
-    <tr><th>تاریخ ثبت</th><td>{{ row.created_at | faDateTime }}</td></tr>
+    <tr><th>تاریخ سبت</th><td>{{ row.created_at | faDateTime }}</td></tr>
   </table>
 </div>
 {% endblock %}

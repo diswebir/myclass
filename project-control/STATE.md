@@ -14,7 +14,7 @@
 - بررسی محیط: Node v22.22.3، npm 10.9.8، Debian 12، sudo موجود.
 - **BLOCKER شناسایی شد:** سرور MariaDB/MySQL در sandbox موجود نیست (apt مسدود — فقط github/npm/pypi در دسترس). Docker موجود نیست.
   - راه‌حل: لایه داده با Kysely (dialect-agnostic)؛ prod = mysql2/MariaDB per spec؛ تست‌های sandbox = SQLite (better-sqlite3، فقط devDependency).
-  - ثبت در `docs/decisions/testing.md`.
+  - سبت در `docs/decisions/testing.md`.
 - اسکلت پروژه: `package.json` (فقط پکیج‌های JS خالص در prod)، `tsconfig.json`، `tsconfig.migrations.json`، `.env.example`، `.gitignore` ایجاد شد.
 
 ### 2026-10-10 — Session 2 (Spike PDF + docs + فاز ۱)
@@ -28,14 +28,14 @@
 
 ### 2026-10-10 — Session 3 (فاز ۲)
 
-- ماژول‌های فاز ۲ کامل شدند: teachers (CRUD + کد + تخصص)، students (پرونده + CSV import با پیش‌نمایش/خطای هر سطر + export با محافظ formula)، courses، classes (فیلدهای کامل + ظرفیت + وضعیت + تخصیص چند استاد + جلسات با تشخیص تضاد زمانی استاد/مکان)، preregistration (فرم عمومی + honeypot + rate limit + کد پیگیری + ضدتکرار + review)، enrollment (ثبت‌نام + کنترل ظرفیت + تبدیل پیش‌ثبت‌نام + لغو).
+- ماژول‌های فاز ۲ کامل شدند: teachers (CRUD + کد + تخصص)، students (پرونده + CSV import با پیش‌نمایش/خطای هر سطر + export با محافظ formula)، courses، classes (فیلدهای کامل + ظرفیت + وضعیت + تخصیص چند استاد + جلسات با تشخیص تضاد زمانی استاد/مکان)، preregistration (فرم عمومی + honeypot + rate limit + کد پیگیری + ضدتکرار + review)، enrollment (سبت‌نام + کنترل ظرفیت + تبدیل پیش‌سبت‌نام + لغو).
 - Policy Layer: assertClassAccess / assertStudentAccess / assertEnrollmentAccess / assertPaymentAccess / assertFileAccess / assertCertificateAccess — تست جداسازی داده کلاس‌ها (IDOR) پاس شد.
 - تست‌ها: ۱۳۹ تست موفق — typecheck + build سبز.
 
 
 ### 2026-10-10 — Session 4 (فاز ۳ — attendance + پنل‌ها)
 
-- ماژول‌های فاز ۳ کامل و mount شدند: attendance (ثبت/اصلاح با audit، یکتایی (جلسه،فراگیر)، unset=حذف، گزارش فراگیر/کلاس، هشدار حد غیبت)، files (آپلود امن + دانلود کنترل‌شده با Policy)، پنل استاد (کلاس‌های خود، ثبت حضور با فرم HTML، گزارش خود، پروفایل)، پنل فراگیر (پروفایل، کلاس‌ها، حضور، مالی، آپلود رسید کارت‌به‌کارت با idempotency، مدارک).
+- ماژول‌های فاز ۳ کامل و mount شدند: attendance (سبت/اصلاح با audit، یکتایی (جلسه،فراگیر)، unset=حذف، گزارش فراگیر/کلاس، هشدار حد غیبت)، files (آپلود امن + دانلود کنترل‌شده با Policy)، پنل استاد (کلاس‌های خود، سبت حضور با فرم HTML، گزارش خود، پروفایل)، پنل فراگیر (پروفایل، کلاس‌ها، حضور، مالی، آپلود رسید کارت‌به‌کارت با idempotency، مدارک).
 - Viewهای جدید: panel/{teacher,teacher-profile,student,student-profile,mark}.njk + attendance/{session,class-report}.njk؛ لینک پنل‌ها در layout + داشبورد.
 - **باگ‌های مهم پیدا و رفع شد:**
   1. کلیدهای ۲بخشی مجوز در نقش‌های سیستمی (مثل `attendance.view`) silently resolve نمی‌شدند → shorthand `module.action` به `resolvePermissionIds` اضافه شد + تست regression.

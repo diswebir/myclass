@@ -1,4 +1,4 @@
-/** تست‌های integration — فاز ۲: اساتید، فراگیران (+CSV)، دوره‌ها، کلاس‌ها، جلسات، پیش‌ثبت‌نام، ثبت‌نام. */
+/** تست‌های integration — فاز ۲: اساتید، فراگیران (+CSV)، دوره‌ها، کلاس‌ها، جلسات، پیش‌سبت‌نام، سبت‌نام. */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import type { TestApp } from '../helpers/app';
@@ -207,7 +207,7 @@ describe('فاز ۲ — کلاس‌ها + استاد + ظرفیت', () => {
   });
 });
 
-describe('فاز ۲ — پیش‌ثبت‌نام + ثبت‌نام', () => {
+describe('فاز ۲ — پیش‌سبت‌نام + سبت‌نام', () => {
   let t: TestApp;
   beforeEach(async () => { t = await createTestApp(); });
   afterEach(async () => { await t.cleanup(); });
@@ -218,14 +218,14 @@ describe('فاز ۲ — پیش‌ثبت‌نام + ثبت‌نام', () => {
     return cls;
   }
 
-  it('فرم عمومی — ثبت + کد پیگیری + ضدتکرار', async () => {
+  it('فرم عمومی — سبت + کد پیگیری + ضدتکرار', async () => {
     const cls = await setupPreregClass();
     const res = await request(t.app)
       .post(`/prereg/public/CL-PR`)
       .type('form')
       .send({ applicantName: 'سارا محمدی', phone: '09123456789', email: 'sara@example.com' });
     expect(res.status).toBe(200);
-    expect(res.text).toContain('پیش‌ثبت‌نام شما ثبت شد');
+    expect(res.text).toContain('پیش‌سبت‌نام شما سبت شد');
     const m = res.text.match(/کد پیگیری: <code[^>]*>([^<]+)<\/code>/);
     expect(m).toBeTruthy();
     const trackingCode = m![1];
@@ -248,11 +248,11 @@ describe('فاز ۲ — پیش‌ثبت‌نام + ثبت‌نام', () => {
     expect(track.text).toContain('pending');
   });
 
-  it('review + تبدیل به ثبت‌نام — کنترل ظرفیت', async () => {
+  it('review + تبدیل به سبت‌نام — کنترل ظرفیت', async () => {
     const cls = await setupPreregClass();
     const agent = await loginAgent(t.app);
     const csrf = await csrfOf(agent);
-    // ثبت عمومی
+    // سبت عمومی
     const sub = await request(t.app)
       .post(`/prereg/public/CL-PR`)
       .type('form')
@@ -267,7 +267,7 @@ describe('فاز ۲ — پیش‌ثبت‌نام + ثبت‌نام', () => {
     // review مجدد → 409 (قبلاً بررسی شده)
     const reReview = await agent.post(`/prereg/${row.id}/review`).set('X-CSRF-Token', csrf).send({ status: 'approved' });
     expect(reReview.status).toBe(409);
-    // یک پیش‌ثبت‌نام دیگر — approve → تبدیل
+    // یک پیش‌سبت‌نام دیگر — approve → تبدیل
     const sub2 = await request(t.app)
       .post(`/prereg/public/CL-PR`)
       .type('form')
@@ -287,7 +287,7 @@ describe('فاز ۲ — پیش‌ثبت‌نام + ثبت‌نام', () => {
     expect(stu.first_name).toBe('مریم');
   });
 
-  it('ثبت‌نام — ضدتکرار + کنترل ظرفیت (کلاس ۲ نفره)', async () => {
+  it('سبت‌نام — ضدتکرار + کنترل ظرفیت (کلاس ۲ نفره)', async () => {
     const cls = await seedClass(t);
     const s1 = await seedStudent(t, 'ST-1', '09120000001');
     const s2 = await seedStudent(t, 'ST-2', '09120000002');

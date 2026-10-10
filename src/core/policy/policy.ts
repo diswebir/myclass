@@ -99,7 +99,7 @@ export class Policy {
     throw AppError.forbidden();
   }
 
-  /** دسترسی به ثبت‌نام (enrollment): از طریق student یا class. */
+  /** دسترسی به سبت‌نام (enrollment): از طریق student یا class. */
   async assertEnrollmentAccess(user: AuthUser, enrollmentId: number): Promise<void> {
     if (this.can(user, 'enrollment', 'enrollment', 'view_all')) return;
     const enr = await this.db
@@ -107,7 +107,7 @@ export class Policy {
       .select(['id', 'student_id', 'class_id'])
       .where('id', '=', enrollmentId)
       .executeTakeFirst();
-    if (!enr) throw AppError.notFound('ثبت‌نام یافت نشد.');
+    if (!enr) throw AppError.notFound('سبت‌نام یافت نشد.');
     await this.assertStudentAccess(user, Number(enr.student_id));
     await this.assertClassAccess(user, Number(enr.class_id));
   }

@@ -25,10 +25,10 @@ export class PreregService {
       .where('deleted_at', 'is', null)
       .executeTakeFirst();
     if (!cls) throw AppError.notFound('کلاس یافت نشد.');
-    if (cls.prereg_enabled !== 1) throw AppError.badRequest('پیش‌ثبت‌نام برای این کلاس فعال نیست.');
+    if (cls.prereg_enabled !== 1) throw AppError.badRequest('پیش‌سبت‌نام برای این کلاس فعال نیست.');
     if (cls.prereg_deadline) {
       const deadline = new Date(cls.prereg_deadline + 'T23:59:59Z');
-      if (deadline.getTime() < Date.now()) throw AppError.badRequest('مهلت پیش‌ثبت‌نام گذشته است.');
+      if (deadline.getTime() < Date.now()) throw AppError.badRequest('مهلت پیش‌سبت‌نام گذشته است.');
     }
     const form = await this.db
       .selectFrom('prereg_forms')
@@ -78,7 +78,7 @@ export class PreregService {
     });
   }
 
-  // ---------- ثبت عمومی ----------
+  // ---------- سبت عمومی ----------
 
   async submitPublic(classId: number, input: {
     applicantName: string;
@@ -99,7 +99,7 @@ export class PreregService {
       .where('status', '=', 'pending')
       .executeTakeFirst();
     if (dup) {
-      throw AppError.conflict('شما قبلاً برای این کلاس پیش‌ثبت‌نام کرده‌اید. کد پیگیری خود را پیگیری کنید.');
+      throw AppError.conflict('شما قبلاً برای این کلاس پیش‌سبت‌نام کرده‌اید. کد پیگیری خود را پیگیری کنید.');
     }
     // اعتبارسنجی فیلدهای فرم
     let fields: Array<{ key: string; label: string; type: string; required: boolean }> = [];

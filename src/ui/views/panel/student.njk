@@ -1,14 +1,14 @@
 {% extends "layout.njk" %}
 {% block title %}پنل فراگیر — myclass{% endblock %}
 {% block content %}
-{% set labels = { 'present': 'حاضر', 'absent': 'غایب', 'late': 'تأخیر', 'excused': 'مرخصی', 'unset': 'ثبت‌نشده' } %}
+{% set labels = { 'present': 'حاضر', 'absent': 'غایب', 'late': 'تأخیر', 'excused': 'مرخصی', 'unset': 'سبت‌نشده' } %}
 <div class="page-head">
   <h1>پنل فراگیر</h1>
   <a href="/panel/student/profile" class="btn btn-ghost">پروفایل من</a>
 </div>
 
 {% if flashReceipt %}
-<div class="alert alert-ok">رسید شما با موفقیت ثبت شد و در انتظار بررسی است.</div>
+<div class="alert alert-ok">رسید شما با موفقیت سبت شد و در انتظار بررسی است.</div>
 {% endif %}
 
 <div class="card">
@@ -27,7 +27,7 @@
         <td><span class="badge">{{ c.enrollment_status }}</span></td>
       </tr>
       {% else %}
-      <tr><td colspan="7" class="empty">شما در کلاسی ثبت‌نام ندارید.</td></tr>
+      <tr><td colspan="7" class="empty">شما در کلاسی سبت‌نام ندارید.</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -52,7 +52,7 @@
         <td><span class="badge {{ 'ok' if r.status == 'present' or r.status == 'late' else ('fail' if r.status == 'absent' else '') }}">{{ labels[r.status] or r.status }}</span></td>
       </tr>
       {% else %}
-      <tr><td colspan="3" class="empty">حضوری ثبت نشده است.</td></tr>
+      <tr><td colspan="3" class="empty">حضوری سبت نشده است.</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -72,7 +72,7 @@
         <td><strong>{{ f.balance | faMoney }}</strong></td>
       </tr>
       {% else %}
-      <tr><td colspan="5" class="empty">ثبت‌نامی یافت نشد.</td></tr>
+      <tr><td colspan="5" class="empty">سبت‌نامی یافت نشد.</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -87,7 +87,7 @@
         <td>{{ p.created_at | faDateTime }}</td>
       </tr>
       {% else %}
-      <tr><td colspan="3" class="empty">پرداختی ثبت نشده است.</td></tr>
+      <tr><td colspan="3" class="empty">پرداختی سبت نشده است.</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -100,7 +100,7 @@
     <input type="hidden" name="_csrf" value="{{ csrfToken }}">
     <input type="hidden" name="idempotencyKey" id="idem" value="">
     <div class="grid2">
-      <div class="field"><label>ثبت‌نام</label>
+      <div class="field"><label>سبت‌نام</label>
         <select name="enrollmentId" required>
           {% for c in classes %}
           <option value="{{ c.enrollment_id }}">{{ c.title }} ({{ c.code }})</option>
@@ -114,7 +114,7 @@
   </form>
   <script>document.getElementById('idem').value = crypto.randomUUID();</script>
   {% else %}
-  <p class="empty">برای آپلود رسید ابتدا باید در کلاسی ثبت‌نام داشته باشید.</p>
+  <p class="empty">برای آپلود رسید ابتدا باید در کلاسی سبت‌نام داشته باشید.</p>
   {% endif %}
 </div>
 

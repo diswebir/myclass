@@ -12,7 +12,7 @@ const EXEMPT_PATHS = [
   /^\/internal\/jobs\/run$/,
   /^\/healthz$/,
   /^\/verify\//, // صفحه عمومی اعتبارسنجی مدرک
-  /^\/prereg\/public\//, // فرم عمومی پیش‌ثبت‌نام (rate limit + honeypot)
+  /^\/prereg\/public\//, // فرم عمومی پیش‌سبت‌نام (rate limit + honeypot)
 ];
 
 export function csrfProtect(req: Request, _res: Response, next: NextFunction): void {

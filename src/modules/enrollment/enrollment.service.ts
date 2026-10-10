@@ -1,4 +1,4 @@
-/** سرویس enrollment — ثبت‌نام قطعی، تبدیل پیش‌ثبت‌نام، کنترل ظرفیت (REQ-P2-06). */
+/** سرویس enrollment — سبت‌نام قطعی، تبدیل پیش‌سبت‌نام، کنترل ظرفیت (REQ-P2-06). */
 import type { Kysely } from 'kysely';
 import type { Database } from '../../core/db/types';
 import { AppError } from '../../core/errors/AppError';
@@ -32,7 +32,7 @@ export class EnrollmentService {
       .selectAll()
       .where('id', '=', id)
       .executeTakeFirst();
-    if (!row) throw AppError.notFound('ثبت‌نام یافت نشد.');
+    if (!row) throw AppError.notFound('سبت‌نام یافت نشد.');
     return row;
   }
 
@@ -46,7 +46,7 @@ export class EnrollmentService {
     return Number(row.c);
   }
 
-  /** ثبت‌نام — با کنترل ظرفیت و ضدتکرار (UNIQUE class+student). */
+  /** سبت‌نام — با کنترل ظرفیت و ضدتکرار (UNIQUE class+student). */
   async enroll(actor: AuthUser, input: {
     classId: number;
     studentId: number;
@@ -61,7 +61,7 @@ export class EnrollmentService {
       .executeTakeFirst();
     if (!cls) throw AppError.notFound('کلاس یافت نشد.');
     if (cls.status === 'cancelled' || cls.status === 'finished') {
-      throw AppError.badRequest('این کلاس در وضعیت قابل ثبت‌نام نیست.');
+      throw AppError.badRequest('این کلاس در وضعیت قابل سبت‌نام نیست.');
     }
     const student = await this.db
       .selectFrom('students')
@@ -71,7 +71,7 @@ export class EnrollmentService {
       .executeTakeFirst();
     if (!student) throw AppError.notFound('فراگیر یافت نشد.');
 
-    // ضدتکرار — یک ثبت‌نام فعال برای هر (کلاس، فراگیر)
+    // ضدتکرار — یک سبت‌نام فعال برای هر (کلاس، فراگیر)
     const existing = await this.db
       .selectFrom('enrollments')
       .select('id')
@@ -80,7 +80,7 @@ export class EnrollmentService {
       .where('status', '=', 'active')
       .executeTakeFirst();
     if (existing) {
-      throw AppError.conflict('این فراگیر قبلاً در این کلاس ثبت‌نام کرده است.');
+      throw AppError.conflict('این فراگیر قبلاً در این کلاس سبت‌نام کرده است.');
     }
 
     // کنترل ظرفیت
@@ -128,19 +128,19 @@ export class EnrollmentService {
     return id;
   }
 
-  /** تبدیل پیش‌ثبت‌نام به ثبت‌نام — student ساخته می‌شود (اگر تکراری نباشد) و enrollment درج می‌شود. */
+  /** تبدیل پیش‌سبت‌نام به سبت‌نام — student ساخته می‌شود (اگر تکراری نباشد) و enrollment درج می‌شود. */
   async convertPrereg(actor: AuthUser, preregId: number) {
     const prereg = await this.db
       .selectFrom('preregistrations')
       .selectAll()
       .where('id', '=', preregId)
       .executeTakeFirst();
-    if (!prereg) throw AppError.notFound('پیش‌ثبت‌نام یافت نشد.');
+    if (!prereg) throw AppError.notFound('پیش‌سبت‌نام یافت نشد.');
     if (prereg.status !== 'approved') {
-      throw AppError.badRequest('فقط پیش‌ثبت‌نام‌های تأییدشده قابل تبدیل هستند.');
+      throw AppError.badRequest('فقط پیش‌سبت‌نام‌های تأییدشده قابل تبدیل هستند.');
     }
     if (prereg.converted_enrollment_id) {
-      throw AppError.conflict('این پیش‌ثبت‌نام قبلاً تبدیل شده است.');
+      throw AppError.conflict('این پیش‌سبت‌نام قبلاً تبدیل شده است.');
     }
     // student — بر اساس موبایل (تکراری → خطا)
     const existingStudent = await this.db
@@ -150,7 +150,7 @@ export class EnrollmentService {
       .where('deleted_at', 'is', null)
       .executeTakeFirst();
     if (existingStudent) {
-      throw AppError.conflict('فراگیری با این شماره موبایل موجود است؛ ابتدا او را به کلاس ثبت‌نام کنید.');
+      throw AppError.conflict('فراگیری با این شماره موبایل موجود است؛ ابتدا او را به کلاس سبت‌نام کنید.');
     }
     const nameParts = prereg.applicant_name.trim().split(/\s+/);
     const firstName = nameParts[0] ?? prereg.applicant_name;
@@ -201,10 +201,10 @@ export class EnrollmentService {
     return { enrollmentId, studentId };
   }
 
-  /** لغو ثبت‌نام (soft) — با ثبت دلیل در audit (per A10: شرایط انصراف در کلاس). */
+  /** لغو سبت‌نام (soft) — با سبت دلیل در audit (per A10: شرایط انصراف در کلاس). */
   async cancel(actor: AuthUser, enrollmentId: number, reason?: string) {
     const enr = await this.getById(enrollmentId);
-    if (enr.status !== 'active') throw AppError.conflict('این ثبت‌نام فعال نیست.');
+    if (enr.status !== 'active') throw AppError.conflict('این سبت‌نام فعال نیست.');
     await this.db
       .updateTable('enrollments')
       .set({ status: 'cancelled', updated_at: nowDb() })
@@ -232,7 +232,7 @@ export class EnrollmentService {
     });
   }
 
-  /** بدهی/مانده ثبت‌نام — شهریه منهای تخفیف منهای پرداخت‌های تأییدشده. */
+  /** بدهی/مانده سبت‌نام — شهریه منهای تخفیف منهای پرداخت‌های تأییدشده. */
   async balance(enrollmentId: number) {
     const enr = await this.getById(enrollmentId);
     const due = subMoney(enr.fee_amount, enr.discount_amount);
